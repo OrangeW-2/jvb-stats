@@ -1,0 +1,1646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Just Volleyball — Efficiency &amp; MMR Lab</title>
+  <style>
+    :root {
+      --background: #0b0f17;
+      --card: #121826;
+      --card-alt: #0f1522;
+      --foreground: #e6edf7;
+      --muted-foreground: #94a3b8;
+      --border: #253047;
+      --primary: #38bdf8;
+      --primary-foreground: #07131d;
+      --success: #34d399;
+      --error: #f87171;
+      --warning: #fbbf24;
+      --chart-1: #38bdf8;
+      --chart-2: #a78bfa;
+      --chart-3: #fbbf24;
+      --chart-5: #fb7185;
+      --link: #60a5fa;
+      --placeholder: #64748b;
+    }
+    [data-theme="light"] {
+      --background: #f4f7fb;
+      --card: #ffffff;
+      --card-alt: #f8fafc;
+      --foreground: #0f172a;
+      --muted-foreground: #475569;
+      --border: #cbd5e1;
+      --primary: #0284c7;
+      --primary-foreground: #ffffff;
+      --success: #059669;
+      --error: #dc2626;
+      --warning: #d97706;
+      --chart-1: #0284c7;
+      --chart-2: #7c3aed;
+      --chart-3: #d97706;
+      --chart-5: #e11d48;
+      --link: #0369a1;
+      --placeholder: #94a3b8;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 16px;
+      background: var(--background);
+      color: var(--foreground);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 13px;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+    }
+    @media (min-width: 768px) { body { padding: 24px; } }
+    .wrap { max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+    .subcard { background: var(--card-alt); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+    .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .between { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+    .grid-2 { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .grid-6 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .grid-12 { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    @media (min-width: 640px) { .grid-4 { grid-template-columns: repeat(4, 1fr); } .grid-6 { grid-template-columns: repeat(3, 1fr); } }
+    @media (min-width: 1024px) {
+      .grid-2 { grid-template-columns: 1fr 1fr; }
+      .grid-6 { grid-template-columns: repeat(6, 1fr); }
+      .grid-12 { grid-template-columns: repeat(12, 1fr); }
+      .col-5 { grid-column: span 5; }
+      .col-7 { grid-column: span 7; }
+      .col-4 { grid-column: span 4; }
+      .col-8 { grid-column: span 8; }
+    }
+    h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+    h2 { margin: 0; font-size: 16px; font-weight: 600; }
+    h3 { margin: 0 0 8px 0; font-size: 14px; font-weight: 600; }
+    p { margin: 0; }
+    .muted { color: var(--muted-foreground); font-size: 12px; }
+    .tabnum { font-variant-numeric: tabular-nums; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .btn {
+      background: var(--background); color: var(--foreground); border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px 11px; font-size: 12px; font-weight: 500; cursor: pointer;
+    }
+    .btn:hover { border-color: var(--primary); }
+    .btn-sm { padding: 4px 8px; border-radius: 6px; font-size: 12px; }
+    .btn-active, .tab-btn[aria-selected="true"] {
+      background: var(--primary); color: var(--primary-foreground); border-color: var(--primary);
+    }
+    .kpi { cursor: pointer; transition: border-color 0.15s; }
+    .kpi:hover { border-color: var(--primary); }
+    .kpi-val { font-size: 15px; font-weight: 700; margin-top: 2px; }
+    input[type="text"], select {
+      background: var(--background); color: var(--foreground); border: 1px solid var(--border);
+      border-radius: 6px; padding: 5px 9px; font-size: 12px; outline: none;
+    }
+    input[type="text"]::placeholder { color: var(--placeholder); }
+    input[type="text"]:focus, select:focus { border-color: var(--primary); }
+    input[type="range"] { accent-color: var(--primary); cursor: pointer; }
+    .hidden { display: none !important; }
+    .rel { position: relative; }
+    .dropdown {
+      position: absolute; left: 0; right: 0; top: 100%; margin-top: 4px; z-index: 40;
+      background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.35); max-height: 290px; overflow-y: auto;
+    }
+    .dd-item {
+      width: 100%; text-align: left; background: transparent; color: var(--foreground);
+      border: none; border-bottom: 1px solid var(--border); padding: 8px 12px; font-size: 12px;
+      cursor: pointer; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px;
+    }
+    .dd-item:last-child { border-bottom: none; }
+    .dd-item:hover { background: var(--card-alt); }
+    .clear-btn {
+      position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+      background: transparent; border: none; color: var(--muted-foreground); font-size: 12px; cursor: pointer;
+    }
+    .clear-btn:hover { color: var(--foreground); }
+    svg.chart { width: 100%; height: auto; display: block; background: var(--card-alt); border: 1px solid var(--border); border-radius: 8px; }
+    svg text { user-select: none; }
+    .tbl-wrap { border: 1px solid var(--border); border-radius: 8px; overflow: auto; max-height: 480px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { padding: 7px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    thead th {
+      position: sticky; top: 0; background: var(--card); color: var(--muted-foreground);
+      font-weight: 600; text-align: right; z-index: 5;
+    }
+    thead th.left, td.left { text-align: left; }
+    td.right { text-align: right; }
+    th.sort { cursor: pointer; }
+    th.sort:hover { color: var(--primary); }
+    tbody tr.clickable { cursor: pointer; }
+    tbody tr.clickable:hover { background: var(--card-alt); }
+    .tooltip {
+      position: fixed; z-index: 60; pointer-events: none; max-width: 260px; font-size: 12px;
+      background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+      padding: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    }
+    .modal-bg {
+      position: fixed; inset: 0; z-index: 70; background: rgba(0,0,0,0.55);
+      display: flex; align-items: center; justify-content: center; padding: 16px;
+    }
+    .modal-box {
+      background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+      max-width: 860px; width: 100%; max-height: 85vh; display: flex; flex-direction: column;
+    }
+    .bar-track { background: var(--background); border-radius: 4px; height: 8px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 4px; }
+    .pill { display: inline-block; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--border); background: var(--background); font-size: 12px; color: var(--muted-foreground); }
+    .pos { color: var(--success); }
+    .neg { color: var(--error); }
+    .pri { color: var(--primary); }
+    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="card" style="display:flex;flex-direction:column;gap:14px;">
+      <div class="between">
+        <div>
+          <h1>Just Volleyball — Efficiency &amp; MMR Lab</h1>
+          <p id="hdr-sub" class="muted" style="font-size:13px;margin-top:4px;"></p>
+        </div>
+        <nav class="row" role="tablist" aria-label="Dashboard sections">
+          <button class="btn tab-btn" role="tab" aria-selected="true" data-tab="scatter">Landscape &amp; Sandbox</button>
+          <button class="btn tab-btn" role="tab" aria-selected="false" data-tab="compare">Compare &amp; Leaderboards</button>
+          <button class="btn tab-btn" role="tab" aria-selected="false" data-tab="profile">Player Profile &amp; Matchups</button>
+          <button class="btn tab-btn" role="tab" aria-selected="false" data-tab="engine">Model &amp; Telemetry</button>
+          <button id="open-glossary" type="button" class="btn" style="color:var(--link);" title="Open searchable acronym and metric glossary">Glossary (?)</button>
+          <button id="theme-toggle" type="button" class="btn" title="Toggle light/dark theme">Light Theme</button>
+        </nav>
+      </div>
+      <div id="kpi-strip" class="grid-6" style="padding-top:10px;border-top:1px solid var(--border);"></div>
+    </header>
+
+    <!-- TAB 1: LANDSCAPE & SANDBOX -->
+    <section id="tab-scatter" class="tab-panel" style="display:flex;flex-direction:column;gap:16px;">
+      <div class="card row">
+        <label for="main-player-search" style="font-size:12px;font-weight:600;white-space:nowrap;">Player Search</label>
+        <div id="main-search-wrap" class="rel" style="flex:1;min-width:220px;">
+          <input id="main-player-search" type="text" style="width:100%;padding:7px 60px 7px 10px;" placeholder="Search any player across PBP telemetry + global MMR (name or SteamID digits)..." autocomplete="off" />
+          <button id="main-search-clear" type="button" class="clear-btn hidden">Clear</button>
+          <div id="main-search-results" class="dropdown hidden"></div>
+        </div>
+        <span id="main-search-status" class="muted tabnum" style="white-space:nowrap;"></span>
+      </div>
+
+      <div class="grid-12">
+        <div class="card col-8" style="display:flex;flex-direction:column;gap:12px;">
+          <div class="between">
+            <h2>Interactive Player Landscape</h2>
+            <div class="row" id="preset-btns">
+              <button data-preset="eff_vpm" class="btn btn-sm">Eff vs. VPM</button>
+              <button data-preset="use_eff" class="btn btn-sm">Usage vs. Eff</button>
+              <button data-preset="off_def" class="btn btn-sm">O-VPM vs. D-VPM</button>
+              <button data-preset="rapm_eff" class="btn btn-sm">Touch EPA vs. RAPM</button>
+              <button data-preset="mvp_margin" class="btn btn-sm">Naive MVP vs. Margin</button>
+            </div>
+          </div>
+
+          <div class="grid-4">
+            <label><span class="muted" style="display:block;margin-bottom:3px;">X-Axis</span><select id="sel-x" style="width:100%;"></select></label>
+            <label><span class="muted" style="display:block;margin-bottom:3px;">Y-Axis</span><select id="sel-y" style="width:100%;"></select></label>
+            <label><span class="muted" style="display:block;margin-bottom:3px;">Bubble Size</span>
+              <select id="sel-size" style="width:100%;">
+                <option value="rallies">Rallies Played</option>
+                <option value="touches">Attributed Touches</option>
+                <option value="custom_war">Custom V-WAR</option>
+                <option value="uniform">Uniform</option>
+              </select>
+            </label>
+            <label><span class="muted" style="display:block;margin-bottom:3px;">Color By</span>
+              <select id="sel-color" style="width:100%;">
+                <option value="arch">Archetype</option>
+                <option value="veff">V-Eff Sign</option>
+                <option value="pinned">Pinned Player</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="between">
+            <label class="row muted" style="gap:8px;">
+              Min Rallies: <span id="min-rallies-val" class="mono tabnum" style="color:var(--foreground);font-weight:600;">100</span>
+              <input id="min-rallies" type="range" min="100" max="600" step="25" value="100" />
+            </label>
+            <div class="row muted" id="scatter-legend"></div>
+          </div>
+
+          <div class="rel">
+            <svg id="scatter-svg" viewBox="0 0 820 450" class="chart"></svg>
+            <div id="scatter-tooltip" class="tooltip hidden"></div>
+          </div>
+          <div id="scatter-inspector" class="subcard between"></div>
+        </div>
+
+        <div class="card col-4" style="display:flex;flex-direction:column;gap:12px;">
+          <div class="between">
+            <h2>Custom Formula Sandbox</h2>
+            <button id="reset-sandbox" class="btn btn-sm">Reset CV Optimal</button>
+          </div>
+          <p class="muted">Tune how <b>VPM</b> blends play-by-play EPA against Rally RAPM and sample shrinkage. Updates scatter and rankings live.</p>
+          <div class="subcard" style="display:flex;flex-direction:column;gap:10px;font-size:12px;">
+            <div>
+              <div class="between"><span>PBP EPA Weight (<code class="mono">w_epa</code>)</span><b id="lbl-wepa" class="mono tabnum">75% EPA / 25% RAPM</b></div>
+              <input id="sld-wepa" type="range" min="0" max="100" step="5" value="75" style="width:100%;" />
+            </div>
+            <div>
+              <div class="between"><span>Sample Shrinkage (<code class="mono">m</code> rallies)</span><b id="lbl-m" class="mono tabnum">200</b></div>
+              <input id="sld-m" type="range" min="0" max="500" step="25" value="200" style="width:100%;" />
+            </div>
+            <div>
+              <div class="between"><span>Offense / Defense Tilt</span><b id="lbl-tilt" class="mono tabnum">Balanced (50/50)</b></div>
+              <input id="sld-tilt" type="range" min="-50" max="50" step="5" value="0" style="width:100%;" />
+            </div>
+          </div>
+          <div style="flex:1;overflow:auto;">
+            <div id="sandbox-table-title" style="font-size:12px;font-weight:600;margin-bottom:6px;">Live Top 12 by Custom VPM (vs. Default Rank)</div>
+            <div class="tbl-wrap" style="max-height:360px;">
+              <table class="tabnum">
+                <thead><tr><th class="left">#</th><th class="left">Player</th><th>Custom</th><th>WAR</th><th>Shift</th></tr></thead>
+                <tbody id="sandbox-top12"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: COMPARE & LEADERBOARDS -->
+    <section id="tab-compare" class="tab-panel hidden" style="display:flex;flex-direction:column;gap:16px;">
+      <div id="compare-cards" class="grid-12">
+        <div class="card col-5" style="display:flex;flex-direction:column;gap:10px;">
+          <div class="between">
+            <h2>6-Axis Percentile Radar</h2>
+            <span id="radar-qual-lbl" class="muted"></span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;font-size:12px;">
+            <label><span class="muted" style="display:block;margin-bottom:3px;">Player A (Solid)</span><select id="cmp-a" style="width:100%;"></select></label>
+            <label><span class="muted" style="display:block;margin-bottom:3px;">Player B (Dashed)</span><select id="cmp-b" style="width:100%;"></select></label>
+            <button id="cmp-swap" type="button" class="btn btn-sm" title="Swap Player A and Player B">Swap</button>
+          </div>
+          <div class="row" id="quick-chips"></div>
+          <svg id="radar-svg" viewBox="0 0 420 340" class="chart"></svg>
+        </div>
+
+        <div class="card col-7" style="display:flex;flex-direction:column;gap:10px;">
+          <h2>Head-to-Head Metric Breakdown</h2>
+          <div id="cmp-bars" style="display:flex;flex-direction:column;gap:9px;font-size:12px;"></div>
+        </div>
+      </div>
+
+      <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+        <div class="between">
+          <div class="row">
+            <button id="tbl-mode-eff" class="btn btn-active"></button>
+            <button id="tbl-mode-mmr" class="btn"></button>
+          </div>
+          <div class="row">
+            <select id="tbl-arch-filter">
+              <option value="all">All Archetypes</option>
+              <option value="0">Elite Both</option>
+              <option value="1">Pure Efficiency</option>
+              <option value="2">Effective Anchor</option>
+              <option value="3">Developing</option>
+              <option value="4">Box-Only (&lt;100R)</option>
+            </select>
+            <input id="tbl-search" type="text" placeholder="Filter by name or ID..." />
+          </div>
+        </div>
+        <p id="tbl-hint" class="muted"></p>
+        <div class="tbl-wrap">
+          <table class="tabnum">
+            <thead id="main-tbl-head"></thead>
+            <tbody id="main-tbl-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: UNIVERSAL PLAYER PROFILE & MATCHUPS -->
+    <section id="tab-profile" class="tab-panel hidden" style="display:flex;flex-direction:column;gap:16px;">
+      <div class="card" style="display:flex;flex-direction:column;gap:12px;">
+        <div class="between">
+          <h2>Player Profile &amp; Elo Trajectory</h2>
+          <div class="row">
+            <input id="prof-filter" type="text" placeholder="Quick filter players..." style="width:170px;" />
+            <select id="prof-select" style="min-width:230px;"></select>
+            <button id="prof-compare-btn" type="button" class="btn btn-sm hidden">Open in Comparator</button>
+          </div>
+        </div>
+        <div id="prof-summary" class="grid-6"></div>
+        <div class="between">
+          <p id="prof-traj-sub" class="muted"></p>
+          <label class="row" style="font-size:12px;cursor:pointer;">
+            <input id="chk-rolling" type="checkbox" checked />
+            <span>Show 10-Game Rolling Win %</span>
+          </label>
+        </div>
+        <svg id="elo-svg" viewBox="0 0 960 320" class="chart"></svg>
+        <div id="match-inspector" class="subcard"></div>
+      </div>
+
+      <div class="grid-12">
+        <div class="card col-7" style="display:flex;flex-direction:column;gap:10px;">
+          <div class="between">
+            <div>
+              <h2 id="matchups-title">Teammates &amp; Opponents Synergy</h2>
+              <p class="muted">Green = wins, Red = losses (With player vs. Across the net). Click any bar to inspect that player.</p>
+            </div>
+            <div class="row" style="font-size:12px;">
+              <label class="row">Min Shared: <b id="min-shared-val" class="mono tabnum">2</b><input id="min-shared" type="range" min="1" max="8" step="1" value="2" /></label>
+              <select id="matchup-sort">
+                <option value="total">Sort by Shared Games</option>
+                <option value="with">Sort by With Player</option>
+                <option value="vs">Sort by Vs Player</option>
+              </select>
+            </div>
+          </div>
+          <svg id="matchups-svg" viewBox="0 0 640 390" class="chart"></svg>
+        </div>
+
+        <div class="card col-5" style="display:flex;flex-direction:column;gap:10px;">
+          <h2>Match Log</h2>
+          <p class="muted">Click any match row to highlight it on the Elo chart.</p>
+          <div class="tbl-wrap" style="max-height:420px;">
+            <table class="tabnum">
+              <thead><tr><th class="left">#</th><th class="left">Date</th><th class="left">Mode</th><th>Res</th><th>Score</th><th>Elo</th></tr></thead>
+              <tbody id="prof-match-log"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: MODEL & TELEMETRY -->
+    <section id="tab-engine" class="tab-panel hidden" style="display:flex;flex-direction:column;gap:16px;">
+      <div class="grid-12">
+        <div class="card col-7" style="display:flex;flex-direction:column;gap:10px;">
+          <div class="between">
+            <h2>Markov Contact Value &amp; EPA by Contact Kind</h2>
+            <select id="kind-metric">
+              <option value="epa">Mean EPA / 100 Touches</option>
+              <option value="v_all">Overall Rally Win Prob (V_all)</option>
+              <option value="v_nt">In-Play Win Prob (V_nonterm)</option>
+              <option value="count">Total Contacts</option>
+            </select>
+          </div>
+          <p class="muted">Click any bar to inspect touch-number and power-bin sub-states on the right.</p>
+          <svg id="kinds-svg" viewBox="0 0 560 340" class="chart"></svg>
+        </div>
+
+        <div class="card col-5" style="display:flex;flex-direction:column;gap:10px;">
+          <h2 id="substate-title">Sub-States: attack</h2>
+          <p class="muted">Empirical rally win probabilities by side touch number and power tertile (or float serve).</p>
+          <div class="tbl-wrap" style="max-height:340px;">
+            <table class="tabnum">
+              <thead><tr><th class="left">Touch#</th><th class="left">Power</th><th>n</th><th>V_all</th><th>V_nt</th><th>Term%</th></tr></thead>
+              <tbody id="substate-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+          <h2>Official In-Game MVP Weights vs. Empirical LOO-CV BPM</h2>
+          <p id="bpm-sub" class="muted"></p>
+          <svg id="bpm-svg" viewBox="0 0 520 300" class="chart"></svg>
+        </div>
+        <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+          <h2>5-Fold Session-Grouped CV &amp; Split-Half Reliability</h2>
+          <p id="cv-sub" class="muted"></p>
+          <svg id="cv-svg" viewBox="0 0 520 155" class="chart"></svg>
+          <svg id="rel-svg" viewBox="0 0 520 190" class="chart"></svg>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Searchable Glossary Modal -->
+  <div id="glossary-modal" class="modal-bg hidden" role="dialog" aria-modal="true" aria-labelledby="glossary-title">
+    <div class="modal-box">
+      <div class="between" style="padding:14px 16px;border-bottom:1px solid var(--border);">
+        <div>
+          <h2 id="glossary-title">Metrics &amp; Acronyms Glossary</h2>
+          <p class="muted">Reference for every volleyball, NBA-style impact, and validation term on this site.</p>
+        </div>
+        <div class="row">
+          <input id="glossary-search" type="text" placeholder="Filter acronyms (e.g. RAPM, V_nt)..." />
+          <button id="close-glossary" type="button" class="btn btn-sm">Close (Esc)</button>
+        </div>
+      </div>
+      <div id="glossary-body" style="padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;font-size:12px;"></div>
+    </div>
+  </div>
+
+  <script>
+  const SITE_DATA = {"meta":{"generated_utc":"2026-11-23 22:49 UTC","date_min":"2026-11-13","date_max":"2026-11-23","has_pbp":true,"mmr_matches":92,"mmr_players":364,"pbp_rallies":5204,"pbp_sessions":115,"pbp_contacts":28584,"pbp_qualified":110,"box_matches":46,"k_epa":9.7109,"default_w_epa":0.75,"default_m":200.0,"repl_vpm":-7.187,"bo3_slope":7.8984,"bo3_rallies":93.0898,"bpm_r2":0.974},"mmr_players":[["OrangeW","…0317",1915.3,1853.6,77,55,22],["Quack","…3800",1661.6,1587.3,14,10,4],["Bomby","…4623",1629.1,1556.3,18,11,7],["Jaco","unlinked",1609.5,1548.5,3,3,0],["KayzzeR","…5201",1603.2,1568.2,14,10,4],["OS | P1","…8764",1595.7,1539.7,2,2,0],["bmw enjoyer","…1741",1593.8,1534.1,16,9,7],["Andros","…7691",1580.7,1530.2,6,4,2],["speaky dermix","unlinked",1578.1,1532.7,2,2,0],["Jöremy","…7590",1577.7,1540.5,6,4,2],["Melle Muck","…3147",1575.2,1532.6,2,2,0],["Shmingus McDingus","…4955",1573.5,1532.5,2,2,0],["suna","unlinked",1571.9,1544.2,3,3,0],["Cheglet","…8751",1571.4,1530.6,2,2,0],["Omex PatXD","unlinked",1570.5,1532.0,2,2,0],["Zero Kara","unlinked",1570.5,1532.0,2,2,0],["finn","…8329",1568.5,1531.3,4,3,1],["Hoshiumi","…7409",1563.1,1541.6,8,6,2],["firework","…4354",1561.3,1526.3,2,2,0],["Don Pitas Pollos","…2800",1561.2,1524.2,5,3,2],["Jane","…3915",1560.7,1531.6,2,2,0],["Cinshay","…9447",1560.4,1525.7,2,2,0],["koel","…0871",1560.1,1528.3,6,4,2],["UnluckyRos","unlinked",1556.2,1531.6,2,2,0],["BN | Isaac Foster_fr","unlinked",1554.4,1531.7,2,2,0],["Ket","…2316",1551.9,1520.2,1,1,0],["亗 F R 么 Nᴳᵒᵈ 亗","…3557",1551.9,1520.2,1,1,0],["stings, doesn't it","unlinked",1551.6,1517.8,1,1,0],["Zomb","…8766",1551.3,1526.0,2,2,0],["femilambda203","…7595",1551.1,1521.0,1,1,0],["Necoli","…7215",1551.1,1521.0,1,1,0],["Sapera","…2813",1550.7,1526.8,2,2,0],["akselgoklahie","unlinked",1550.5,1516.0,1,1,0],["Gugor","unlinked",1550.5,1516.0,1,1,0],["Sbonkeydonkey","unlinked",1550.5,1516.0,1,1,0],["omermorag10","…2598",1549.8,1527.9,4,3,1],["Skariway","…3635",1549.2,1520.5,1,1,0],["d1monchill","…0316",1547.8,1524.1,2,2,0],["GoofChilean","…0475",1547.8,1524.1,2,2,0],["shinjitsu","…0395",1547.7,1518.5,1,1,0],["Raccooon0","…4561",1547.2,1529.4,6,4,2],["3zoosE","unlinked",1546.8,1516.0,1,1,0],["Jjjpa","unlinked",1546.8,1516.0,1,1,0],["basil","…3095",1546.6,1518.4,1,1,0],["taneaven","…6913",1546.6,1518.4,1,1,0],["pp","unlinked",1546.2,1517.9,1,1,0],["Vasile Electric","unlinked",1546.2,1517.9,1,1,0],["_Kr1P4_","unlinked",1545.2,1515.8,1,1,0],["Coyl","unlinked",1545.2,1515.8,1,1,0],["FATAL","unlinked",1545.2,1515.8,1,1,0],["Mandy","unlinked",1545.2,1515.8,1,1,0],["m","…9871",1544.9,1523.2,2,2,0],["DANTEEEEHHHH","unlinked",1544.5,1516.5,1,1,0],["Iamnotdeadd","…5049",1544.4,1515.1,3,2,1],["Aristr0","…0679",1544.0,1518.5,1,1,0],["Dramatic Bear","unlinked",1543.0,1531.9,2,2,0],["Pells","…3598",1541.0,1502.4,8,4,4],["HZ | Reptil","…2622",1539.9,1519.0,3,2,1],["TomLTT","…8897",1538.8,1522.6,10,6,4],["Couchkartoffel","unlinked",1538.1,1516.0,1,1,0],["Suicida0dj","unlinked",1538.1,1516.0,1,1,0],["JUST CHO","unlinked",1536.8,1518.6,1,1,0],["Bamzy","…3736",1536.3,1515.0,1,1,0],["Nickname","…4358",1536.3,1515.9,1,1,0],["Máximoo","unlinked",1535.8,1516.4,1,1,0],["Rs11","unlinked",1535.8,1516.4,1,1,0],["PcSuchi","…6291",1534.5,1513.3,4,2,2],["mugs","unlinked",1534.4,1515.2,1,1,0],["pNg","…6693",1534.0,1511.1,4,2,2],["FC TELETRAVAIL","unlinked",1533.5,1516.0,1,1,0],["thekachowemall","unlinked",1533.5,1516.0,1,1,0],["osh","…1242",1533.0,1505.7,4,2,2],["HZ | hyk","unlinked",1533.0,1516.0,1,1,0],["Yktrasdi","…1523",1532.0,1509.6,4,2,2],["victortaku","…3633",1531.8,1514.2,3,2,1],["NSTEMU","…9265",1531.8,1514.1,1,1,0],["sagané","…8915",1531.8,1514.1,1,1,0],["hendt_0","unlinked",1531.7,1517.3,1,1,0],["pepesda841","unlinked",1531.7,1517.3,1,1,0],["Renas21","unlinked",1531.7,1517.3,1,1,0],["Toast","unlinked",1531.7,1517.3,1,1,0],["Xy","unlinked",1531.7,1517.3,1,1,0],["sznorbert glejczak","…0263",1531.0,1513.3,5,3,2],["Hiry","unlinked",1530.0,1514.9,1,1,0],["Topo","unlinked",1530.0,1514.9,1,1,0],["Cho7","…1393",1529.5,1512.9,1,1,0],["CRYPT4LIS","…9338",1529.5,1512.9,1,1,0],["Dragis","unlinked",1529.5,1516.5,1,1,0],["dumbapple","unlinked",1529.5,1516.0,1,1,0],["FiZZi","unlinked",1529.5,1516.0,1,1,0],["Loro_2006","unlinked",1529.5,1516.5,1,1,0],["Ramen","unlinked",1529.5,1513.9,1,1,0],["Shrekk","unlinked",1529.5,1513.9,1,1,0],["Snow","…0172",1529.2,1506.1,4,2,2],["Matiu","…6856",1528.6,1512.4,1,1,0],["Ters","unlinked",1527.9,1514.1,1,1,0],["Serendipity","…1335",1527.7,1514.1,3,2,1],["Ararararagi","…4870",1527.2,1514.1,1,1,0],["Tony","…3375",1526.5,1514.0,1,1,0],["Altovoltio^^","unlinked",1526.0,1514.8,1,1,0],["Armorio","unlinked",1526.0,1514.8,1,1,0],["biber10","…0058",1526.0,1512.7,1,1,0],["Caio","…7605",1526.0,1512.7,1,1,0],["choukill","unlinked",1526.0,1514.6,1,1,0],["Clean Ocean","unlinked",1526.0,1514.8,1,1,0],["dinzxr","…0063",1526.0,1512.7,1,1,0],["froj1k","…4015",1526.0,1512.7,1,1,0],["janohoop","…5692",1526.0,1512.9,1,1,0],["Mathieu_Mdg","…6250",1526.0,1514.0,1,1,0],["Nandete","…1645",1526.0,1512.9,1,1,0],["rrezz","unlinked",1526.0,1512.9,1,1,0],["Salphex","unlinked",1526.0,1514.6,1,1,0],["supermega500","…9879",1526.0,1514.0,1,1,0],["Tenturun","unlinked",1526.0,1514.6,1,1,0],["Victor","…0179",1526.0,1512.7,1,1,0],["Papo","unlinked",1525.6,1515.8,1,1,0],["tomserra2a","unlinked",1525.6,1515.8,1,1,0],["kuko","…9237",1525.5,1512.3,1,1,0],["marshmallowumi","…4503",1525.5,1512.3,1,1,0],["Ctteigh","…1716",1525.4,1513.2,1,1,0],["Mahiro","unlinked",1525.4,1516.4,1,1,0],["Nephitys","…6782",1525.4,1513.6,1,1,0],["Nic","…1695",1525.4,1513.2,1,1,0],["TonnyGCL","…7047",1525.4,1512.1,1,1,0],["twhd","…5923",1525.4,1512.1,1,1,0],["windsofkira","…0964",1525.4,1513.6,1,1,0],["Kippo Fan #1 (Aapperatus","unlinked",1525.3,1515.8,1,1,0],["Max","unlinked",1525.3,1515.8,1,1,0],["nessir","unlinked",1525.3,1515.8,1,1,0],["sawers014","unlinked",1525.3,1515.8,1,1,0],["ꜱᴄᴇ . Shieldister","unlinked",1525.3,1515.8,1,1,0],["JxstYui","…6702",1524.9,1512.2,1,1,0],["SoyEmanuel","…8772",1524.9,1512.2,1,1,0],["Ganbort","unlinked",1524.7,1516.5,1,1,0],["10na.","…9175",1524.2,1511.7,1,1,0],["Rinkamoshi","…5381",1523.9,1504.1,2,1,1],["crowl_o3","unlinked",1522.9,1515.8,1,1,0],["Céréales Lion 2x2","unlinked",1522.9,1515.8,1,1,0],["Gotta get a grip","unlinked",1522.9,1515.8,1,1,0],["Yu-Wen","unlinked",1522.9,1515.8,1,1,0],["Nacho","…5541",1522.5,1503.7,19,9,10],["AzDark_","…5347",1522.5,1511.4,1,1,0],["LaughingStock","…2353",1520.7,1513.9,1,1,0],["Mahito 👑","…3486",1520.7,1513.9,1,1,0],["OS | Aster","…5051",1520.7,1513.9,1,1,0],["Sky","…9268",1520.7,1513.9,1,1,0],["Sergi","unlinked",1520.2,1503.5,2,1,1],["peottamalik","unlinked",1518.3,1503.8,2,1,1],["SirBubbleChu","unlinked",1518.0,1503.6,2,1,1],["Aluk","unlinked",1517.6,1516.1,1,1,0],["Lacruz","unlinked",1517.6,1516.1,1,1,0],["P☯","unlinked",1517.6,1516.1,1,1,0],["Oni","…8900",1517.3,1512.5,5,3,2],["Lukeviral","…0366",1516.9,1509.3,4,2,2],["Saitaike","…3130",1513.2,1512.9,7,4,3],["iD_Galaxy","…5757",1511.4,1503.5,4,2,2],["Cozza Pelosa","…0688",1509.6,1505.2,3,2,1],["Inferno","…0150",1507.9,1502.7,2,1,1],["Nerologicals","unlinked",1505.5,1500.2,2,1,1],["sterlowhite","…4684",1502.8,1499.7,2,1,1],["RandomName","unlinked",1502.3,1499.7,2,1,1],["hauntsy","…8374",1502.2,1500.1,2,1,1],["XoXy","unlinked",1500.9,1499.8,2,1,1],["Marvalz.","unlinked",1500.1,1500.4,2,1,1],["HARVZ4","unlinked",1499.3,1500.2,2,1,1],["AxMikeas","…3912",1497.4,1500.3,2,1,1],["petronavt","…5208",1495.6,1499.1,2,1,1],["fredlee583","…5076",1495.3,1500.0,4,2,2],["MrMandau","…6807",1495.2,1495.1,2,1,1],["Lord Tarascoun","…0448",1493.0,1495.4,3,1,2],["YNSC","unlinked",1491.4,1487.2,3,1,2],["Caillou","…3327",1487.7,1500.0,6,3,3],["entri","…0700",1487.3,1488.5,3,1,2],["greenYolong","unlinked",1486.5,1501.2,6,3,3],["PAGANEC","unlinked",1481.9,1496.2,2,1,1],["andreaghini","…0877",1480.8,1496.2,2,1,1],["SLOTH | I.Niko<3","unlinked",1479.9,1496.5,2,1,1],["dluminoxx","unlinked",1479.8,1485.3,1,0,1],["Nichita.9","unlinked",1479.8,1485.3,1,0,1],["Bot Rix Rix","…2915",1479.5,1486.1,1,0,1],["iamhassangohar","…0169",1479.5,1486.1,1,0,1],["masuraou","…6953",1479.5,1486.1,1,0,1],["nooobil","…7932",1479.5,1486.1,1,0,1],["twelve","…4764",1479.5,1486.1,1,0,1],["Wis","…2870",1479.3,1487.4,5,2,3],["Aetos","…5114",1479.2,1488.7,1,0,1],["Lykossino","…9516",1479.2,1488.7,1,0,1],["Ashuraplex","unlinked",1479.1,1483.3,3,1,2],["Milan","unlinked",1479.1,1483.3,3,1,2],["mash2311","…7001",1478.7,1484.5,3,1,2],["Rayx","…5778",1478.4,1487.9,1,0,1],["yukame","unlinked",1478.4,1487.9,1,0,1],["Abod7","…5639",1477.7,1488.2,1,0,1],["Khora","…1841",1477.7,1488.6,1,0,1],["Levine","unlinked",1477.7,1486.2,1,0,1],["Alekami","unlinked",1477.3,1484.2,1,0,1],["админ лобби","unlinked",1477.3,1484.2,1,0,1],["большой путь","unlinked",1477.3,1484.2,1,0,1],["Главный босс","unlinked",1477.3,1484.2,1,0,1],["ЗАВИСИМЫЙ","unlinked",1477.3,1484.2,1,0,1],["TRABISCOTT","…6341",1476.5,1485.3,3,1,2],["Ksmm","…7677",1475.2,1487.8,1,0,1],["KxmiDH","…5286",1475.2,1487.8,1,0,1],["Sento","…2810",1475.2,1487.8,1,0,1],["¹ᵁᴾ × Clocky","…8617",1475.2,1487.8,1,0,1],["KlLLHUNTER","unlinked",1475.0,1497.2,2,1,1],["veos","unlinked",1474.9,1483.9,3,1,2],["Jimi","unlinked",1474.9,1484.2,1,0,1],["Lynx","unlinked",1474.9,1484.2,1,0,1],["marioduck","unlinked",1474.9,1484.2,1,0,1],["SCOTFIELD","unlinked",1474.9,1484.2,1,0,1],["Aced","…4523",1474.8,1486.4,1,0,1],["Corbac","…1940",1474.8,1486.8,1,0,1],["DaBilly","…0566",1474.8,1487.7,1,0,1],["Eterky le Magichien Doge","…6041",1474.8,1487.9,1,0,1],["Hayashi","…1166",1474.8,1487.7,1,0,1],["kdgdemir","…2617",1474.8,1486.4,1,0,1],["kirkei òwó","…3188",1474.8,1487.7,1,0,1],["Le Renard","…0386",1474.8,1487.9,1,0,1],["Luckysan","…9492",1474.8,1486.8,1,0,1],["Noctilight","…3195",1474.8,1487.9,1,0,1],["poisson","unlinked",1474.8,1483.6,1,0,1],["Roulette Rider","…0283",1474.8,1486.8,1,0,1],["salad","…2747",1474.8,1486.4,1,0,1],["SneakyMagicGoat","…2288",1474.8,1486.8,1,0,1],["TRKN","…0623",1474.8,1487.9,1,0,1],["Warikan","…8643",1474.8,1486.4,1,0,1],["†  Koya  †","unlinked",1474.8,1483.6,1,0,1],["Abounini","unlinked",1474.6,1484.2,1,0,1],["DerLiam","unlinked",1474.6,1484.2,1,0,1],["Jelly","…6684",1474.6,1487.7,1,0,1],["Jimmy Larp","…0617",1474.6,1487.7,1,0,1],["pippococa","unlinked",1474.6,1484.2,1,0,1],["piratafrancis","…4442",1474.6,1487.7,1,0,1],["SiiNerGia","unlinked",1474.6,1484.2,1,0,1],["uagu","…6906",1474.6,1487.7,1,0,1],["AlexitoPito","unlinked",1474.2,1485.2,1,0,1],["alphazfrittox","unlinked",1474.2,1485.2,1,0,1],["Bastox","…5559",1474.2,1487.3,1,0,1],["BIGDAWG","unlinked",1474.2,1487.3,1,0,1],["CheezySmile","unlinked",1474.2,1485.4,1,0,1],["Fridoll","…4197",1474.2,1487.3,1,0,1],["Jonathan","…5777",1474.2,1487.1,1,0,1],["Kamal","…4036",1474.2,1487.1,1,0,1],["Lûsmįk","…6132",1474.2,1487.1,1,0,1],["metodsaglam","…6250",1474.2,1487.3,1,0,1],["Pec_BucciaNera_69_","…5955",1474.2,1487.3,1,0,1],["PixelPhantom","unlinked",1474.2,1485.2,1,0,1],["PoloxDisc","…7686",1474.2,1487.3,1,0,1],["RED JHON","…3799",1474.2,1487.1,1,0,1],["Revener","…8264",1474.2,1486.0,1,0,1],["Spelyolog","unlinked",1474.2,1485.4,1,0,1],["virkoni","…4492",1474.2,1487.3,1,0,1],["xXCarlesgamerelprofortni","unlinked",1474.2,1485.2,1,0,1],["Yumju","…8286",1474.2,1487.3,1,0,1],["сосик","unlinked",1474.2,1485.4,1,0,1],["杜姆卡","unlinked",1474.2,1485.4,1,0,1],["DexerXPL","…0980",1473.8,1485.6,1,0,1],["Markiuhh.","…8585",1473.8,1485.6,1,0,1],["nicolai","…3362",1473.8,1485.6,1,0,1],["AJAY","…0820",1473.7,1486.0,1,0,1],["futoshi","…2741",1473.7,1486.0,1,0,1],["President.","…3186",1473.7,1486.0,1,0,1],["GiottoArts","…6191",1473.6,1485.9,3,1,2],["Søuma","unlinked",1473.6,1485.1,1,0,1],["TheIzu","unlinked",1473.6,1485.1,1,0,1],["LEFITACALIENTE","unlinked",1473.3,1484.0,1,0,1],["Pollloio","unlinked",1473.3,1484.0,1,0,1],["OneDrag","…8170",1473.0,1485.9,1,0,1],["Squishygod","…0674",1473.0,1485.9,1,0,1],["Viyer","…5292",1472.9,1487.6,1,0,1],["Wyjin","…8102",1472.9,1487.6,1,0,1],["Carrys","unlinked",1472.6,1484.2,1,0,1],["hugros","…0346",1472.6,1486.0,1,0,1],["YTRAM","…2657",1472.6,1486.0,1,0,1],["Marble","unlinked",1472.2,1485.9,1,0,1],["󠀡󠀡mhtsaras","unlinked",1472.2,1485.9,1,0,1],["Cilantro25_","…1863",1472.0,1487.2,1,0,1],["Katomme","…0686",1472.0,1487.2,1,0,1],["Immortal-OliveTTV","unlinked",1471.9,1483.6,3,1,2],["Optimum","…0521",1471.6,1487.6,1,0,1],["san diego","…2496",1471.6,1487.6,1,0,1],["Tom ⛴⛟","…4499",1471.6,1487.6,1,0,1],["SamBirdo","…3637",1471.5,1486.4,1,0,1],["5huv4n","…9159",1470.7,1487.1,1,0,1],["abcyygdr","unlinked",1470.7,1484.0,1,0,1],["canholas","unlinked",1470.7,1484.0,1,0,1],["Choice Specs","…4224",1470.7,1487.1,1,0,1],["cracKu","unlinked",1470.7,1483.5,1,0,1],["Enjin","unlinked",1470.7,1484.0,1,0,1],["ibr","…2475",1470.7,1487.1,1,0,1],["Kid A","unlinked",1470.7,1486.1,1,0,1],["Quatron","unlinked",1470.7,1483.5,1,0,1],["Sycosen","unlinked",1470.7,1486.1,1,0,1],["Wojtas!","unlinked",1470.7,1483.5,1,0,1],["Xylos","unlinked",1470.7,1486.1,1,0,1],["xChrxz","unlinked",1470.2,1485.1,1,0,1],["yoyoman69","unlinked",1470.2,1485.1,1,0,1],["Clynix","…6054",1469.9,1487.1,3,1,2],["Yx47","unlinked",1469.1,1483.8,1,0,1],["Blxxnq","unlinked",1468.5,1482.7,1,0,1],["bratiy_oy74","unlinked",1468.5,1482.7,1,0,1],["Nelay","unlinked",1468.5,1482.7,1,0,1],["raru","unlinked",1468.5,1482.7,1,0,1],["iZealous","…8167",1468.4,1485.9,1,0,1],["Nevstar","…2332",1467.4,1486.1,3,1,2],["JJNL73","unlinked",1467.1,1482.7,1,0,1],["s☆fir","unlinked",1467.1,1482.7,1,0,1],["amorette","unlinked",1466.7,1484.0,1,0,1],["BreXa","unlinked",1466.7,1484.0,1,0,1],["LIMErence","unlinked",1466.7,1484.0,1,0,1],["Saggan","unlinked",1466.7,1484.0,1,0,1],["3ABOUD","unlinked",1466.3,1484.4,1,0,1],["BoonZ","unlinked",1466.3,1484.4,1,0,1],["Lipton","unlinked",1465.8,1484.8,1,0,1],["Brunawolf","unlinked",1464.4,1483.6,1,0,1],["pham hanni εїз","unlinked",1464.4,1483.6,1,0,1],["TravisGlock","unlinked",1464.4,1483.6,1,0,1],["LuckyBug24","…6622",1463.4,1481.4,1,0,1],["malletsean","…7643",1463.4,1481.4,1,0,1],["にMØNSTERに","unlinked",1462.1,1484.0,1,0,1],["Shurek","…9377",1456.2,1481.5,1,0,1],["Bufferingo","unlinked",1455.7,1483.5,1,0,1],["Zhuo","unlinked",1455.7,1483.5,1,0,1],["Fae","…7892",1455.3,1476.8,2,0,2],["Tovay","…0977",1455.3,1476.8,2,0,2],["Celius","unlinked",1455.0,1484.2,1,0,1],["ZenCrhxs","unlinked",1455.0,1484.2,1,0,1],["__chikchirik","unlinked",1454.0,1482.1,1,0,1],["Khalid Kashmiri","unlinked",1454.0,1482.1,1,0,1],["LiL-Gatochill","…8005",1453.6,1481.6,1,0,1],["lorex546","…6720",1453.6,1481.6,1,0,1],["ChangeUser","unlinked",1453.4,1484.0,1,0,1],["Jungz","unlinked",1453.4,1484.0,1,0,1],["LongLostBruddah","unlinked",1453.4,1484.0,1,0,1],["CustomCheese.Com","…2153",1452.5,1481.5,1,0,1],["Fiver","unlinked",1452.4,1484.4,1,0,1],["L","…4414",1450.1,1480.6,3,1,2],["SltCKira","…7570",1449.9,1479.5,1,0,1],["The Rat Man","…8730",1449.6,1480.0,1,0,1],["Wii Strike","unlinked",1449.6,1484.0,1,0,1],["LRBeanz23","unlinked",1448.8,1484.6,1,0,1],["jaccboi","unlinked",1448.6,1482.2,1,0,1],["UFG | GeoBreaker","unlinked",1448.5,1470.5,2,0,2],["Rajehh","…1130",1447.8,1472.1,2,0,2],["Averanite","unlinked",1445.8,1468.3,2,0,2],["lil scoobert","…8895",1439.7,1458.8,7,2,5],["0hjjjiiiiiiii优雅","unlinked",1439.3,1467.1,2,0,2],["ᏫᏟ ×͜× prize","…1183",1438.9,1473.7,2,0,2],["SylverByrd","unlinked",1435.2,1469.1,4,1,3],["bahay62","…3480",1433.6,1464.7,3,0,3],["Exsavitator","…7602",1432.0,1463.9,3,0,3],["adrian-len","unlinked",1429.6,1468.0,2,0,2],["Laccet","unlinked",1429.6,1468.0,2,0,2],["Le Dam'S","…5950",1429.5,1465.7,3,0,3],["Un Gatto Arancione","unlinked",1428.2,1455.8,3,0,3],["orchdwve","…3535",1425.8,1467.8,2,0,2],["cretinpl","…4261",1425.0,1467.2,2,0,2],["Marre","unlinked",1423.3,1467.7,2,0,2],["fiszlet","unlinked",1412.7,1483.9,1,0,1],["zekk","unlinked",1410.5,1467.7,2,0,2],["Casa","…4940",1404.5,1460.3,2,0,2],["Grat (999)","…1278",1399.2,1459.3,2,0,2],["Mees","unlinked",1377.0,1438.9,4,0,4]],"matches":[["2026-11-13 13:31","4v4","beach",2,0,1,[6,71,70,69],[311,310,308,309]],["2026-11-14 20:39","3v3","school",1,2,0,[-1,-1,340],[33,34,32]],["2026-11-14 20:53","6v6","tutorial",1,2,0,[206,209,207,210,208,-1],[130,23,126,128,127,129]],["2026-11-14 22:15","4v4","grass",2,0,1,[59,1,140,60],[4,68,173,320]],["2026-11-14 23:14","4v4","grass",0,2,0,[299,206,140,363],[4,173,1,163]],["2026-11-14 23:29","4v4","grass",1,2,0,[173,163,140,363],[4,1,23,206]],["2026-11-15 02:42","3v3","beach",0,2,0,[285,289,286],[88,89,0]],["2026-11-15 12:52","4v4","school",1,2,0,[140,315,316,317],[64,19,65,-1]],["2026-11-15 18:56","4v4","tutorial",2,0,1,[68,52,6,-1],[360,0,322,323]],["2026-11-15 19:57","4v4","tutorial",1,2,0,[0,326,327,360],[50,49,48,47]],["2026-11-15 20:17","4v4","tutorial",0,2,0,[313,19,312,170],[4,58,6,17]],["2026-11-15 21:54","4v4","tutorial",2,0,1,[4,83,84,1],[296,337,297,173]],["2026-11-15 22:14","5v5","school",1,2,0,[172,152,155,154,9],[2,56,171,72,158]],["2026-11-16 19:28","4v4","nationals",0,2,0,[4,363,347,-1],[3,-1,-1,-1]],["2026-11-16 20:04","4v4","outer_space",2,0,1,[154,120,0,9],[221,227,347,135]],["2026-11-17 17:45","4v4","beach",2,0,1,[42,7,168,41],[0,334,332,333]],["2026-11-17 18:11","4v4","nationals",2,0,1,[2,56,188,187],[279,341,0,40]],["2026-11-17 18:24","4v4","nationals",2,0,1,[2,279,56,40],[188,0,187,336]],["2026-11-17 18:39","4v4","nationals",2,0,1,[2,133,0,40],[279,56,188,187]],["2026-11-17 20:34","3v3","grass",2,0,1,[90,87,0],[288,294,292]],["2026-11-17 20:40","3v3","practice",2,0,1,[55,149,151,0,150],[359]],["2026-11-17 20:46","4v4","practice",2,0,1,[116,55,115,0],[229,234,232,228]],["2026-11-17 21:01","5v5","practice",1,2,0,[197,196,195,199,198],[136,139,137,0,138]],["2026-11-17 21:24","4v4","beach",0,2,0,[345,266,162,267],[24,0,173,164]],["2026-11-17 21:58","4v4","beach",1,2,0,[345,272,158,164],[24,0,162,173]],["2026-11-17 22:14","4v4","grass",2,0,1,[4,12,0,17],[177,178,355,346]],["2026-11-17 22:35","4v4","grass",2,1,1,[4,12,0,17],[346,355,74,343]],["2026-11-17 22:54","4v4","grass",2,1,1,[74,346,12,0],[4,343,355,17]],["2026-11-18 10:23","4v4","clouds",3,0,1,[8,205,0,140],[265,170,189,264]],["2026-11-18 10:52","4v4","grass",2,3,0,[205,342,0,140],[170,189,8,27]],["2026-11-18 10:57","4v4","practice",2,0,1,[104,99,100,0],[247,253,236,237]],["2026-11-18 11:09","4v4","tutorial",0,2,0,[256,255,240,251],[113,0,111,103]],["2026-11-18 14:12","3v3","tutorial",0,2,0,[293,295,291],[91,0,92]],["2026-11-18 15:01","4v4","grass",0,2,0,[35,275,276,147],[3,0,95,174]],["2026-11-18 15:18","4v4","grass",1,2,0,[0,174,329,328],[3,147,46,45]],["2026-11-18 16:07","4v4","school",2,0,1,[1,7,140,0],[160,194,93,349]],["2026-11-18 16:18","4v4","nationals",2,0,1,[1,0,160,93],[7,140,358,349]],["2026-11-18 16:32","4v4","nationals",2,0,1,[7,140,93,148],[1,0,358,349]],["2026-11-18 16:49","4v4","nationals",1,2,0,[1,148,140,314],[7,0,349,67]],["2026-11-18 18:33","4v4","beach",0,2,0,[352,176,0,353],[15,146,71,14]],["2026-11-18 18:50","4v4","beach",2,0,1,[15,176,0,14],[146,352,71,353]],["2026-11-19 10:37","6v6","tutorial",2,1,1,[79,77,81,78,175,80],[300,302,303,0,53,301]],["2026-11-19 13:17","4v4","nationals",2,1,1,[167,153,0,35],[259,200,258,257]],["2026-11-19 13:37","4v4","school",2,0,1,[0,-1,97,96],[268,-1,263,269]],["2026-11-19 13:53","4v4","school",2,0,1,[0,263,96,98],[344,260,262,261]],["2026-11-19 14:09","4v4","school",2,0,1,[0,108,112,28],[344,250,263,96]],["2026-11-19 14:27","4v4","nationals",0,2,0,[171,337,335,0],[172,10,22,39]],["2026-11-19 14:38","4v4","nationals",2,0,1,[10,22,337,0],[172,274,273,-1]],["2026-11-19 16:57","3v3","practice",0,2,0,[290,287,284],[0,85,86]],["2026-11-19 17:03","4v4","outer_space",2,0,1,[121,125,31,0],[211,216,226,223]],["2026-11-19 17:13","4v4","nationals",0,2,0,[212,224,219,222],[122,119,0,31]],["2026-11-19 17:19","4v4","nationals",2,1,1,[2,40,167,0],[277,1,278,298]],["2026-11-19 17:29","4v4","nationals",2,0,1,[40,0,1,298],[2,167,161,283]],["2026-11-19 17:44","4v4","nationals",0,2,0,[40,167,1,298],[2,0,161,35]],["2026-11-19 18:17","4v4","grass",2,0,1,[4,58,74,0],[190,350,351,191]],["2026-11-19 18:50","4v4","grass",2,0,1,[4,17,58,0],[185,186,351,354]],["2026-11-19 19:11","4v4","grass",2,0,1,[4,17,58,1],[363,351,354,140]],["2026-11-19 19:32","4v4","grass",2,0,1,[4,17,0,1],[68,6,140,354]],["2026-11-19 20:22","4v4","grass",0,2,0,[4,17,168,0],[68,140,6,1]],["2026-11-21 13:26","4v4","clouds",2,0,1,[0,105,102,106],[241,238,245,254]],["2026-11-21 13:53","4v4","grass",1,2,0,[66,305,153,348],[156,18,6,-1]],["2026-11-21 13:58","4v4","grass",1,2,0,[66,305,153,348],[156,18,6,0]],["2026-11-21 14:21","4v4","grass",0,2,0,[156,6,361,0],[66,5,153,157]],["2026-11-21 14:37","4v4","grass",0,2,0,[321,0,157,361],[66,5,6,54]],["2026-11-21 16:58","5v5","nationals",2,0,1,[2,154,9,61,20],[0,6,318,319,184]],["2026-11-21 17:18","5v5","nationals",2,1,1,[2,154,0,152,20],[6,171,184,9,346]],["2026-11-21 17:35","5v5","nationals",0,2,0,[0,6,184,57,346],[2,154,171,152,9]],["2026-11-21 17:54","4v4","nationals",2,1,1,[6,184,57,346],[2,154,171,152]],["2026-11-21 18:10","5v5","nationals",2,0,1,[184,9,171,152,57],[2,154,306,307,346]],["2026-11-21 20:29","4v4","nationals",1,2,0,[0,331,330,189],[43,44,13,58]],["2026-11-21 20:47","4v4","school",2,0,1,[0,75,166,76],[140,304,22,58]],["2026-11-21 21:14","4v4","school",2,1,1,[0,140,62,58],[6,166,2,22]],["2026-11-21 21:33","4v4","school",2,0,1,[0,2,22,6],[56,140,19,58]],["2026-11-21 21:51","4v4","school",0,2,0,[2,6,56,58],[0,140,63,19]],["2026-11-21 22:13","4v4","school",0,2,0,[0,7,339,58],[140,2,53,19]],["2026-11-22 20:07","4v4","tutorial",2,0,1,[109,110,107,0],[244,249,242,243]],["2026-11-23 12:26","6v6","tutorial",0,2,0,[181,180,71,182,179,183],[142,0,35,143,144,145]],["2026-11-23 12:40","4v4","grass",1,2,0,[246,248,252,239],[140,114,101,0]],["2026-11-23 17:22","4v4","tutorial",1,2,0,[202,201,203,204],[0,131,13,132]],["2026-11-23 17:54","4v4","tutorial",2,1,1,[0,37,38,22],[213,93,217,215]],["2026-11-23 18:09","4v4","tutorial",2,0,1,[0,38,51,37],[324,325,192,350]],["2026-11-23 18:25","4v4","tutorial",2,0,1,[0,141,11,51],[350,325,324,193]],["2026-11-23 20:09","4v4","grass",2,0,1,[25,26,200,159],[165,56,362,0]],["2026-11-23 20:37","4v4","grass",2,1,1,[165,56,135,36],[159,0,200,362]],["2026-11-23 20:50","4v4","tutorial",0,2,0,[231,230,235,233],[117,118,53,0]],["2026-11-23 20:58","4v4","nationals",0,2,0,[214,225,218,220],[0,123,124,28]],["2026-11-23 21:03","4v4","nationals",0,2,0,[281,282,280,-1],[305,94,0,-1]],["2026-11-23 21:26","4v4","tutorial",1,3,0,[0,175,2,357],[30,11,29,82]],["2026-11-23 21:41","4v4","tutorial",2,0,1,[0,82,16,134],[169,356,73,357]],["2026-11-23 22:01","4v4","tutorial",2,0,1,[155,16,169,73],[0,356,82,338]],["2026-11-23 22:13","4v4","tutorial",0,2,0,[2,16,155,169],[0,21,82,73]],["2026-11-23 22:31","4v4","tutorial",2,1,1,[0,21,16,155],[271,270,82,73]]],"pbp_players":[["OrangeW","…0317",0,0,29.01,22.25,6.76,3.56,2.73,2.5,0.23,0.767,0.394,827,28.6,3.3,4.8,39.61,34.83,33.38,18.841,1226.82,4925,3779,1915.3,1853.6,77,55,22,46,1.285,13.3,4.26],["Hoshiumi","…7409",17,0,17.06,20.87,-3.81,4.02,2.87,3.56,-0.69,0.715,0.427,110,36.1,0.9,0.0,7.12,1.9,10.03,1.396,135.75,543,388,1563.1,1541.6,8,6,2,3,1.235,17.0,14.23],["pepesda841","unlinked",78,0,15.32,10.8,4.51,7.55,5.54,3.77,1.77,0.733,0.6,15,27.3,9.1,0.0,5.73,0.59,5.7,0.167,17.5,105,77,1531.7,1517.3,1,1,0,0,null,null,null],["KayzzeR","…5201",4,2,12.4,8.06,4.34,1.96,1.73,0.92,0.81,0.882,0.2,90,27.8,2.5,0.0,12.17,2.89,15.56,1.201,144.5,578,510,1603.2,1568.2,14,10,4,4,1.56,23.39,4.28],["finn","…8329",16,0,12.35,11.13,1.22,4.79,2.84,2.59,0.25,0.593,0.435,46,33.3,0.0,24.4,6.63,1.95,6.38,0.443,53.5,214,127,1568.5,1531.3,4,3,1,4,0.952,15.08,5.5],["Pells","…3598",56,0,12.22,10.78,1.44,2.26,1.84,1.45,0.39,0.812,0.195,41,30.3,3.0,1.4,13.69,-0.31,16.71,0.788,95.75,383,311,1541.0,1502.4,8,4,4,4,1.258,-7.33,1.98],["PcSuchi","…6291",66,0,11.92,11.36,0.55,2.5,2.19,2.23,-0.04,0.877,0.353,68,25.0,4.2,0.0,11.61,3.91,9.82,0.527,65.0,260,228,1534.5,1513.3,4,2,2,3,1.601,6.17,10.63],["OS | P1","…8764",5,0,11.37,7.47,3.9,2.77,2.25,1.81,0.44,0.812,0.315,54,10.0,5.0,0.0,15.42,10.81,6.76,0.335,42.5,170,138,1595.7,1539.7,2,2,0,2,1.176,18.31,7.43],["Shmingus McDingus","…4955",11,0,10.81,7.46,3.35,3.41,2.29,1.81,0.48,0.673,0.412,17,10.5,0.0,20.6,13.34,9.15,8.24,0.307,40.25,162,109,1573.5,1532.5,2,2,0,2,1.16,20.83,-0.18],["Mahiro","unlinked",120,0,10.75,8.67,2.08,4.85,3.14,3.15,-0.01,0.647,0.368,19,38.9,0.0,0.0,12.11,9.59,4.87,0.194,25.5,102,66,1525.4,1516.4,1,1,0,0,null,null,null],["Snow","…0172",93,0,10.7,1.91,8.8,2.31,1.96,0.31,1.65,0.849,0.077,39,17.1,0.0,1.1,9.58,7.35,2.55,0.528,69.5,278,236,1529.2,1506.1,4,2,2,1,1.448,-20.0,-1.99],["Jöremy","…7590",9,0,10.68,3.29,7.4,2.07,0.97,0.3,0.67,0.468,0.182,22,36.4,2.3,0.0,25.81,19.61,9.69,0.485,64.0,299,140,1577.7,1540.5,6,4,2,3,0.717,14.44,1.95],["Cozza Pelosa","…0688",156,0,10.33,7.72,2.6,2.97,3.21,2.0,1.21,1.081,0.122,41,5.0,5.0,0.0,-2.08,-5.96,3.92,0.321,43.25,173,187,1509.6,1505.2,3,2,1,2,1.394,3.33,-1.24],["Andros","…7691",7,2,9.84,7.85,2.0,1.95,1.69,1.74,-0.05,0.864,0.34,97,28.3,3.8,4.9,8.02,9.29,-0.47,0.636,88.0,352,304,1580.7,1530.2,6,4,2,1,1.321,-7.69,7.36],["Oni","…8900",152,0,9.78,7.71,2.07,3.24,2.23,1.84,0.39,0.688,0.284,74,24.1,6.9,0.0,3.07,2.17,1.18,0.391,54.25,250,172,1517.3,1512.5,5,3,2,2,1.032,7.2,7.23],["victortaku","…3633",74,0,9.62,10.37,-0.75,3.34,2.34,2.66,-0.32,0.702,0.419,43,15.8,5.3,0.0,7.04,1.49,5.97,0.305,42.75,171,120,1531.8,1514.2,3,2,1,1,1.833,50.0,6.47],["twelve","…4764",183,0,9.06,10.69,-1.64,3.31,3.39,3.48,-0.09,1.024,0.212,33,11.1,0.0,0.0,-1.37,-6.01,3.72,0.141,20.5,123,126,1479.5,1486.1,1,0,1,1,1.159,-21.74,-4.91],["suna","unlinked",12,1,9.01,10.35,-1.34,3.27,2.07,2.55,-0.48,0.633,0.381,42,14.3,4.8,0.0,6.19,3.38,6.58,0.337,49.0,196,124,1571.9,1544.2,3,3,0,0,null,null,null],["osh","…1242",71,1,8.71,7.57,1.14,3.08,1.78,1.84,-0.06,0.578,0.625,16,21.1,0.0,0.0,11.77,5.44,6.43,0.25,37.0,161,93,1533.0,1505.7,4,2,2,1,0.565,-21.74,-8.47],["Cinshay","…9447",21,0,8.57,9.03,-0.46,3.7,2.62,2.75,-0.13,0.708,0.444,27,36.0,12.0,25.8,5.67,0.36,6.93,0.201,30.0,120,85,1560.4,1525.7,2,2,0,2,1.298,20.66,12.8],["Nacho","…5541",140,2,8.07,5.29,2.78,1.26,1.06,0.85,0.21,0.839,0.127,79,21.3,4.1,4.4,6.53,5.35,-0.07,1.649,254.75,1019,855,1522.5,1503.7,19,9,10,8,1.287,-3.0,-4.98],["Saitaike","…3130",154,2,8.04,1.91,6.13,1.34,1.31,0.49,0.82,0.978,0.121,58,12.2,4.1,0.0,6.57,9.41,-0.88,0.584,90.35,405,396,1513.2,1512.9,7,4,3,3,1.256,10.0,-2.91],["BN | Isaac Foster_fr","unlinked",24,2,7.84,2.62,5.22,1.6,1.68,0.54,1.14,1.05,0.294,17,24.1,0.0,0.0,8.23,6.19,4.04,0.285,44.75,179,188,1554.4,1531.7,2,2,0,0,null,null,null],["mugs","unlinked",67,1,7.81,5.19,2.62,5.35,2.98,2.21,0.77,0.557,0.333,12,20.0,0.0,0.0,1.21,2.23,-1.99,0.169,26.5,106,59,1534.4,1515.2,1,1,0,0,null,null,null],["greenYolong","unlinked",173,1,7.58,3.52,4.06,2.48,1.61,0.8,0.8,0.648,0.267,45,15.8,0.0,0.0,8.23,6.19,4.04,0.28,44.75,179,116,1486.5,1501.2,6,3,3,0,null,null,null],["OS | Aster","…5051",144,1,6.76,8.07,-1.31,5.69,2.31,2.41,-0.1,0.407,0.75,12,7.7,7.7,0.0,1.37,-3.72,6.01,0.121,20.5,123,50,1520.7,1513.9,1,1,0,1,0.754,21.74,0.91],["Wis","…2870",184,2,6.55,4.23,2.32,1.52,1.44,0.94,0.5,0.948,0.077,26,27.5,0.0,0.0,2.2,1.46,1.7,0.337,57.85,268,254,1479.3,1487.4,5,2,3,3,1.239,-10.0,-3.36],["Iamnotdeadd","…5049",53,2,6.01,1.76,4.24,1.42,1.15,0.26,0.89,0.808,0.269,26,22.7,9.1,6.5,6.98,3.89,3.26,0.246,44.0,208,168,1544.4,1515.1,3,2,1,2,1.453,23.08,1.51],["HARVZ4","unlinked",164,2,5.97,3.98,1.99,1.38,1.11,0.92,0.19,0.799,0.184,38,25.8,6.5,0.0,8.66,5.79,3.64,0.25,44.75,179,143,1499.3,1500.2,2,1,1,0,null,null,null],["m","…9871",51,1,5.91,4.41,1.5,2.29,1.21,1.17,0.04,0.53,1.0,3,34.6,0.0,12.9,10.6,7.41,6.93,0.163,29.25,117,62,1544.9,1523.2,2,2,0,2,0.951,37.7,2.55],["lil scoobert","…8895",346,2,5.55,6.95,-1.4,1.19,0.76,1.13,-0.37,0.633,0.328,61,12.7,1.8,0.0,6.57,2.05,4.56,0.611,113.0,488,309,1439.7,1458.8,7,2,5,2,0.664,-7.2,-2.63],["AxMikeas","…3912",165,2,5.13,7.28,-2.16,1.69,1.69,2.34,-0.65,1.0,0.231,39,7.7,0.0,0.0,0.05,0.11,1.7,0.185,35.5,142,142,1497.4,1500.3,2,1,1,2,1.455,1.0,3.64],["Jaco","unlinked",3,2,4.3,3.64,0.66,0.72,0.53,0.45,0.08,0.744,0.208,24,11.8,17.6,0.0,9.53,2.25,8.87,0.234,48.0,195,145,1609.5,1548.5,3,3,0,0,null,null,null],["Yktrasdi","…1523",73,2,4.21,5.29,-1.08,0.98,0.58,1.0,-0.42,0.597,0.5,16,14.3,0.0,23.5,8.43,1.78,6.83,0.237,49.0,196,117,1532.0,1509.6,4,2,2,4,0.992,-6.35,-2.61],["Quack","…3800",1,2,4.21,4.06,0.15,-0.14,-0.09,0.21,-0.3,0.614,0.293,99,18.0,6.6,0.0,18.73,10.31,15.1,0.661,136.75,547,336,1661.6,1587.3,14,10,4,5,0.996,12.4,4.2],["L","…4414",337,3,3.89,9.28,-5.39,1.53,1.21,2.62,-1.41,0.795,0.333,27,27.3,0.0,0.0,0.37,-3.9,4.33,0.174,37.08,151,120,1450.1,1480.6,3,1,2,2,1.319,2.78,-1.03],["LaughingStock","…2353",142,3,3.44,3.86,-0.43,1.3,1.12,0.89,0.22,0.862,0.267,30,12.5,12.5,0.0,1.37,-3.72,6.01,0.092,20.5,123,106,1520.7,1513.9,1,1,0,1,1.174,21.74,-3.35],["Serendipity","…1335",96,2,2.76,2.74,0.02,0.72,0.3,0.73,-0.42,0.418,0.0,3,22.2,0.0,11.6,6.88,5.82,0.99,0.187,44.25,177,74,1527.7,1514.1,3,2,1,3,0.778,12.12,-3.32],["speaky dermix","unlinked",8,2,2.69,1.05,1.64,0.29,0.11,0.2,-0.09,0.362,0.667,3,34.6,19.2,0.0,9.35,7.66,1.37,0.182,43.5,174,63,1578.1,1532.7,2,2,0,0,null,null,null],["koel","…0871",22,2,2.47,5.7,-3.23,0.55,0.32,0.98,-0.66,0.583,0.38,71,24.4,2.2,18.4,3.69,0.36,4.72,0.395,96.5,386,225,1560.1,1528.3,6,4,2,6,0.922,7.8,2.32],["Caillou","…3327",171,3,2.28,0.99,1.3,0.57,0.41,0.3,0.11,0.72,0.238,42,12.5,0.0,0.0,2.9,3.56,-0.53,0.199,49.6,218,157,1487.7,1500.0,6,3,3,3,1.111,6.17,4.03],["Don Pitas Pollos","…2800",19,2,1.63,4.03,-2.4,0.02,0.02,1.07,-1.05,0.678,0.308,26,32.3,0.0,12.3,6.29,6.07,0.11,0.197,52.75,211,143,1561.2,1524.2,5,3,2,3,1.073,-0.46,0.45],["Inferno","…0150",157,3,1.58,1.37,0.21,1.26,0.78,0.71,0.06,0.618,0.278,18,15.0,0.0,0.0,-4.08,-0.67,-4.73,0.158,42.5,170,105,1507.9,1502.7,2,1,1,2,1.141,-11.27,-1.23],["petronavt","…5208",166,3,1.56,3.47,-1.91,0.42,0.31,1.18,-0.86,0.758,0.136,22,28.6,0.0,16.2,1.82,4.98,-2.1,0.18,48.42,186,141,1495.6,1499.1,2,1,1,2,1.349,8.43,1.69],["Sky","…9268",145,3,1.36,0.79,0.57,0.82,0.37,-0.21,0.58,0.447,0.353,17,6.2,0.0,0.0,1.37,-3.72,6.01,0.074,20.5,123,55,1520.7,1513.9,1,1,0,1,0.623,21.74,4.9],["Mahito 👑","…3486",143,3,1.24,3.26,-2.02,0.45,0.2,0.61,-0.41,0.439,0.143,14,30.0,0.0,0.0,2.77,-3.32,6.41,0.073,20.5,123,54,1520.7,1513.9,1,1,0,1,0.58,21.74,-1.26],["Averanite","unlinked",345,3,0.9,3.38,-2.48,1.02,0.86,1.36,-0.5,0.844,0.171,41,12.5,6.2,0.0,-8.23,-4.04,-6.19,0.153,44.75,179,151,1445.8,1468.3,2,0,2,0,null,null,null],["TRABISCOTT","…6341",200,3,0.88,2.69,-1.81,0.43,0.32,0.93,-0.6,0.744,0.333,24,35.7,3.6,0.0,-0.77,-0.22,-2.57,0.144,42.0,168,125,1476.5,1485.3,3,1,2,3,1.205,-1.71,1.93],["Nevstar","…2332",305,3,0.85,0.82,0.03,-0.19,-0.1,-0.09,-0.01,0.53,0.25,12,0.0,0.0,0.0,4.47,-0.46,3.48,0.098,28.75,115,61,1467.4,1486.1,3,1,2,2,1.0,8.7,-2.61],["andreaghini","…0877",175,3,0.68,2.02,-1.34,1.08,0.61,0.54,0.07,0.569,0.286,7,17.6,17.6,18.2,-6.41,-6.88,-0.42,0.147,44.0,211,120,1480.8,1496.2,2,1,1,1,1.171,-9.76,-10.88],["HZ | Reptil","…2622",57,3,0.39,-0.78,1.17,-0.11,-0.09,-0.26,0.17,0.793,0.244,45,11.8,5.9,0.0,2.8,2.81,0.84,0.126,39.05,174,138,1539.9,1519.0,3,2,1,1,0.787,-27.66,-5.57],["AzDark_","…5347",141,3,0.24,-0.94,1.19,-0.61,-0.33,-0.33,0.01,0.535,0.312,16,10.0,5.0,3.2,4.68,5.48,0.82,0.1,31.75,127,68,1522.5,1511.4,1,1,0,1,0.887,35.48,6.82],["Levine","unlinked",194,3,0.19,2.34,-2.15,1.1,0.7,1.48,-0.78,0.637,0.3,20,10.0,0.0,11.8,-6.13,-1.63,-5.91,0.08,25.5,102,65,1477.7,1486.2,1,0,1,0,null,null,null],["taneaven","…6913",44,2,0.08,-0.08,0.16,-0.85,-0.56,-0.29,-0.27,0.66,0.091,11,21.4,0.0,4.3,5.74,3.18,2.4,0.077,25.0,100,66,1546.6,1518.4,1,1,0,1,0.935,2.8,2.03],["MrMandau","…6807",168,3,-0.18,4.07,-4.25,-0.13,-0.13,0.64,-0.77,1.018,0.161,31,17.9,0.0,0.0,1.28,-5.44,6.26,0.163,54.75,219,223,1495.2,1495.1,2,1,1,1,1.573,-4.88,-7.85],["Lykossino","…9516",186,3,-0.41,1.79,-2.2,0.37,0.26,1.13,-0.87,0.698,0.211,19,40.0,0.0,0.0,-4.24,-1.19,-5.41,0.076,26.5,106,74,1479.2,1488.7,1,0,1,1,0.982,-30.91,0.51],["d1monchill","…0316",37,2,-0.47,-1.53,1.06,-1.11,-0.71,-1.03,0.32,0.642,0.28,25,31.0,17.2,31.7,6.94,1.54,7.88,0.106,37.0,148,95,1547.8,1524.1,2,2,0,2,1.036,27.27,4.89],["STRIDER","unlinked",-1,3,-0.75,-2.29,1.54,-1.0,-0.72,-1.51,0.8,0.72,0.0,15,20.0,0.0,0.0,3.96,-1.16,5.93,0.091,33.33,100,72,null,null,0,0,0,0,null,null,null],["President.","…3186",262,3,-0.96,-1.92,0.96,-0.8,-0.53,-0.37,-0.16,0.655,0.059,17,30.8,7.7,13.3,1.89,6.13,-3.19,0.079,29.75,119,78,1473.7,1486.0,1,0,1,1,0.868,-23.53,-0.96],["SirBubbleChu","unlinked",148,2,-1.01,5.63,-6.64,-1.42,-0.89,2.02,-2.91,0.625,0.714,14,15.4,7.7,0.0,5.22,4.51,1.98,0.073,28.0,112,70,1518.0,1503.6,2,1,1,0,null,null,null],["Immortal-OliveTTV","unlinked",279,3,-1.31,1.48,-2.78,-0.65,-0.43,-0.12,-0.31,0.661,0.5,16,15.0,20.0,0.0,-0.4,-7.93,7.01,0.079,31.75,127,84,1471.9,1483.6,3,1,2,0,null,null,null],["peottamalik","unlinked",147,3,-1.41,4.2,-5.61,-0.34,-0.24,1.6,-1.83,0.699,0.133,15,40.0,0.0,0.0,-3.14,-3.35,-0.15,0.069,28.25,113,79,1518.3,1503.8,2,1,1,0,null,null,null],["YTRAM","…2657",274,3,-1.51,-1.32,-0.18,-0.22,-0.2,-0.73,0.53,0.915,0.154,39,16.7,16.7,0.0,-3.88,-6.54,2.43,0.069,28.5,117,107,1472.6,1486.0,1,0,1,1,2.171,-25.71,6.14],["Amro Abdo","unlinked",-1,3,-1.57,6.49,-8.06,-0.24,-0.24,2.51,-2.75,0.98,0.31,29,7.7,0.0,0.0,-3.96,-5.93,1.16,0.079,33.33,100,98,null,null,0,0,0,0,null,null,null],["sznorbert glejczak","…0263",82,2,-2.09,2.06,-4.15,-1.42,-0.96,0.01,-0.98,0.679,0.283,46,13.5,3.8,7.8,8.83,1.45,8.64,0.17,78.75,315,214,1531.0,1513.3,5,3,2,5,1.06,6.59,1.57],["bmw enjoyer","…1741",6,2,-2.12,1.31,-3.43,-0.94,-0.68,-0.18,-0.5,0.725,0.227,176,15.2,3.8,5.9,7.79,-1.67,9.62,0.472,219.25,912,661,1593.8,1534.1,16,9,7,11,1.104,-0.62,1.44],["Necoli","…7215",30,3,-2.21,0.97,-3.18,-1.19,-0.94,0.31,-1.25,0.784,0.28,25,8.3,0.0,18.4,0.89,-0.09,0.24,0.059,27.75,111,87,1551.1,1521.0,1,1,0,1,1.317,9.76,7.63],["hendt_0","unlinked",77,3,-2.44,2.26,-4.7,-3.05,-1.36,0.45,-1.81,0.448,0.5,2,0.0,0.0,0.0,3.9,0.02,5.13,0.035,17.5,105,47,1531.7,1517.3,1,1,0,0,null,null,null],["Grat (999)","…1278",362,3,-2.52,1.86,-4.38,0.08,0.07,1.0,-0.93,0.901,0.294,17,11.1,11.1,0.0,-10.93,-6.82,-5.23,0.07,35.5,142,128,1399.2,1459.3,2,0,2,2,1.065,-5.0,-8.19],["omermorag10","…2598",35,2,-2.53,2.85,-5.38,-1.99,-1.23,0.55,-1.78,0.62,0.259,27,26.1,0.0,0.0,6.0,2.33,4.69,0.07,35.25,163,101,1549.8,1527.9,4,3,1,3,0.896,16.88,1.75],["k2clm","unlinked",-1,3,-2.88,-4.25,1.37,-1.88,-1.59,-2.32,0.72,0.85,0.5,10,28.6,14.3,0.0,3.96,-1.16,5.93,0.061,33.33,100,85,null,null,0,0,0,0,null,null,null],["GoofChilean","…0475",38,2,-3.41,-1.61,-1.8,-1.94,-1.66,-1.05,-0.61,0.858,0.0,4,41.2,17.6,4.2,6.94,1.54,7.88,0.059,37.0,148,127,1547.8,1524.1,2,2,0,2,1.327,27.27,-7.5],["Bomby","…4623",2,2,-3.96,-2.12,-1.84,-1.45,-1.12,-0.51,-0.61,0.776,0.212,203,22.4,3.4,6.3,11.52,9.05,5.5,0.332,242.1,1012,785,1629.1,1556.3,18,11,7,12,1.194,0.0,0.34],["femilambda203","…7595",29,3,-4.07,4.14,-8.22,-2.36,-1.59,1.6,-3.19,0.676,0.286,21,9.1,0.0,7.7,-0.03,-0.65,-0.11,0.036,27.0,108,73,1551.1,1521.0,1,1,0,1,1.037,9.76,-2.13],["Exsavitator","…7602",351,3,-4.14,-2.44,-1.69,-0.41,-0.25,0.15,-0.4,0.61,0.0,8,31.2,0.0,0.0,-13.1,-3.16,-13.73,0.057,44.25,177,108,1432.0,1463.9,3,0,3,2,1.427,-39.81,-7.01],["Ashuraplex","unlinked",187,3,-4.42,1.08,-5.5,-3.0,-1.8,-0.32,-1.48,0.6,0.211,19,15.4,0.0,0.0,3.93,-4.39,7.93,0.041,35.0,140,84,1479.1,1483.3,3,1,2,0,null,null,null],["iamhassangohar","…0169",180,3,-4.6,-8.35,3.75,-2.62,-1.54,-3.39,1.85,0.585,0.135,37,0.0,57.1,0.0,-1.37,-6.01,3.72,0.022,20.5,123,72,1479.5,1486.1,1,0,1,1,0.899,-21.74,6.27],["Un Gatto Arancione","unlinked",355,3,-4.62,0.27,-4.89,-1.44,-0.87,0.2,-1.07,0.601,0.348,23,6.7,0.0,0.0,-6.28,-6.32,-3.64,0.051,47.0,188,113,1428.2,1455.8,3,0,3,0,null,null,null],["yoyoman69","unlinked",297,3,-4.74,0.9,-5.64,-2.8,-1.68,0.3,-1.98,0.6,0.333,6,8.3,8.3,0.0,-1.1,-1.87,0.16,0.029,27.9,115,69,1470.2,1485.1,1,0,1,0,null,null,null],["Raccooon0","…4561",40,2,-4.91,-0.79,-4.11,-2.62,-1.64,-0.51,-1.14,0.628,0.167,36,19.4,6.5,0.0,6.6,2.49,5.76,0.059,60.5,242,152,1547.2,1529.4,6,4,2,3,1.177,22.12,0.0],["Casa","…4940",361,3,-5.11,-2.8,-2.31,-1.82,-0.88,-0.42,-0.46,0.485,0.133,15,30.8,7.7,0.0,-10.3,-5.39,-7.75,0.028,31.75,130,63,1404.5,1460.3,2,0,2,2,0.908,-18.31,-0.66],["Blxxnq","unlinked",300,3,-5.56,2.8,-8.36,-4.8,-1.83,1.06,-2.89,0.381,0.429,7,22.2,0.0,0.0,-3.9,-5.13,-0.02,0.012,17.5,105,40,1468.5,1482.7,1,0,1,0,null,null,null],["LuckyBug24","…6622",318,3,-5.64,-1.26,-4.38,-3.23,-1.8,-0.21,-1.59,0.558,0.1,10,23.8,0.0,0.0,-2.9,-0.31,-2.91,0.016,24.0,120,67,1463.4,1481.4,1,0,1,1,0.945,-16.36,0.67],["Lord Tarascoun","…0448",169,3,-6.24,-4.48,-1.76,-4.41,-2.29,-1.43,-0.85,0.518,0.037,27,18.2,0.0,53.6,2.1,2.99,-0.97,0.014,34.25,137,71,1493.0,1495.4,3,1,2,3,0.587,-15.08,-1.44],["UFG | GeoBreaker","unlinked",343,3,-6.4,-4.2,-2.21,-2.74,-1.7,-1.19,-0.52,0.621,-0.083,12,14.3,0.0,0.0,-5.17,-3.93,-3.84,0.012,35.0,140,87,1448.5,1470.5,2,0,2,0,null,null,null],["Lukeviral","…0366",153,3,-6.43,-3.28,-3.15,-1.78,-1.77,-1.16,-0.61,0.996,-0.111,18,10.5,5.3,0.0,2.04,-3.11,4.98,0.019,58.0,232,231,1516.9,1509.3,4,2,2,3,1.463,-1.87,-11.61],["iD_Galaxy","…5757",155,3,-6.74,-2.79,-3.95,-3.02,-2.26,-1.32,-0.94,0.748,-0.143,14,14.3,4.8,16.7,2.62,-3.07,6.42,0.008,40.75,163,122,1511.4,1503.5,4,2,2,3,1.129,6.19,-5.33],["Aetos","…5114",185,3,-7.06,-5.57,-1.49,-3.55,-2.38,-1.79,-0.59,0.67,-0.167,6,27.3,18.2,0.0,-4.24,-1.19,-5.41,0.001,26.5,106,71,1479.2,1488.7,1,0,1,1,0.691,-30.91,-8.85],["KlLLHUNTER","unlinked",205,3,-7.7,-1.7,-5.99,-4.98,-1.97,-0.12,-1.85,0.397,0.333,9,20.8,8.3,0.0,-4.03,0.73,-5.56,-0.009,43.5,174,69,1475.0,1497.2,2,1,1,0,null,null,null],["YNSC","unlinked",170,3,-8.02,-6.35,-1.67,-4.83,-2.67,-1.79,-0.87,0.552,0.154,13,46.2,7.7,0.0,4.03,5.56,-0.73,-0.015,43.5,174,96,1491.4,1487.2,3,1,2,0,null,null,null],["XoXy","unlinked",162,3,-8.42,-2.07,-6.35,-2.63,-1.62,-0.11,-1.51,0.615,0.143,14,15.8,0.0,0.0,-11.42,-5.6,-7.75,-0.023,44.75,179,110,1500.9,1499.8,2,1,1,0,null,null,null],["Milan","unlinked",188,3,-8.51,-3.61,-4.9,-6.62,-3.17,-1.88,-1.28,0.479,0.143,14,6.7,26.7,0.0,3.93,-4.39,7.93,-0.02,35.0,140,67,1479.1,1483.3,3,1,2,0,null,null,null],["TomLTT","…8897",58,3,-8.71,-4.87,-3.84,-2.65,-1.54,-0.52,-1.02,0.581,0.165,109,14.1,3.8,4.6,-0.78,8.7,-6.65,-0.102,158.0,632,367,1538.8,1522.6,10,6,4,8,0.924,-0.5,-0.87],["KxmiDH","…5286",202,3,-8.94,-4.36,-4.58,-3.89,-3.52,-2.16,-1.36,0.905,0.042,24,15.0,5.0,0.0,3.9,-2.55,7.4,-0.03,39.83,126,114,1475.2,1487.8,1,0,1,1,1.6,-5.0,10.23],["亗 F R 么 Nᴳᵒᵈ 亗","…3557",26,3,-8.95,-3.93,-5.02,-4.46,-3.64,-1.81,-1.82,0.815,0.212,33,20.0,20.0,0.0,4.75,0.67,4.86,-0.023,31.0,124,101,1551.9,1520.2,1,1,0,1,0.869,4.76,2.95],["ᏫᏟ ×͜× prize","…1183",348,3,-9.07,-4.71,-4.37,-3.36,-2.16,-1.49,-0.67,0.643,0.161,31,6.7,6.7,0.0,-10.42,-10.14,-1.68,-0.028,35.0,140,90,1438.9,1473.7,2,0,2,1,1.04,-10.89,2.47],["cretinpl","…4261",357,3,-9.22,-1.06,-8.16,-4.11,-2.34,-0.11,-2.24,0.57,0.2,5,15.4,0.0,0.0,-11.13,-9.38,-4.37,-0.026,30.25,121,69,1425.0,1467.2,2,0,2,2,0.871,-24.29,-7.13],["Tovay","…0977",325,3,-9.96,-4.9,-5.06,-6.64,-3.22,-1.46,-1.76,0.485,-0.077,13,12.5,0.0,21.7,-8.37,-4.56,-6.86,-0.03,25.25,101,49,1455.3,1476.8,2,0,2,2,0.623,-37.7,-5.18],["sterlowhite","…4684",159,3,-10.26,-5.88,-4.38,-7.35,-3.39,-2.03,-1.35,0.46,0.091,11,15.0,20.0,0.0,-0.58,-2.21,-0.11,-0.045,34.75,139,64,1502.8,1499.7,2,1,1,2,0.67,-1.0,-4.04],["0hjjjiiiiiiii优雅","unlinked",347,3,-10.3,-7.88,-2.42,-5.31,-3.38,-2.56,-0.82,0.637,-0.053,19,0.0,0.0,0.0,-7.91,-2.79,-7.51,-0.034,25.5,102,65,1439.3,1467.1,2,0,2,0,null,null,null],["mash2311","…7001",189,3,-10.7,-0.88,-9.82,-5.37,-2.88,0.14,-3.03,0.537,0.429,21,8.3,8.3,0.0,-0.53,5.41,-5.37,-0.076,50.75,203,109,1478.7,1484.5,3,1,2,1,0.869,-2.8,-6.91],["fredlee583","…5076",167,3,-11.04,-7.59,-3.45,-4.51,-2.75,-1.53,-1.23,0.611,-0.071,14,23.1,15.4,0.0,-9.92,1.69,-11.16,-0.061,37.25,149,91,1495.3,1500.0,4,2,2,4,0.755,-15.65,-7.43],["pNg","…6693",68,3,-12.33,-1.88,-10.45,-4.47,-3.73,-1.16,-2.57,0.834,-0.333,12,20.8,0.0,0.0,1.39,-7.29,7.72,-0.095,43.75,175,146,1534.0,1511.1,4,2,2,2,1.469,-11.72,-7.67],["Valid","unlinked",-1,3,-13.41,-6.01,-7.4,-6.91,-5.12,-2.64,-2.48,0.74,0.077,13,15.0,5.0,0.0,-3.96,-5.93,1.16,-0.088,33.33,100,74,null,null,0,0,0,0,null,null,null],["Rajehh","…1130",344,3,-15.62,-7.14,-8.47,-7.75,-5.11,-2.39,-2.72,0.659,0.037,27,11.1,0.0,14.7,-4.99,-4.06,-2.48,-0.113,31.5,126,83,1447.8,1472.1,2,0,2,2,0.73,-22.63,-1.86],["SylverByrd","unlinked",349,3,-16.71,-8.64,-8.06,-6.98,-3.98,-2.03,-1.95,0.57,0.154,13,25.0,0.0,0.0,-8.87,-5.3,-6.51,-0.202,50.0,200,114,1435.2,1469.1,4,1,3,0,null,null,null],["GiottoArts","…6191",263,3,-17.03,-10.36,-6.67,-6.82,-4.51,-2.68,-1.83,0.661,0.067,15,10.5,10.5,7.5,-7.0,-2.95,-6.08,-0.182,43.5,174,115,1473.6,1485.9,3,1,2,3,0.995,-11.11,-5.27],["Fae","…7892",324,3,-17.36,-7.26,-10.09,-7.81,-5.47,-2.19,-3.28,0.701,0.222,18,11.1,44.4,7.8,-10.6,-6.93,-7.41,-0.126,29.25,117,82,1455.3,1476.8,2,0,2,2,1.189,-37.7,-3.91],["Le Dam'S","…5950",354,3,-17.41,-9.26,-8.15,-6.82,-3.6,-1.79,-1.81,0.527,0.088,34,6.7,6.7,0.0,-16.85,-8.72,-13.49,-0.22,50.75,203,107,1429.5,1465.7,3,0,3,2,0.644,-32.2,-2.44],["†  Koya  †","unlinked",227,3,-18.28,-10.38,-7.9,-10.2,-6.2,-3.37,-2.84,0.608,0.0,11,0.0,12.5,0.0,-12.11,-4.87,-9.59,-0.12,25.5,102,62,1474.8,1483.6,1,0,1,0,null,null,null],["Clynix","…6054",298,4,-3.31,-2.41,-0.9,-2.56,-1.7,-0.7,-1.0,0.667,0.083,12,15.0,0.0,0.0,2.5,5.88,-2.98,0.038,23.25,93,62,1469.9,1487.1,3,1,2,3,1.018,6.19,2.68],["bahay62","…3480",350,4,-12.33,-2.17,-10.15,-6.1,-4.65,-0.23,-4.42,0.762,0.167,6,25.0,0.0,0.0,-9.27,-3.72,-7.95,-0.046,21.0,84,64,1433.6,1464.7,3,0,3,3,1.094,-41.18,-7.69]],"markov_kinds":[["block",1179,17.52,0.697,0.553],["dump",262,9.4,0.626,0.569],["attack",4747,3.55,0.595,0.479],["receive",787,0.91,0.475,0.497],["set",5842,0.19,0.514,0.564],["serve",5190,0.04,0.568,0.535],["bump",8039,-2.72,0.47,0.502],["shank",423,-4.64,0.449,0.513],["tip",819,-5.64,0.471,0.456],["dig",608,-7.03,0.449,0.49],["carom",688,-26.54,0.237,0.459]],"markov_states":[["attack",1,"high",49,0.184,25,0.36,0.49],["attack",1,"low",63,0.635,35,0.514,0.444],["attack",2,"low",346,0.581,232,0.457,0.329],["attack",2,"mid",103,0.709,59,0.576,0.427],["attack",3,"high",1433,0.626,895,0.493,0.375],["attack",3,"low",1541,0.567,1107,0.467,0.282],["attack",3,"mid",1197,0.606,811,0.481,0.322],["block",0,"base",1160,0.702,624,0.554,0.462],["block",0,"high",19,0.421,16,0.5,0.158],["bump",1,"high",2048,0.521,1957,0.534,0.044],["bump",1,"low",3272,0.463,2876,0.503,0.121],["bump",1,"mid",1273,0.506,1200,0.517,0.057],["bump",2,"high",333,0.45,302,0.487,0.093],["bump",2,"low",368,0.386,322,0.41,0.125],["bump",2,"mid",56,0.411,51,0.451,0.089],["bump",3,"high",185,0.297,133,0.406,0.281],["bump",3,"low",448,0.364,357,0.403,0.203],["bump",3,"mid",56,0.375,39,0.513,0.304],["carom",1,"low",196,0.347,117,0.453,0.403],["carom",1,"mid",458,0.203,180,0.467,0.607],["carom",2,"low",21,0.095,5,0.4,0.762],["dig",1,"base",400,0.465,369,0.493,0.077],["dig",1,"high",97,0.577,91,0.604,0.062],["dig",2,"base",77,0.351,70,0.371,0.091],["dig",3,"base",33,0.121,12,0.25,0.636],["dump",2,"high",75,0.627,60,0.55,0.2],["dump",2,"low",75,0.573,63,0.54,0.16],["dump",2,"mid",87,0.632,65,0.554,0.253],["receive",1,"high",243,0.453,236,0.466,0.029],["receive",1,"low",300,0.483,263,0.529,0.123],["receive",1,"mid",244,0.488,228,0.491,0.066],["serve",1,"float",1032,0.631,880,0.607,0.147],["serve",1,"high",573,0.558,454,0.511,0.208],["serve",1,"low",1450,0.521,1243,0.517,0.143],["serve",1,"mid",2135,0.572,1726,0.517,0.192],["set",1,"high",57,0.474,48,0.562,0.158],["set",1,"low",304,0.461,273,0.513,0.102],["set",1,"mid",72,0.514,69,0.536,0.042],["set",2,"high",1811,0.484,1594,0.549,0.12],["set",2,"low",2553,0.537,2378,0.577,0.069],["set",2,"mid",980,0.532,902,0.578,0.08],["set",3,"low",40,0.475,33,0.576,0.175],["shank",1,"base",384,0.443,314,0.513,0.182],["shank",3,"base",34,0.529,28,0.536,0.176],["tip",1,"low",35,0.286,24,0.375,0.314],["tip",1,"mid",21,0.524,15,0.6,0.286],["tip",2,"high",62,0.516,49,0.51,0.21],["tip",2,"low",104,0.519,64,0.406,0.385],["tip",2,"mid",99,0.646,63,0.571,0.364],["tip",3,"high",196,0.444,149,0.436,0.24],["tip",3,"low",143,0.42,98,0.449,0.315],["tip",3,"mid",145,0.448,111,0.45,0.234]],"cv_bench":[["Serve Baseline",0.24551,0.68415,0.5678,0.5572],["In-fold BT MMR",0.24997,0.69407,0.548,0.5727],["Rally RAPM (α=40)",0.24533,0.68392,0.5671,0.5882],["PBP Markov EPA",0.24342,0.68004,0.5709,0.5956],["Blended VPM (0.25/0.75)",0.24337,0.67989,0.5644,0.5952]],"bpm_weights":[["pts",3.0,3.0],["spk",0.0,0.64],["ast",2.0,0.67],["ace",2.0,0.74],["blk",2.0,0.45],["dig",2.0,-0.28],["set",1.0,-0.8],["rcv",1.0,-0.37]],"reliability":[["Usage (Touches/Rally)",0.761,0.865],["Rally RAPM",0.568,0.725],["PBP EPA / 100 Rallies",0.456,0.626],["Serve RAPM",0.473,0.642],["V-Eff (EPA / 100 Touches)",0.412,0.584],["O-EPA / 100 Rallies",0.398,0.569],["Sideout RAPM",0.456,0.627],["D-EPA / 100 Rallies",0.156,0.271]]};
+  // Theme initialization & toggle
+  const savedTheme = localStorage.getItem("jv_theme") || "dark";
+  document.documentElement.setAttribute("data-theme", savedTheme);
+  const themeBtn = document.getElementById("theme-toggle");
+  function syncThemeBtn() {
+    const cur = document.documentElement.getAttribute("data-theme") || "dark";
+    themeBtn.textContent = cur === "dark" ? "Light Theme" : "Dark Theme";
+  }
+  syncThemeBtn();
+  themeBtn.addEventListener("click", () => {
+    const nxt = (document.documentElement.getAttribute("data-theme") || "dark") === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", nxt);
+    localStorage.setItem("jv_theme", nxt);
+    syncThemeBtn();
+    renderActiveTab();
+  });
+
+  const ARCH_NAMES = ["Elite Both", "Pure Efficiency", "Effective Anchor", "Developing", "Box-Only (<100R)"];
+  const ARCH_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--muted-foreground)", "var(--chart-5)"];
+
+  // Unpack mmr_players: [name, sid4, bt_mmr, elo_mmr, gp, w, l]
+  const mmrPlayers = SITE_DATA.mmr_players.map((r, i) => ({
+    idx: i, rank: i + 1, name: r[0], id: r[1], bt_mmr: r[2], elo_mmr: r[3],
+    gp: r[4], w: r[5], l: r[6], win_pct: r[4] ? (100 * r[5] / r[4]) : 0,
+    peak_elo: r[3], low_elo: r[3], cur_streak: 0, longest_win: 0, timeline: []
+  }));
+
+  // Replay all chronological matches once so every player gets full Elo history, peak/low, streaks, and matchups
+  function computeAllPlayerMatchStats() {
+    const eloByIdx = new Float64Array(mmrPlayers.length);
+    eloByIdx.fill(1500.0);
+    let cpuElo = 1500.0;
+    const getE = i => (i < 0 ? cpuElo : eloByIdx[i]);
+    const addE = (i, d) => { if (i < 0) cpuElo += d; else eloByIdx[i] += d; };
+
+    SITE_DATA.matches.forEach(m => {
+      const [ts, mode, stage, sa, sb, wA, tA, tB] = m;
+      const rA = tA.reduce((s, x) => s + getE(x), 0) / tA.length;
+      const rB = tB.reduce((s, x) => s + getE(x), 0) / tB.length;
+      const eA = 1.0 / (1.0 + Math.pow(10.0, (rB - rA) / 400.0));
+      const dA = 32.0 * ((wA ? 1.0 : 0.0) - eA);
+      tA.forEach(x => addE(x, dA));
+      tB.forEach(x => addE(x, -dA));
+
+      const pushSide = (team, oppTeam, won, setsStr, delta) => {
+        const seen = new Set();
+        team.forEach(pi => {
+          if (pi < 0 || seen.has(pi)) return;
+          seen.add(pi);
+          const pl = mmrPlayers[pi];
+          const eloNow = eloByIdx[pi];
+          const gno = pl.timeline.length + 1;
+          pl.timeline.push({
+            gno, ts, mode, stage, won, setsStr, elo: eloNow, delta,
+            mates: team.filter(x => x !== pi),
+            opps: oppTeam.slice()
+          });
+          if (gno === 1) { pl.peak_elo = eloNow; pl.low_elo = eloNow; }
+          else {
+            if (eloNow > pl.peak_elo) pl.peak_elo = eloNow;
+            if (eloNow < pl.low_elo) pl.low_elo = eloNow;
+          }
+          if (won) {
+            pl.cur_streak = pl.cur_streak > 0 ? pl.cur_streak + 1 : 1;
+            if (pl.cur_streak > pl.longest_win) pl.longest_win = pl.cur_streak;
+          } else {
+            pl.cur_streak = pl.cur_streak < 0 ? pl.cur_streak - 1 : -1;
+          }
+        });
+      };
+      pushSide(tA, tB, !!wA, `${sa}-${sb}`, dA);
+      pushSide(tB, tA, !wA, `${sb}-${sa}`, -dA);
+    });
+  }
+  computeAllPlayerMatchStats();
+
+  // Unpack pbp_players
+  const players = SITE_DATA.pbp_players.map((r, i) => ({
+    idx: i, name: r[0], id: r[1], mmr_idx: r[2], arch: r[3], qualified: r[3] !== 4,
+    vpm: r[4], o_vpm: r[5], d_vpm: r[6], v_eff: r[7],
+    epa_100r: r[8], o_epa_100r: r[9], d_epa_100r: r[10],
+    usage: r[11], true_hit: r[12], att: r[13], true_ace: r[14], srv_err: r[15], shank: r[16],
+    rapm: r[17], srv_rapm: r[18], side_rapm: r[19], v_war: r[20], slot_exp: r[21],
+    rallies: r[22], touches: r[23], bt_mmr: r[24], elo_mmr: r[25],
+    mmr_gp: r[26], mmr_w: r[27], mmr_l: r[28],
+    box_m: r[29], box_mvp_r: r[30], box_margin: r[31], box_bpm8: r[32],
+    custom_vpm: r[4], custom_war: r[20]
+  }));
+
+  const pbpByMmrIdx = new Map();
+  players.forEach(p => { if (p.mmr_idx >= 0) pbpByMmrIdx.set(p.mmr_idx, p); });
+  const qualPlayers = players.filter(p => p.qualified);
+  const defRankMap = new Map();
+  [...qualPlayers].sort((a, b) => b.vpm - a.vpm).forEach((p, idx) => defRankMap.set(p.name + p.id, idx + 1));
+
+  // Default profile player: highest GP (tiebreak highest BT MMR)
+  const defaultMmrPlayer = mmrPlayers.length
+    ? [...mmrPlayers].sort((a, b) => b.gp - a.gp || b.bt_mmr - a.bt_mmr)[0]
+    : null;
+
+  const hasPbp = !!SITE_DATA.meta.has_pbp && qualPlayers.length > 0;
+  const state = {
+    tab: hasPbp ? "scatter" : "profile",
+    xKey: "v_eff", yKey: "vpm", sizeKey: "rallies", colorKey: "arch",
+    minRallies: 100, search: "",
+    pinned: players[0] || null, pinnedMmr: null,
+    wEpa: SITE_DATA.meta.default_w_epa, mShr: SITE_DATA.meta.default_m, tilt: 0,
+    cmpA: 0, cmpB: Math.min(1, Math.max(0, players.length - 1)),
+    tblMode: hasPbp ? "eff" : "mmr",
+    tblSort: { key: hasPbp ? "vpm" : "bt_mmr", dir: -1 },
+    tblArch: "all", tblSearch: "",
+    profileIdx: defaultMmrPlayer ? defaultMmrPlayer.idx : 0,
+    profSelectedGame: defaultMmrPlayer ? Math.max(0, defaultMmrPlayer.timeline.length - 1) : 0,
+    rollingWin: true, minShared: 2, matchupSort: "total",
+    kindMetric: "epa", selectedKind: "attack"
+  };
+
+  function esc(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function svgEl(tag, attrs = {}, text = null) {
+    const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+    if (text !== null) el.textContent = text;
+    return el;
+  }
+  function fmt(v, d = 2, plus = false) {
+    if (v === null || v === undefined || Number.isNaN(v)) return "—";
+    const s = Number(v).toFixed(d);
+    return (plus && Number(v) > 0) ? "+" + s : s;
+  }
+  function fmtStreak(st) {
+    if (!st) return "—";
+    return st > 0 ? `${st}W` : `${Math.abs(st)}L`;
+  }
+
+  // Header Subtitle & Dynamic Leader KPI Cards
+  function initHeader() {
+    const m = SITE_DATA.meta;
+    const parts = [`${m.mmr_matches} verified online matches`, `${m.mmr_players} MMR players`];
+    if (m.has_pbp) parts.push(`${m.pbp_rallies.toLocaleString()} PBP rallies (${m.pbp_contacts.toLocaleString()} contacts)`);
+    else if (m.box_matches) parts.push(`${m.box_matches} box-score matches`);
+    document.getElementById("hdr-sub").textContent = "Interactive player-agnostic explorer across " + parts.join(", ") + ".";
+
+    const strip = document.getElementById("kpi-strip");
+    const cards = [];
+    if (hasPbp) {
+      const topVpm = [...qualPlayers].sort((a, b) => b.vpm - a.vpm)[0];
+      const topMmr = mmrPlayers[0];
+      const topEff = [...qualPlayers].sort((a, b) => b.v_eff - a.v_eff)[0];
+      const topRapm = [...qualPlayers].sort((a, b) => b.rapm - a.rapm)[0];
+      cards.push(
+        { lbl: "#1 Overall VPM", val: topVpm.name, sub: `${fmt(topVpm.vpm, 2, true)} (${topVpm.rallies}R)`, tip: "Volleyball Plus-Minus leader among qualified players", mmrIdx: topVpm.mmr_idx, pbpIdx: topVpm.idx },
+        { lbl: "#1 Global BT MMR", val: topMmr.name, sub: `${topMmr.bt_mmr.toFixed(1)} (${topMmr.w}–${topMmr.l})`, tip: "Global Regularized Bradley-Terry MMR leader across all players", mmrIdx: topMmr.idx },
+        { lbl: "#1 Touch Eff (V-Eff)", val: topEff.name, sub: `${fmt(topEff.v_eff, 2, true)} EPA/100T`, tip: "Highest Markov EPA per 100 touches among qualified players", mmrIdx: topEff.mmr_idx, pbpIdx: topEff.idx },
+        { lbl: "#1 Lineup RAPM", val: topRapm.name, sub: `${fmt(topRapm.rapm, 2, true)} pts/100R`, tip: "Highest Ridge Regularized Adjusted Plus-Minus", mmrIdx: topRapm.mmr_idx, pbpIdx: topRapm.idx },
+        { lbl: "Match Pool", val: `${m.mmr_matches} matches`, sub: `${m.mmr_players} players (${m.date_min} .. ${m.date_max})`, tip: "Deduplicated online match pool and active human player count" },
+        { lbl: "Telemetry Pool", val: `${m.pbp_rallies.toLocaleString()} rallies`, sub: `${m.pbp_sessions} sess · ${m.pbp_qualified} qualified`, tip: "Play-by-play telemetry rallies and qualified players (>=100R, >=40T)" }
+      );
+    } else {
+      const qualMmr = mmrPlayers.filter(x => x.gp >= 5);
+      const winLeader = [...(qualMmr.length ? qualMmr : mmrPlayers)].sort((a, b) => b.win_pct - a.win_pct || b.gp - a.gp)[0];
+      const topMmr = mmrPlayers[0];
+      const topElo = [...mmrPlayers].sort((a, b) => b.elo_mmr - a.elo_mmr)[0];
+      const mostActive = [...mmrPlayers].sort((a, b) => b.gp - a.gp || b.bt_mmr - a.bt_mmr)[0];
+      cards.push(
+        { lbl: "#1 Global BT MMR", val: topMmr ? topMmr.name : "—", sub: topMmr ? `${topMmr.bt_mmr.toFixed(1)} (${topMmr.w}–${topMmr.l})` : "", tip: "Global Bradley-Terry MMR leader", mmrIdx: topMmr ? topMmr.idx : null },
+        { lbl: "#1 Chronological Elo", val: topElo ? topElo.name : "—", sub: topElo ? `${topElo.elo_mmr.toFixed(1)} (${topElo.gp} GP)` : "", tip: "Sequential team Elo leader", mmrIdx: topElo ? topElo.idx : null },
+        { lbl: "#1 Win% (5+ GP)", val: winLeader ? winLeader.name : "—", sub: winLeader ? `${winLeader.win_pct.toFixed(1)}% (${winLeader.w}–${winLeader.l})` : "", tip: "Best match win rate with >= 5 GP", mmrIdx: winLeader ? winLeader.idx : null },
+        { lbl: "Most Active", val: mostActive ? mostActive.name : "—", sub: mostActive ? `${mostActive.gp} GP (${mostActive.w}–${mostActive.l})` : "", tip: "Most online matches recorded", mmrIdx: mostActive ? mostActive.idx : null },
+        { lbl: "Match Pool", val: `${m.mmr_matches} matches`, sub: `${m.mmr_players} human players`, tip: "Verified deduplicated online match pool" },
+        { lbl: "Box & Date Span", val: `${m.box_matches} box`, sub: `${m.date_min} .. ${m.date_max}`, tip: "Box-score matches and earliest to latest match dates" }
+      );
+    }
+
+    strip.innerHTML = cards.map((c, ci) => `
+      <div class="subcard kpi" data-kpi="${ci}" title="${esc(c.tip)}">
+        <div class="muted">${esc(c.lbl)}</div>
+        <div class="kpi-val tabnum">${esc(c.val)}</div>
+        <div class="muted tabnum">${esc(c.sub)}</div>
+      </div>`).join("");
+    strip.querySelectorAll(".kpi").forEach(el => {
+      const c = cards[Number(el.dataset.kpi)];
+      if (c.mmrIdx !== undefined && c.mmrIdx !== null && c.mmrIdx >= 0) {
+        el.addEventListener("click", () => openPlayerProfile(c.mmrIdx));
+      }
+    });
+  }
+
+  function switchTab(tabName) {
+    state.tab = tabName;
+    document.querySelectorAll(".tab-btn").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === tabName ? "true" : "false"));
+    document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
+    document.getElementById("tab-" + state.tab).classList.remove("hidden");
+    renderActiveTab();
+  }
+  document.querySelectorAll(".tab-btn").forEach(btn => btn.addEventListener("click", () => switchTab(btn.dataset.tab)));
+
+  function openPlayerProfile(mmrIdx) {
+    if (mmrIdx < 0 || mmrIdx >= mmrPlayers.length) return;
+    state.profileIdx = mmrIdx;
+    const pl = mmrPlayers[mmrIdx];
+    state.profSelectedGame = Math.max(0, pl.timeline.length - 1);
+    const profSel = document.getElementById("prof-select");
+    if (profSel) profSel.value = String(mmrIdx);
+    // Smart default minShared for this player
+    const matchups = computeMatchupsFor(mmrIdx);
+    const hasMulti = matchups.some(x => x.shared >= 2);
+    state.minShared = hasMulti ? 2 : 1;
+    document.getElementById("min-shared").value = state.minShared;
+    document.getElementById("min-shared-val").textContent = state.minShared;
+    switchTab("profile");
+  }
+
+  // SANDBOX RECOMPUTE
+  function recomputeSandbox() {
+    if (!hasPbp) return;
+    const wE = state.wEpa, wR = 1 - wE, m = state.mShr, kEpa = SITE_DATA.meta.k_epa;
+    const oMult = 1 + state.tilt / 100, dMult = 1 - state.tilt / 100;
+    for (const p of players) {
+      const shr = p.rallies / (p.rallies + m);
+      const oComp = wR * p.side_rapm + wE * (p.o_epa_100r * shr * kEpa);
+      const dComp = wR * p.srv_rapm + wE * (p.d_epa_100r * shr * kEpa);
+      const rawV = wR * p.rapm + wE * (p.epa_100r * shr * kEpa);
+      const tilted = oMult * oComp + dMult * dComp;
+      p.custom_vpm = state.tilt === 0 ? rawV : (0.5 * rawV + 0.5 * tilted);
+    }
+    const qVals = qualPlayers.map(p => p.custom_vpm).sort((a, b) => a - b);
+    const repl = qVals[Math.floor(0.2 * (qVals.length - 1))] || 0;
+    for (const p of players) {
+      p.custom_war = (0.5 * ((p.custom_vpm - repl) / 100) * p.slot_exp) * (SITE_DATA.meta.bo3_slope / SITE_DATA.meta.bo3_rallies);
+    }
+  }
+
+  // TAB 1: SCATTER & UNIFIED SEARCH
+  const AXES = [
+    { key: "v_eff", label: "V-Eff (EPA / 100 Touches)", zero: true },
+    { key: "vpm", label: "VPM (Blended Pts / 100 Rallies)", zero: true },
+    { key: "custom_vpm", label: "Custom VPM (Sandbox)", zero: true },
+    { key: "o_vpm", label: "O-VPM (Offense)", zero: true },
+    { key: "d_vpm", label: "D-VPM (Defense & Serve)", zero: true },
+    { key: "usage", label: "Usage (Touches / Rally)", zero: false },
+    { key: "rapm", label: "Rally RAPM (/ 100 Rallies)", zero: true },
+    { key: "srv_rapm", label: "Serve RAPM", zero: true },
+    { key: "side_rapm", label: "Sideout RAPM", zero: true },
+    { key: "true_hit", label: "True Hitting %", zero: true },
+    { key: "true_ace", label: "True Ace %", zero: false },
+    { key: "bt_mmr", label: "BT MMR", zero: false },
+    { key: "v_war", label: "V-WAR (Match Wins)", zero: true },
+    { key: "box_mvp_r", label: "Box Naive MVP / Rally", zero: false },
+    { key: "box_margin", label: "Box Team Margin / 100R", zero: true }
+  ];
+  const AXIS_MAP = Object.fromEntries(AXES.map(a => [a.key, a]));
+
+  const selX = document.getElementById("sel-x"), selY = document.getElementById("sel-y");
+  AXES.forEach(a => { selX.add(new Option(a.label, a.key)); selY.add(new Option(a.label, a.key)); });
+  selX.value = state.xKey; selY.value = state.yKey;
+
+  function renderScatter() {
+    if (!hasPbp) return;
+    const svg = document.getElementById("scatter-svg");
+    svg.innerHTML = "";
+    const W = 820, H = 450, pad = { l: 64, r: 26, t: 22, b: 48 };
+    const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+    const xMeta = AXIS_MAP[state.xKey], yMeta = AXIS_MAP[state.yKey];
+    const pts = players.filter(p => p.rallies >= state.minRallies && p[state.xKey] !== null && p[state.yKey] !== null);
+    if (!pts.length) {
+      svg.appendChild(svgEl("text", { x: W / 2, y: H / 2, "text-anchor": "middle", fill: "var(--muted-foreground)", "font-size": 13 }, "No players match the current filter."));
+      return;
+    }
+
+    const xs = pts.map(p => p[state.xKey]), ys = pts.map(p => p[state.yKey]);
+    let xMin = Math.min(...xs), xMax = Math.max(...xs), yMin = Math.min(...ys), yMax = Math.max(...ys);
+    const xPad = (xMax - xMin || 1) * 0.08, yPad = (yMax - yMin || 1) * 0.1;
+    xMin -= xPad; xMax += xPad; yMin -= yPad; yMax += yPad;
+    const sx = v => pad.l + ((v - xMin) / (xMax - xMin)) * pw;
+    const sy = v => pad.t + ph - ((v - yMin) / (yMax - yMin)) * ph;
+
+    for (let i = 0; i <= 5; i++) {
+      const xv = xMin + (i / 5) * (xMax - xMin), yv = yMin + (i / 5) * (yMax - yMin);
+      const gx = sx(xv), gy = sy(yv);
+      svg.appendChild(svgEl("line", { x1: gx, y1: pad.t, x2: gx, y2: pad.t + ph, stroke: "var(--border)", "stroke-opacity": 0.45, "stroke-dasharray": "2,3" }));
+      svg.appendChild(svgEl("line", { x1: pad.l, y1: gy, x2: pad.l + pw, y2: gy, stroke: "var(--border)", "stroke-opacity": 0.45, "stroke-dasharray": "2,3" }));
+      svg.appendChild(svgEl("text", { x: gx, y: H - 24, "text-anchor": "middle", fill: "var(--muted-foreground)", "font-size": 12 }, Math.abs(xv) >= 100 ? xv.toFixed(0) : xv.toFixed(1)));
+      svg.appendChild(svgEl("text", { x: pad.l - 8, y: gy + 4, "text-anchor": "end", fill: "var(--muted-foreground)", "font-size": 12 }, Math.abs(yv) >= 100 ? yv.toFixed(0) : yv.toFixed(1)));
+    }
+    if (xMeta.zero && xMin < 0 && xMax > 0) svg.appendChild(svgEl("line", { x1: sx(0), y1: pad.t, x2: sx(0), y2: pad.t + ph, stroke: "var(--muted-foreground)", "stroke-opacity": 0.65, "stroke-dasharray": "5,4" }));
+    if (yMeta.zero && yMin < 0 && yMax > 0) svg.appendChild(svgEl("line", { x1: pad.l, y1: sy(0), x2: pad.l + pw, y2: sy(0), stroke: "var(--muted-foreground)", "stroke-opacity": 0.65, "stroke-dasharray": "5,4" }));
+    svg.appendChild(svgEl("text", { x: pad.l + pw / 2, y: H - 6, "text-anchor": "middle", fill: "var(--foreground)", "font-size": 12, "font-weight": 600 }, xMeta.label));
+    svg.appendChild(svgEl("text", { x: 16, y: pad.t + ph / 2, "text-anchor": "middle", fill: "var(--foreground)", "font-size": 12, "font-weight": 600, transform: `rotate(-90 16 ${pad.t + ph / 2})` }, yMeta.label));
+
+    const sMax = Math.max(...pts.map(p => Math.max(0, Number(p[state.sizeKey] || 0))), 1);
+    const getRadius = p => state.sizeKey === "uniform" ? 6 : 4.5 + 12.5 * Math.sqrt(Math.max(0, Number(p[state.sizeKey] || 0)) / sMax);
+    const getColor = p => {
+      if (state.colorKey === "arch") return ARCH_COLORS[p.arch];
+      if (state.colorKey === "veff") return p.v_eff >= 0 ? "var(--success)" : "var(--error)";
+      return (!state.pinnedMmr && state.pinned && state.pinned.idx === p.idx) ? "var(--chart-1)" : "var(--muted-foreground)";
+    };
+
+    const legEl = document.getElementById("scatter-legend");
+    if (state.colorKey === "arch") {
+      legEl.innerHTML = [0, 1, 2, 3].map(c => `<span class="row" style="gap:4px;"><span class="dot" style="background:${ARCH_COLORS[c]}"></span>${ARCH_NAMES[c]}</span>`).join("");
+    } else if (state.colorKey === "veff") {
+      legEl.innerHTML = `<span class="row" style="gap:4px;"><span class="dot" style="background:var(--success)"></span>V-Eff &ge; 0</span><span class="row" style="gap:4px;"><span class="dot" style="background:var(--error)"></span>V-Eff &lt; 0</span>`;
+    } else {
+      legEl.innerHTML = `<span class="row" style="gap:4px;"><span class="dot" style="background:var(--chart-1)"></span>Pinned Player</span>`;
+    }
+
+    const q = state.search.trim().toLowerCase();
+    const tt = document.getElementById("scatter-tooltip");
+    const ordered = [...pts].sort((a, b) => a.rallies - b.rallies);
+
+    // Dynamic prominent-player label targets (zero hardcoded player names)
+    const labelTargets = new Set();
+    [...pts].sort((a, b) => b.vpm - a.vpm).slice(0, 4).forEach(p => labelTargets.add(p.idx));
+    [...pts].sort((a, b) => b.v_eff - a.v_eff).slice(0, 3).forEach(p => labelTargets.add(p.idx));
+    [...pts].sort((a, b) => b.rapm - a.rapm).slice(0, 3).forEach(p => labelTargets.add(p.idx));
+    [...pts].sort((a, b) => b.rallies - a.rallies).slice(0, 4).forEach(p => labelTargets.add(p.idx));
+
+    const placedBoxes = [];
+    const canPlace = (lx, ly, txt) => {
+      const bw = txt.length * 6.5 + 6, bh = 14;
+      if (lx < pad.l || lx + bw > W - pad.r || ly - bh < pad.t || ly > H - pad.b) return false;
+      for (const b of placedBoxes) if (!(lx + bw < b.x || lx > b.x + b.w || ly < b.y - b.h || ly - bh > b.y)) return false;
+      placedBoxes.push({ x: lx, y: ly, w: bw, h: bh });
+      return true;
+    };
+
+    ordered.forEach(p => {
+      const cx = sx(p[state.xKey]), cy = sy(p[state.yKey]), r = getRadius(p);
+      const isMatch = q && (p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q));
+      const isPinned = !state.pinnedMmr && state.pinned && state.pinned.idx === p.idx;
+      const circ = svgEl("circle", {
+        cx, cy, r, fill: getColor(p), "fill-opacity": q ? (isMatch ? 0.95 : 0.2) : 0.82,
+        stroke: (isPinned || isMatch) ? "var(--foreground)" : "var(--background)",
+        "stroke-width": (isPinned || isMatch) ? 2.2 : 1, style: "cursor:pointer;"
+      });
+      circ.addEventListener("mouseenter", e => {
+        tt.innerHTML = `
+          <div><b>${esc(p.name)}</b> <span class="muted">${esc(p.id)}</span></div>
+          <div class="muted">${ARCH_NAMES[p.arch]} · ${p.rallies}R · ${p.touches}T</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 10px;margin-top:6px;" class="tabnum">
+            <span>VPM: <b>${fmt(p.vpm, 2, true)}</b></span><span>V-Eff: <b>${fmt(p.v_eff, 2, true)}</b></span>
+            <span>RAPM: <b>${fmt(p.rapm, 2, true)}</b></span><span>Use: <b>${fmt(p.usage, 2)}</b></span>
+            <span>TrueHit%: <b>${fmt(p.true_hit, 3)}</b></span><span>BT MMR: <b>${fmt(p.bt_mmr, 1)}</b></span>
+          </div>`;
+        tt.classList.remove("hidden");
+        tt.style.left = Math.min(window.innerWidth - 270, e.clientX + 14) + "px";
+        tt.style.top = Math.max(8, e.clientY - 20) + "px";
+      });
+      circ.addEventListener("mousemove", e => {
+        tt.style.left = Math.min(window.innerWidth - 270, e.clientX + 14) + "px";
+        tt.style.top = Math.max(8, e.clientY - 20) + "px";
+      });
+      circ.addEventListener("mouseleave", () => tt.classList.add("hidden"));
+      circ.addEventListener("click", () => { state.pinned = p; state.pinnedMmr = null; renderScatter(); });
+      svg.appendChild(circ);
+    });
+
+    const labelCands = pts.filter(p =>
+      (q && (p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q))) ||
+      (!state.pinnedMmr && state.pinned && state.pinned.idx === p.idx) ||
+      labelTargets.has(p.idx)
+    );
+    labelCands.sort((a, b) => b.rallies - a.rallies);
+    labelCands.forEach(p => {
+      const cx = sx(p[state.xKey]), cy = sy(p[state.yKey]), r = getRadius(p);
+      const isPinned = !state.pinnedMmr && state.pinned && state.pinned.idx === p.idx;
+      if (canPlace(cx + r + 4, cy + 4, p.name) || isPinned) {
+        svg.appendChild(svgEl("text", { x: cx + r + 4, y: cy + 4, fill: "var(--foreground)", "font-size": 12, "font-weight": isPinned ? 700 : 500 }, p.name));
+      }
+    });
+
+    // Pinned Inspector
+    const ins = document.getElementById("scatter-inspector");
+    if (state.pinnedMmr) {
+      const m = state.pinnedMmr;
+      ins.innerHTML = `
+        <div class="row">
+          <b style="font-size:14px;">${esc(m.name)}</b>
+          <span class="muted">${esc(m.id)}</span>
+          <span class="pill">No PBP telemetry (&lt;100R)</span>
+          <button id="ins-prof-btn" type="button" class="btn btn-sm">View Profile</button>
+        </div>
+        <div class="row tabnum" style="gap:14px;">
+          <span>BT MMR: <b>${fmt(m.bt_mmr, 1)}</b> (#${m.rank} / ${mmrPlayers.length})</span>
+          <span>Elo: <b>${fmt(m.elo_mmr, 1)}</b></span>
+          <span>Peak: <b>${fmt(m.peak_elo, 1)}</b></span>
+          <span>Record: <b>${m.w}–${m.l}</b> (${fmt(m.win_pct, 1)}%)</span>
+        </div>`;
+      document.getElementById("ins-prof-btn").addEventListener("click", () => openPlayerProfile(m.idx));
+    } else {
+      const p = state.pinned || pts[0];
+      ins.innerHTML = `
+        <div class="row">
+          <b style="font-size:14px;">${esc(p.name)}</b>
+          <span class="muted">${esc(p.id)} · ${ARCH_NAMES[p.arch]}</span>
+          ${p.mmr_idx >= 0 ? `<button id="ins-prof-btn" type="button" class="btn btn-sm">View Profile</button>` : ""}
+          <button id="ins-cmp-btn" type="button" class="btn btn-sm">Compare</button>
+        </div>
+        <div class="row tabnum" style="gap:12px;">
+          <span>VPM: <b>${fmt(p.vpm, 2, true)}</b> (O ${fmt(p.o_vpm, 1, true)} / D ${fmt(p.d_vpm, 1, true)})</span>
+          <span>Custom: <b class="pri">${fmt(p.custom_vpm, 2, true)}</b></span>
+          <span>V-Eff: <b>${fmt(p.v_eff, 2, true)}</b></span>
+          <span>RAPM: <b>${fmt(p.rapm, 2, true)}</b></span>
+          <span>TrueHit%: <b>${fmt(p.true_hit, 3)}</b></span>
+          <span>MMR: <b>${fmt(p.bt_mmr, 1)}</b></span>
+          <span>${p.rallies}R / ${p.touches}T</span>
+        </div>`;
+      const pBtn = document.getElementById("ins-prof-btn");
+      if (pBtn) pBtn.addEventListener("click", () => openPlayerProfile(p.mmr_idx));
+      document.getElementById("ins-cmp-btn").addEventListener("click", () => {
+        state.cmpA = p.idx;
+        if (state.cmpB === p.idx && players.length > 1) state.cmpB = p.idx === 0 ? 1 : 0;
+        cmpA.value = state.cmpA; cmpB.value = state.cmpB;
+        switchTab("compare");
+      });
+    }
+  }
+
+  function renderSandboxTable() {
+    if (!hasPbp) return;
+    recomputeSandbox();
+    const tbody = document.getElementById("sandbox-top12");
+    const titleEl = document.getElementById("sandbox-table-title");
+    const ranked = [...qualPlayers].sort((a, b) => b.custom_vpm - a.custom_vpm).map((p, idx) => ({ p, rank: idx + 1 }));
+    const q = state.search.trim().toLowerCase();
+    let list;
+    if (q) {
+      const filtered = ranked.filter(({ p }) => p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q));
+      titleEl.textContent = `Custom VPM Matches (${filtered.length} of ${ranked.length})`;
+      list = filtered.slice(0, 12);
+    } else {
+      titleEl.textContent = "Live Top 12 by Custom VPM (vs. Default Rank)";
+      list = ranked.slice(0, 12);
+    }
+    if (!list.length) {
+      tbody.innerHTML = `<tr><td colspan="5" class="left muted" style="padding:10px;">No qualified PBP players match (check search dropdown for MMR-only players).</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = list.map(({ p, rank }) => {
+      const diff = (defRankMap.get(p.name + p.id) || 0) - rank;
+      const shiftHtml = diff > 0 ? `<span class="pos">▲+${diff}</span>` : (diff < 0 ? `<span class="neg">▼${diff}</span>` : `<span class="muted">—</span>`);
+      return `<tr class="clickable" data-pidx="${p.idx}">
+        <td class="left muted">${rank}</td>
+        <td class="left" style="font-weight:500;max-width:130px;overflow:hidden;text-overflow:ellipsis;">${esc(p.name)}</td>
+        <td class="right" style="font-weight:600;">${fmt(p.custom_vpm, 2, true)}</td>
+        <td class="right">${fmt(p.custom_war, 2, true)}</td>
+        <td class="right">${shiftHtml}</td>
+      </tr>`;
+    }).join("");
+    tbody.querySelectorAll("tr").forEach(tr => tr.addEventListener("click", () => {
+      state.pinned = players[Number(tr.dataset.pidx)]; state.pinnedMmr = null; renderScatter();
+    }));
+  }
+
+  // Unified Main-Tab Player Search
+  const pbpMmrSet = new Set(players.filter(p => p.mmr_idx >= 0).map(p => p.mmr_idx));
+  const unifiedIndex = [
+    ...players.map(p => ({ kind: "pbp", name: p.name, id: p.id, pbp: p, mmr: p.mmr_idx >= 0 ? mmrPlayers[p.mmr_idx] : null })),
+    ...mmrPlayers.filter(m => !pbpMmrSet.has(m.idx)).map(m => ({ kind: "mmr", name: m.name, id: m.id, pbp: null, mmr: m }))
+  ];
+  function searchAllPlayers(query) {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    const hits = unifiedIndex.filter(it => it.name.toLowerCase().includes(q) || it.id.toLowerCase().includes(q));
+    hits.sort((a, b) => {
+      const an = a.name.toLowerCase(), bn = b.name.toLowerCase();
+      const ae = an === q ? 0 : (an.startsWith(q) ? 1 : 2), be = bn === q ? 0 : (bn.startsWith(q) ? 1 : 2);
+      if (ae !== be) return ae - be;
+      if (a.kind !== b.kind) return a.kind === "pbp" ? -1 : 1;
+      const as = a.pbp ? a.pbp.vpm : (a.mmr ? (a.mmr.bt_mmr - 1500) / 25 : -999);
+      const bs = b.pbp ? b.pbp.vpm : (b.mmr ? (b.mmr.bt_mmr - 1500) / 25 : -999);
+      return bs - as;
+    });
+    return hits;
+  }
+
+  const mainSearchInput = document.getElementById("main-player-search");
+  const mainSearchResults = document.getElementById("main-search-results");
+  const mainSearchClear = document.getElementById("main-search-clear");
+  const mainSearchStatus = document.getElementById("main-search-status");
+  const mainSearchWrap = document.getElementById("main-search-wrap");
+  mainSearchStatus.textContent = `${qualPlayers.length} PBP · ${mmrPlayers.length} MMR`;
+
+  function selectSearchResult(item) {
+    if (item.kind === "pbp" && item.pbp) {
+      state.pinned = item.pbp; state.pinnedMmr = null;
+      if (state.minRallies > item.pbp.rallies && item.pbp.rallies >= 100) {
+        state.minRallies = 100;
+        document.getElementById("min-rallies").value = 100;
+        document.getElementById("min-rallies-val").textContent = 100;
+      }
+    } else if (item.mmr) {
+      state.pinned = null; state.pinnedMmr = item.mmr;
+    }
+    mainSearchResults.classList.add("hidden");
+    renderScatter(); renderSandboxTable();
+  }
+
+  function renderSearchDropdown() {
+    const q = state.search.trim();
+    if (!q) {
+      mainSearchResults.classList.add("hidden"); mainSearchClear.classList.add("hidden");
+      mainSearchStatus.textContent = `${qualPlayers.length} PBP · ${mmrPlayers.length} MMR`;
+      return;
+    }
+    mainSearchClear.classList.remove("hidden");
+    const matches = searchAllPlayers(q);
+    mainSearchStatus.textContent = `${matches.length} match${matches.length === 1 ? "" : "es"}`;
+    if (!matches.length) {
+      mainSearchResults.innerHTML = `<div class="muted" style="padding:10px 12px;">No players match "${esc(q)}".</div>`;
+      mainSearchResults.classList.remove("hidden");
+      return;
+    }
+    const shown = matches.slice(0, 12);
+    mainSearchResults.innerHTML = shown.map((it, idx) => {
+      if (it.kind === "pbp") {
+        const p = it.pbp;
+        return `<button type="button" class="dd-item" data-ri="${idx}">
+          <span><b>${esc(p.name)}</b> <span class="muted">${esc(p.id)} · ${ARCH_NAMES[p.arch]}</span></span>
+          <span class="tabnum muted">VPM <b style="color:var(--foreground)">${fmt(p.vpm, 2, true)}</b> · V-Eff <b>${fmt(p.v_eff, 2, true)}</b> · RAPM <b>${fmt(p.rapm, 2, true)}</b> · ${p.rallies}R</span>
+        </button>`;
+      }
+      const m = it.mmr;
+      return `<button type="button" class="dd-item" data-ri="${idx}">
+        <span><b>${esc(m.name)}</b> <span class="muted">${esc(m.id)} · MMR-only</span></span>
+        <span class="tabnum muted">BT MMR <b style="color:var(--foreground)">${fmt(m.bt_mmr, 1)}</b> (#${m.rank}) · ${m.w}–${m.l} (${m.gp} GP)</span>
+      </button>`;
+    }).join("");
+    mainSearchResults.classList.remove("hidden");
+    mainSearchResults.querySelectorAll("button[data-ri]").forEach(b => b.addEventListener("click", () => selectSearchResult(shown[Number(b.dataset.ri)])));
+  }
+
+  mainSearchInput.addEventListener("input", e => { state.search = e.target.value; renderSearchDropdown(); renderScatter(); renderSandboxTable(); });
+  mainSearchInput.addEventListener("focus", () => { if (state.search.trim()) renderSearchDropdown(); });
+  mainSearchInput.addEventListener("keydown", e => {
+    if (e.key === "Enter") { const m = searchAllPlayers(state.search); if (m.length) { e.preventDefault(); selectSearchResult(m[0]); } }
+    else if (e.key === "Escape") { state.search = ""; mainSearchInput.value = ""; renderSearchDropdown(); renderScatter(); renderSandboxTable(); }
+  });
+  mainSearchClear.addEventListener("click", () => {
+    state.search = ""; mainSearchInput.value = ""; renderSearchDropdown(); renderScatter(); renderSandboxTable(); mainSearchInput.focus();
+  });
+  document.addEventListener("click", e => { if (!mainSearchWrap.contains(e.target)) mainSearchResults.classList.add("hidden"); });
+
+  ["sel-x", "sel-y", "sel-size", "sel-color"].forEach(id => {
+    document.getElementById(id).addEventListener("change", e => {
+      state[{ "sel-x": "xKey", "sel-y": "yKey", "sel-size": "sizeKey", "sel-color": "colorKey" }[id]] = e.target.value;
+      renderScatter();
+    });
+  });
+  document.getElementById("min-rallies").addEventListener("input", e => {
+    state.minRallies = Number(e.target.value);
+    document.getElementById("min-rallies-val").textContent = state.minRallies;
+    renderScatter();
+  });
+  document.querySelectorAll("[data-preset]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const presets = {
+        eff_vpm: ["v_eff", "vpm", 100], use_eff: ["usage", "v_eff", 100],
+        off_def: ["o_vpm", "d_vpm", 100], rapm_eff: ["v_eff", "rapm", 100], mvp_margin: ["box_mvp_r", "box_margin", 100]
+      };
+      const [xk, yk, mr] = presets[btn.dataset.preset];
+      state.xKey = xk; state.yKey = yk; state.minRallies = mr;
+      selX.value = xk; selY.value = yk;
+      document.getElementById("min-rallies").value = mr;
+      document.getElementById("min-rallies-val").textContent = mr;
+      renderScatter();
+    });
+  });
+  function syncSandboxLabels() {
+    const wp = Math.round(state.wEpa * 100);
+    document.getElementById("lbl-wepa").textContent = `${wp}% EPA / ${100 - wp}% RAPM`;
+    document.getElementById("lbl-m").textContent = state.mShr;
+    document.getElementById("lbl-tilt").textContent = state.tilt === 0 ? "Balanced (50/50)" : (state.tilt > 0 ? `+${state.tilt}% Offense` : `${state.tilt}% Defense`);
+  }
+  document.getElementById("sld-wepa").addEventListener("input", e => { state.wEpa = Number(e.target.value) / 100; syncSandboxLabels(); renderSandboxTable(); renderScatter(); });
+  document.getElementById("sld-m").addEventListener("input", e => { state.mShr = Number(e.target.value); syncSandboxLabels(); renderSandboxTable(); renderScatter(); });
+  document.getElementById("sld-tilt").addEventListener("input", e => { state.tilt = Number(e.target.value); syncSandboxLabels(); renderSandboxTable(); renderScatter(); });
+  document.getElementById("reset-sandbox").addEventListener("click", () => {
+    state.wEpa = SITE_DATA.meta.default_w_epa; state.mShr = SITE_DATA.meta.default_m; state.tilt = 0;
+    document.getElementById("sld-wepa").value = Math.round(state.wEpa * 100);
+    document.getElementById("sld-m").value = state.mShr;
+    document.getElementById("sld-tilt").value = 0;
+    syncSandboxLabels(); renderSandboxTable(); renderScatter();
+  });
+
+  // TAB 2: COMPARE & LEADERBOARDS
+  const cmpA = document.getElementById("cmp-a"), cmpB = document.getElementById("cmp-b");
+  players.forEach((p, i) => { cmpA.add(new Option(`${p.name} (${p.rallies}R)`, i)); cmpB.add(new Option(`${p.name} (${p.rallies}R)`, i)); });
+  cmpA.value = state.cmpA; cmpB.value = state.cmpB;
+  document.getElementById("radar-qual-lbl").textContent = `Qualified (n=${qualPlayers.length})`;
+  document.getElementById("tbl-mode-eff").textContent = `Efficiency & VPM (${players.length} PBP/Box)`;
+  document.getElementById("tbl-mode-mmr").textContent = `Global MMR (${mmrPlayers.length} Players)`;
+
+  if (hasPbp) {
+    const chipsEl = document.getElementById("quick-chips");
+    const chipIdxs = [];
+    const pushTop = arr => { const x = arr.find(q => !chipIdxs.includes(q.idx) && q.idx !== 0); if (x) chipIdxs.push(x.idx); };
+    pushTop([...qualPlayers].sort((a, b) => b.vpm - a.vpm));
+    pushTop([...qualPlayers].sort((a, b) => b.v_eff - a.v_eff));
+    pushTop([...qualPlayers].sort((a, b) => b.d_vpm - a.d_vpm));
+    pushTop([...qualPlayers].sort((a, b) => b.rapm - a.rapm));
+    pushTop([...qualPlayers].sort((a, b) => (b.bt_mmr || 0) - (a.bt_mmr || 0)));
+    pushTop([...qualPlayers].sort((a, b) => b.rallies - a.rallies));
+    chipIdxs.forEach(idx => {
+      const p = players[idx];
+      const b = document.createElement("button");
+      b.className = "btn btn-sm"; b.textContent = "vs " + p.name;
+      b.onclick = () => { state.cmpB = idx; cmpB.value = idx; renderCompare(); };
+      chipsEl.appendChild(b);
+    });
+  } else {
+    document.getElementById("compare-cards").classList.add("hidden");
+    document.getElementById("tbl-mode-eff").classList.add("hidden");
+    document.getElementById("tbl-arch-filter").classList.add("hidden");
+    document.getElementById("tbl-mode-mmr").className = "btn btn-active";
+  }
+
+  function pctRank(key, val) {
+    const vals = qualPlayers.map(p => p[key]).filter(v => v !== null && v !== undefined).sort((a, b) => a - b);
+    if (!vals.length || val === null || val === undefined) return 0.5;
+    let c = 0; for (const v of vals) if (v <= val) c++;
+    return c / vals.length;
+  }
+
+  function renderCompare() {
+    if (!hasPbp || !players.length) return;
+    const pA = players[state.cmpA], pB = players[state.cmpB];
+    const svg = document.getElementById("radar-svg");
+    svg.innerHTML = "";
+    const cx = 210, cy = 165, R = 112;
+    const axes = [
+      { key: "o_vpm", lbl: "O-VPM" }, { key: "d_vpm", lbl: "D-VPM" }, { key: "v_eff", lbl: "V-Eff" },
+      { key: "true_hit", lbl: "TrueHit%" }, { key: "true_ace", lbl: "TrueAce%" }, { key: "rapm", lbl: "RAPM" }
+    ];
+    [0.25, 0.5, 0.75, 1.0].forEach(lvl => {
+      const pts = axes.map((_, i) => {
+        const a = -Math.PI / 2 + (2 * Math.PI * i) / axes.length;
+        return `${cx + R * lvl * Math.cos(a)},${cy + R * lvl * Math.sin(a)}`;
+      }).join(" ");
+      svg.appendChild(svgEl("polygon", { points: pts, fill: "none", stroke: "var(--border)", "stroke-opacity": 0.7 }));
+    });
+    axes.forEach((ax, i) => {
+      const a = -Math.PI / 2 + (2 * Math.PI * i) / axes.length;
+      svg.appendChild(svgEl("line", { x1: cx, y1: cy, x2: cx + R * Math.cos(a), y2: cy + R * Math.sin(a), stroke: "var(--border)" }));
+      svg.appendChild(svgEl("text", { x: cx + (R + 20) * Math.cos(a), y: cy + (R + 18) * Math.sin(a) + 4, "text-anchor": "middle", fill: "var(--foreground)", "font-size": 12, "font-weight": 500 }, ax.lbl));
+    });
+    const drawPoly = (p, col, dash) => {
+      const pts = axes.map((ax, i) => {
+        const pct = Math.max(0.08, pctRank(ax.key, p[ax.key]));
+        const a = -Math.PI / 2 + (2 * Math.PI * i) / axes.length;
+        return `${cx + R * pct * Math.cos(a)},${cy + R * pct * Math.sin(a)}`;
+      }).join(" ");
+      svg.appendChild(svgEl("polygon", { points: pts, fill: col, "fill-opacity": 0.22, stroke: col, "stroke-width": 2.2, ...(dash ? { "stroke-dasharray": dash } : {}) }));
+    };
+    drawPoly(pA, "var(--chart-1)", null);
+    drawPoly(pB, "var(--chart-2)", "5,3");
+    svg.appendChild(svgEl("circle", { cx: 22, cy: 322, r: 5, fill: "var(--chart-1)" }));
+    svg.appendChild(svgEl("text", { x: 32, y: 326, fill: "var(--foreground)", "font-size": 12, "font-weight": 600 }, pA.name));
+    svg.appendChild(svgEl("circle", { cx: 220, cy: 322, r: 5, fill: "var(--chart-2)" }));
+    svg.appendChild(svgEl("text", { x: 230, y: 326, fill: "var(--foreground)", "font-size": 12, "font-weight": 600 }, pB.name));
+
+    const metrics = [
+      { lbl: "VPM (Pts/100R)", k: "vpm", d: 2, plus: true, min: -20, max: 32 },
+      { lbl: "O-VPM", k: "o_vpm", d: 2, plus: true, min: -12, max: 25 },
+      { lbl: "D-VPM", k: "d_vpm", d: 2, plus: true, min: -12, max: 14 },
+      { lbl: "V-Eff (EPA/100T)", k: "v_eff", d: 2, plus: true, min: -10, max: 8 },
+      { lbl: "Rally RAPM", k: "rapm", d: 2, plus: true, min: -18, max: 42 },
+      { lbl: "Usage (Touches/R)", k: "usage", d: 2, plus: false, min: 0.3, max: 1.1 },
+      { lbl: "True Hitting %", k: "true_hit", d: 3, plus: false, min: -0.35, max: 0.8 },
+      { lbl: "True Ace %", k: "true_ace", d: 1, plus: false, min: 0, max: 48 },
+      { lbl: "BT MMR", k: "bt_mmr", d: 1, plus: false, min: 1400, max: 1960 },
+      { lbl: "V-WAR", k: "v_war", d: 2, plus: true, min: -0.3, max: 18 }
+    ];
+    const norm = (v, mn, mx) => (v === null || v === undefined) ? 0 : Math.max(0, Math.min(100, (100 * (v - mn)) / (mx - mn)));
+    document.getElementById("cmp-bars").innerHTML = metrics.map(m => {
+      const va = pA[m.k], vb = pB[m.k];
+      return `<div>
+        <div class="between tabnum">
+          <span style="font-weight:500;">${m.lbl}</span>
+          <span><b style="color:var(--chart-1)">${fmt(va, m.d, m.plus)}</b> <span class="muted">vs</span> <b style="color:var(--chart-2)">${fmt(vb, m.d, m.plus)}</b></span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:3px;">
+          <div class="bar-track" style="display:flex;justify-content:flex-end;"><div class="bar-fill" style="width:${norm(va, m.min, m.max)}%;background:var(--chart-1);"></div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:${norm(vb, m.min, m.max)}%;background:var(--chart-2);"></div></div>
+        </div>
+      </div>`;
+    }).join("");
+  }
+
+  function renderMainTable() {
+    const thead = document.getElementById("main-tbl-head"), tbody = document.getElementById("main-tbl-body");
+    const q = state.tblSearch.trim().toLowerCase();
+    const hint = document.getElementById("tbl-hint");
+
+    if (state.tblMode === "eff" && hasPbp) {
+      hint.textContent = "Click any column header to sort. Click a row to set Player B (Shift+Click sets Player A) in the comparator above.";
+      const cols = [
+        { k: "name", lbl: "Player", left: true, tip: "Display name and last 4 SteamID digits" },
+        { k: "arch", lbl: "Archetype", left: true, tip: "Efficiency vs. Effectiveness quadrant" },
+        { k: "vpm", lbl: "VPM", tip: "Volleyball Plus-Minus: expected team pts/100 rallies (O-VPM + D-VPM)" },
+        { k: "o_vpm", lbl: "O-VPM", tip: "Offensive VPM: offensive PBP EPA + Sideout RAPM" },
+        { k: "d_vpm", lbl: "D-VPM", tip: "Defensive VPM: defensive PBP EPA + Serve RAPM" },
+        { k: "v_eff", lbl: "V-Eff", tip: "Expected Points Added (EPA) per 100 touches" },
+        { k: "true_hit", lbl: "TrueHit%", tip: "(True Kills - Direct Attack Errors) / Attack Attempts" },
+        { k: "usage", lbl: "Use", tip: "Usage rate: attributed touches per rally played" },
+        { k: "rapm", lbl: "RAPM", tip: "Regularized Adjusted Plus-Minus (pts/100 rallies)" },
+        { k: "v_war", lbl: "V-WAR", tip: "BO3-21 match Wins Above Replacement (p20 baseline)" },
+        { k: "bt_mmr", lbl: "MMR", tip: "Global Regularized Bradley-Terry MMR (mean 1500)" },
+        { k: "rallies", lbl: "Rallies", tip: "Play-by-play telemetry rallies played" }
+      ];
+      thead.innerHTML = `<tr><th class="left">#</th>` + cols.map(c =>
+        `<th class="sort ${c.left ? "left" : ""}" data-sort="${c.k}" title="${esc(c.tip)}">${c.lbl}${state.tblSort.key === c.k ? (state.tblSort.dir < 0 ? " ▼" : " ▲") : ""}</th>`
+      ).join("") + `</tr>`;
+
+      const list = players.filter(p => (state.tblArch === "all" || p.arch === Number(state.tblArch)) && (!q || p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q)));
+      const sk = state.tblSort.key, sd = state.tblSort.dir;
+      list.sort((a, b) => sk === "name" ? sd * String(a[sk]).localeCompare(String(b[sk])) : sd * ((a[sk] ?? -1e9) - (b[sk] ?? -1e9)));
+
+      tbody.innerHTML = list.map((p, i) => `
+        <tr class="clickable" data-pidx="${p.idx}">
+          <td class="left muted">${i + 1}</td>
+          <td class="left"><b>${esc(p.name)}</b> <span class="muted">${esc(p.id)}</span></td>
+          <td class="left"><span class="dot" style="background:${ARCH_COLORS[p.arch]}"></span>${ARCH_NAMES[p.arch]}</td>
+          <td class="right"><b>${fmt(p.vpm, 2, true)}</b></td>
+          <td class="right">${fmt(p.o_vpm, 2, true)}</td>
+          <td class="right">${fmt(p.d_vpm, 2, true)}</td>
+          <td class="right">${fmt(p.v_eff, 2, true)}</td>
+          <td class="right">${fmt(p.true_hit, 3)}</td>
+          <td class="right">${fmt(p.usage, 2)}</td>
+          <td class="right">${fmt(p.rapm, 2, true)}</td>
+          <td class="right">${fmt(p.v_war, 2, true)}</td>
+          <td class="right">${fmt(p.bt_mmr, 1)}</td>
+          <td class="right">${p.rallies}</td>
+        </tr>`).join("");
+      tbody.querySelectorAll("tr").forEach(tr => tr.addEventListener("click", e => {
+        const idx = Number(tr.dataset.pidx);
+        if (e.shiftKey) { state.cmpA = idx; cmpA.value = idx; } else { state.cmpB = idx; cmpB.value = idx; }
+        renderCompare();
+      }));
+    } else {
+      hint.textContent = "Click any column header to sort. Click any player row to open their full Elo trajectory and matchup profile.";
+      const cols = [
+        { k: "name", lbl: "Player", left: true, tip: "Display name and last 4 SteamID digits" },
+        { k: "bt_mmr", lbl: "BT MMR", tip: "Global Regularized Bradley-Terry MMR (removes chronological bias)" },
+        { k: "elo_mmr", lbl: "Elo MMR", tip: "Sequential Chronological Team Elo (start 1500, K=32)" },
+        { k: "peak_elo", lbl: "Peak Elo", tip: "Highest chronological Elo reached" },
+        { k: "gp", lbl: "GP", tip: "Verified online games played" },
+        { k: "w", lbl: "W", tip: "Match Wins" },
+        { k: "l", lbl: "L", tip: "Match Losses" },
+        { k: "win_pct", lbl: "Win%", tip: "Match Win Percentage" },
+        { k: "cur_streak", lbl: "Streak", tip: "Current consecutive win/loss streak" }
+      ];
+      thead.innerHTML = `<tr><th class="left">#</th>` + cols.map(c =>
+        `<th class="sort ${c.left ? "left" : ""}" data-sort="${c.k}" title="${esc(c.tip)}">${c.lbl}${state.tblSort.key === c.k ? (state.tblSort.dir < 0 ? " ▼" : " ▲") : ""}</th>`
+      ).join("") + `</tr>`;
+
+      const list = mmrPlayers.filter(p => !q || p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q));
+      const sk = (list.length && state.tblSort.key in list[0]) ? state.tblSort.key : "bt_mmr";
+      const sd = state.tblSort.dir;
+      list.sort((a, b) => sk === "name" ? sd * a.name.localeCompare(b.name) : sd * (a[sk] - b[sk]));
+
+      tbody.innerHTML = list.map((p, i) => `
+        <tr class="clickable" data-midx="${p.idx}">
+          <td class="left muted">${i + 1}</td>
+          <td class="left"><b>${esc(p.name)}</b> <span class="muted">${esc(p.id)}</span></td>
+          <td class="right"><b>${p.bt_mmr.toFixed(1)}</b></td>
+          <td class="right">${p.elo_mmr.toFixed(1)}</td>
+          <td class="right">${p.peak_elo.toFixed(1)}</td>
+          <td class="right">${p.gp}</td>
+          <td class="right">${p.w}</td>
+          <td class="right">${p.l}</td>
+          <td class="right">${p.win_pct.toFixed(1)}%</td>
+          <td class="right"><span class="${p.cur_streak > 0 ? "pos" : "neg"}">${fmtStreak(p.cur_streak)}</span></td>
+        </tr>`).join("");
+      tbody.querySelectorAll("tr").forEach(tr => tr.addEventListener("click", () => openPlayerProfile(Number(tr.dataset.midx))));
+    }
+
+    thead.querySelectorAll("th[data-sort]").forEach(th => th.addEventListener("click", () => {
+      const k = th.dataset.sort;
+      if (state.tblSort.key === k) state.tblSort.dir *= -1;
+      else { state.tblSort.key = k; state.tblSort.dir = k === "name" ? 1 : -1; }
+      renderMainTable();
+    }));
+  }
+
+  cmpA.addEventListener("change", e => { state.cmpA = Number(e.target.value); renderCompare(); });
+  cmpB.addEventListener("change", e => { state.cmpB = Number(e.target.value); renderCompare(); });
+  document.getElementById("cmp-swap").addEventListener("click", () => {
+    const tmp = state.cmpA; state.cmpA = state.cmpB; state.cmpB = tmp;
+    cmpA.value = state.cmpA; cmpB.value = state.cmpB; renderCompare();
+  });
+  document.getElementById("tbl-mode-eff").addEventListener("click", () => {
+    state.tblMode = "eff"; state.tblSort = { key: "vpm", dir: -1 };
+    document.getElementById("tbl-arch-filter").classList.remove("hidden");
+    document.getElementById("tbl-mode-eff").className = "btn btn-active";
+    document.getElementById("tbl-mode-mmr").className = "btn";
+    renderMainTable();
+  });
+  document.getElementById("tbl-mode-mmr").addEventListener("click", () => {
+    state.tblMode = "mmr"; state.tblSort = { key: "bt_mmr", dir: -1 };
+    document.getElementById("tbl-arch-filter").classList.add("hidden");
+    document.getElementById("tbl-mode-mmr").className = "btn btn-active";
+    document.getElementById("tbl-mode-eff").className = "btn";
+    renderMainTable();
+  });
+  document.getElementById("tbl-arch-filter").addEventListener("change", e => { state.tblArch = e.target.value; renderMainTable(); });
+  document.getElementById("tbl-search").addEventListener("input", e => { state.tblSearch = e.target.value; renderMainTable(); });
+
+
+  // TAB 3: UNIVERSAL PLAYER PROFILE & MATCHUPS
+  const profSelect = document.getElementById("prof-select");
+  const profFilter = document.getElementById("prof-filter");
+  function populateProfileSelect(filter = "") {
+    const q = filter.trim().toLowerCase();
+    const sorted = [...mmrPlayers].sort((a, b) => b.gp - a.gp || b.bt_mmr - a.bt_mmr);
+    const list = sorted.filter(p => !q || p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q));
+    profSelect.innerHTML = "";
+    list.forEach(p => profSelect.add(new Option(`${p.name} ${p.id} (${p.gp} GP · ${p.bt_mmr.toFixed(0)} MMR)`, p.idx)));
+    if (list.length && !list.some(p => p.idx === state.profileIdx)) {
+      state.profileIdx = list[0].idx;
+      state.profSelectedGame = Math.max(0, list[0].timeline.length - 1);
+    }
+    profSelect.value = String(state.profileIdx);
+  }
+  populateProfileSelect();
+
+  function computeMatchupsFor(mmrIdx) {
+    const pl = mmrPlayers[mmrIdx];
+    if (!pl) return [];
+    const agg = new Map();
+    const ensure = idx => {
+      if (!agg.has(idx)) {
+        const m = mmrPlayers[idx];
+        agg.set(idx, { idx, name: m.name, id: m.id, bt_mmr: m.bt_mmr, ww: 0, wl: 0, vw: 0, vl: 0 });
+      }
+      return agg.get(idx);
+    };
+    pl.timeline.forEach(g => {
+      const seenM = new Set(), seenO = new Set();
+      g.mates.forEach(x => {
+        if (x < 0 || seenM.has(x)) return; seenM.add(x);
+        const rec = ensure(x); if (g.won) rec.ww++; else rec.wl++;
+      });
+      g.opps.forEach(x => {
+        if (x < 0 || seenO.has(x)) return; seenO.add(x);
+        const rec = ensure(x);
+        // "With" / "Vs" is opponent's W/L when playing vs selected player
+        if (g.won) rec.vl++; else rec.vw++;
+      });
+    });
+    return [...agg.values()].map(d => ({ ...d, withTot: d.ww + d.wl, vsTot: d.vw + d.vl, shared: d.ww + d.wl + d.vw + d.vl }));
+  }
+
+  function formatPlayerList(idxs) {
+    return idxs.map(x => x < 0 ? "[CPU]" : mmrPlayers[x].name).join(", ") || "—";
+  }
+
+  function renderProfile() {
+    const pl = mmrPlayers[state.profileIdx];
+    if (!pl) return;
+    const pbp = pbpByMmrIdx.get(pl.idx);
+
+    const cmpBtn = document.getElementById("prof-compare-btn");
+    if (hasPbp && pbp) {
+      cmpBtn.classList.remove("hidden");
+      cmpBtn.onclick = () => {
+        state.cmpA = pbp.idx;
+        if (state.cmpB === pbp.idx && players.length > 1) state.cmpB = pbp.idx === 0 ? 1 : 0;
+        cmpA.value = state.cmpA; cmpB.value = state.cmpB;
+        switchTab("compare");
+      };
+    } else {
+      cmpBtn.classList.add("hidden");
+    }
+
+    const cards = [
+      { lbl: "Global BT MMR", val: pl.bt_mmr.toFixed(1), sub: `Rank #${pl.rank} / ${mmrPlayers.length}` },
+      { lbl: "Chronological Elo", val: pl.elo_mmr.toFixed(1), sub: `Peak ${pl.peak_elo.toFixed(1)} · Low ${pl.low_elo.toFixed(1)}` },
+      { lbl: "Match Record", val: `${pl.w}–${pl.l} (${pl.win_pct.toFixed(1)}%)`, sub: `${pl.gp} online matches` },
+      { lbl: "Streaks", val: fmtStreak(pl.cur_streak), sub: `Best win streak: ${pl.longest_win}W` },
+      pbp && pbp.qualified
+        ? { lbl: "Impact (VPM / RAPM)", val: `${fmt(pbp.vpm, 2, true)}`, sub: `RAPM ${fmt(pbp.rapm, 2, true)} · ${pbp.rallies}R` }
+        : { lbl: "PBP Efficiency", val: pbp ? `${pbp.rallies}R` : "N/A", sub: pbp ? "Unqualified (<100R)" : "No PBP telemetry" },
+      pbp && pbp.qualified
+        ? { lbl: "Efficiency (V-Eff)", val: `${fmt(pbp.v_eff, 2, true)}`, sub: `Use ${fmt(pbp.usage, 2)} · Hit ${fmt(pbp.true_hit, 3)}` }
+        : { lbl: "Wins Above Repl", val: "—", sub: "Needs >=100 PBP rallies" }
+    ];
+    document.getElementById("prof-summary").innerHTML = cards.map(c => `
+      <div class="subcard">
+        <div class="muted">${esc(c.lbl)}</div>
+        <div class="kpi-val tabnum">${esc(c.val)}</div>
+        <div class="muted tabnum">${esc(c.sub)}</div>
+      </div>`).join("");
+
+    const tl = pl.timeline;
+    const span = tl.length ? `${tl[0].ts.slice(0, 10)} to ${tl[tl.length - 1].ts.slice(0, 10)}` : "";
+    document.getElementById("prof-traj-sub").textContent = `${pl.name} (${pl.id}): ${tl.length} chronological matches (${span}). Hover or click any node to inspect.`;
+
+    // Elo SVG
+    const svg = document.getElementById("elo-svg");
+    svg.innerHTML = "";
+    const W = 960, H = 320, pad = { l: 58, r: 58, t: 26, b: 40 };
+    const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+    const elos = tl.map(g => g.elo).concat([1500]);
+    const eMin = Math.floor((Math.min(...elos) - 25) / 25) * 25;
+    const eMax = Math.ceil((Math.max(...elos) + 25) / 25) * 25;
+    const sx = gno => tl.length <= 1 ? (pad.l + pw / 2) : pad.l + ((gno - 1) / (tl.length - 1)) * pw;
+    const sy = e => pad.t + ph - ((e - eMin) / Math.max(1, eMax - eMin)) * ph;
+
+    for (let i = 0; i <= 4; i++) {
+      const ev = eMin + (i / 4) * (eMax - eMin), y = sy(ev);
+      svg.appendChild(svgEl("line", { x1: pad.l, y1: y, x2: pad.l + pw, y2: y, stroke: "var(--border)", "stroke-opacity": 0.5, "stroke-dasharray": "2,3" }));
+      svg.appendChild(svgEl("text", { x: pad.l - 8, y: y + 4, "text-anchor": "end", fill: "var(--muted-foreground)", "font-size": 12 }, Math.round(ev)));
+    }
+    svg.appendChild(svgEl("line", { x1: pad.l, y1: sy(1500), x2: pad.l + pw, y2: sy(1500), stroke: "var(--muted-foreground)", "stroke-dasharray": "4,4", "stroke-opacity": 0.6 }));
+
+    const stepX = Math.max(1, Math.ceil(tl.length / 8));
+    tl.forEach((g, idx) => {
+      if (idx === 0 || idx === tl.length - 1 || (idx + 1) % stepX === 0) {
+        svg.appendChild(svgEl("text", { x: sx(g.gno), y: H - 14, "text-anchor": "middle", fill: "var(--muted-foreground)", "font-size": 12 }, "#" + g.gno));
+      }
+    });
+
+    if (state.rollingWin && tl.length >= 2) {
+      const syP = p => pad.t + ph - p * ph;
+      [0.25, 0.5, 0.75, 1.0].forEach(p => svg.appendChild(svgEl("text", { x: W - pad.r + 8, y: syP(p) + 4, fill: "var(--chart-2)", "font-size": 12 }, Math.round(p * 100) + "%")));
+      let dR = "";
+      tl.forEach((g, i) => {
+        const sl = tl.slice(Math.max(0, i - 9), i + 1);
+        const wp = sl.reduce((s, x) => s + (x.won ? 1 : 0), 0) / sl.length;
+        dR += (i === 0 ? "M" : "L") + `${sx(g.gno).toFixed(1)},${syP(wp).toFixed(1)}`;
+      });
+      svg.appendChild(svgEl("path", { d: dR, fill: "none", stroke: "var(--chart-2)", "stroke-width": 1.8, "stroke-opacity": 0.75, "stroke-dasharray": "5,3" }));
+    }
+
+    if (tl.length >= 2) {
+      let dL = "", dA = "";
+      tl.forEach((g, i) => {
+        const x = sx(g.gno).toFixed(1), y = sy(g.elo).toFixed(1);
+        dL += (i === 0 ? "M" : "L") + `${x},${y}`;
+        dA += (i === 0 ? `M${x},${sy(eMin).toFixed(1)} L${x},${y}` : ` L${x},${y}`);
+      });
+      dA += ` L${sx(tl.length).toFixed(1)},${sy(eMin).toFixed(1)} Z`;
+      svg.appendChild(svgEl("path", { d: dA, fill: "var(--chart-1)", "fill-opacity": 0.14 }));
+      svg.appendChild(svgEl("path", { d: dL, fill: "none", stroke: "var(--chart-1)", "stroke-width": 2.4 }));
+    }
+
+    const selIdx = Math.min(state.profSelectedGame, Math.max(0, tl.length - 1));
+    let peakG = tl[0], lowG = tl[0];
+    tl.forEach((g, i) => {
+      if (g.elo > peakG.elo) peakG = g;
+      if (g.elo < lowG.elo) lowG = g;
+      const isSel = i === selIdx;
+      const c = svgEl("circle", {
+        cx: sx(g.gno), cy: sy(g.elo), r: isSel ? 6.5 : 4,
+        fill: g.won ? "var(--success)" : "var(--error)",
+        stroke: isSel ? "var(--foreground)" : "var(--background)",
+        "stroke-width": isSel ? 2 : 1, style: "cursor:pointer;"
+      });
+      const pick = () => { state.profSelectedGame = i; renderProfile(); };
+      c.addEventListener("mouseenter", pick); c.addEventListener("click", pick);
+      svg.appendChild(c);
+    });
+
+    if (tl.length > 1) {
+      svg.appendChild(svgEl("text", { x: sx(peakG.gno), y: Math.max(pad.t + 12, sy(peakG.elo) - 10), "text-anchor": peakG.gno > tl.length * 0.8 ? "end" : "middle", fill: "var(--success)", "font-size": 12, "font-weight": 600 }, `Peak ${peakG.elo.toFixed(1)} (#${peakG.gno})`));
+      if (lowG.gno !== peakG.gno) svg.appendChild(svgEl("text", { x: sx(lowG.gno), y: Math.min(H - 22, sy(lowG.elo) + 18), "text-anchor": "middle", fill: "var(--error)", "font-size": 12, "font-weight": 600 }, `Low ${lowG.elo.toFixed(1)} (#${lowG.gno})`));
+    }
+
+    const gm = tl[selIdx];
+    document.getElementById("match-inspector").innerHTML = gm ? `
+      <div class="between" style="margin-bottom:6px;">
+        <b>Game #${gm.gno} · ${esc(gm.ts)} · ${esc(gm.mode)} (${esc(gm.stage)})</b>
+        <span class="mono tabnum ${gm.won ? "pos" : "neg"}" style="font-weight:700;">
+          ${gm.won ? "WIN" : "LOSS"} ${esc(gm.setsStr)} · Elo ${gm.elo.toFixed(1)} (${gm.delta >= 0 ? "+" : ""}${gm.delta.toFixed(1)})
+        </span>
+      </div>
+      <div class="grid-2 muted">
+        <div><b style="color:var(--foreground);">Teammates:</b> ${esc(formatPlayerList(gm.mates))}</div>
+        <div><b style="color:var(--foreground);">Opponents:</b> ${esc(formatPlayerList(gm.opps))}</div>
+      </div>` : `<span class="muted">No matches recorded.</span>`;
+
+    // Match Log table
+    document.getElementById("prof-match-log").innerHTML = [...tl].reverse().map(g => `
+      <tr class="clickable" data-gi="${g.gno - 1}" style="${g.gno - 1 === selIdx ? "background:var(--card-alt);" : ""}">
+        <td class="left muted">${g.gno}</td>
+        <td class="left">${esc(g.ts.slice(5))}</td>
+        <td class="left">${esc(g.mode)} ${esc(g.stage)}</td>
+        <td class="right"><b class="${g.won ? "pos" : "neg"}">${g.won ? "W" : "L"}</b></td>
+        <td class="right">${esc(g.setsStr)}</td>
+        <td class="right">${g.elo.toFixed(1)}</td>
+      </tr>`).join("");
+    document.querySelectorAll("#prof-match-log tr").forEach(tr => tr.addEventListener("click", () => {
+      state.profSelectedGame = Number(tr.dataset.gi); renderProfile();
+    }));
+
+    // Matchups SVG
+    document.getElementById("matchups-title").textContent = `Shared Games with ${pl.name}`;
+    const mSvg = document.getElementById("matchups-svg");
+    mSvg.innerHTML = "";
+    let mList = computeMatchupsFor(pl.idx).filter(d => d.shared >= state.minShared);
+    mList.sort((a, b) => state.matchupSort === "with" ? (b.withTot - a.withTot || b.shared - a.shared) : state.matchupSort === "vs" ? (b.vsTot - a.vsTot || b.shared - a.shared) : (b.shared - a.shared || b.bt_mmr - a.bt_mmr));
+    mList = mList.slice(0, 14);
+    if (!mList.length) {
+      mSvg.appendChild(svgEl("text", { x: 320, y: 195, "text-anchor": "middle", fill: "var(--muted-foreground)", "font-size": 13 }, `No players with >= ${state.minShared} shared games.`));
+      return;
+    }
+
+    const rowH = 24, mH = 44 + mList.length * rowH + 14;
+    mSvg.setAttribute("viewBox", `0 0 640 ${mH}`);
+    const cx0 = 380, maxHalf = 115, maxTot = Math.max(...mList.map(d => Math.max(d.withTot, d.vsTot)), 1);
+    const sc = v => (v / maxTot) * maxHalf;
+    mSvg.appendChild(svgEl("text", { x: cx0 - 12, y: 20, "text-anchor": "end", fill: "var(--foreground)", "font-size": 12, "font-weight": 600 }, "← As Teammate (W/L)"));
+    mSvg.appendChild(svgEl("text", { x: cx0 + 12, y: 20, "text-anchor": "start", fill: "var(--foreground)", "font-size": 12, "font-weight": 600 }, "As Opponent (W/L) →"));
+    mSvg.appendChild(svgEl("line", { x1: cx0, y1: 30, x2: cx0, y2: mH - 12, stroke: "var(--muted-foreground)", "stroke-dasharray": "3,3" }));
+
+    mList.forEach((d, i) => {
+      const y = 38 + i * rowH;
+      const nmEl = svgEl("text", { x: 165, y: y + 14, "text-anchor": "end", fill: "var(--link)", "font-size": 12, "font-weight": 500, style: "cursor:pointer;" }, `${d.name.slice(0, 16)} (${d.bt_mmr.toFixed(0)})`);
+      nmEl.addEventListener("click", () => openPlayerProfile(d.idx));
+      mSvg.appendChild(nmEl);
+
+      const wwW = sc(d.ww), wlW = sc(d.wl), vwW = sc(d.vw), vlW = sc(d.vl);
+      if (wwW) mSvg.appendChild(svgEl("rect", { x: cx0 - 6 - wwW, y: y + 3, width: wwW, height: 14, fill: "var(--success)", rx: 2 }));
+      if (wlW) mSvg.appendChild(svgEl("rect", { x: cx0 - 6 - wwW - wlW, y: y + 3, width: wlW, height: 14, fill: "var(--error)", rx: 2 }));
+      if (d.withTot) mSvg.appendChild(svgEl("text", { x: cx0 - 12 - wwW - wlW, y: y + 14, "text-anchor": "end", fill: "var(--muted-foreground)", "font-size": 12 }, `${d.ww}-${d.wl}`));
+
+      if (vwW) mSvg.appendChild(svgEl("rect", { x: cx0 + 6, y: y + 3, width: vwW, height: 14, fill: "var(--success)", rx: 2 }));
+      if (vlW) mSvg.appendChild(svgEl("rect", { x: cx0 + 6 + vwW, y: y + 3, width: vlW, height: 14, fill: "var(--error)", rx: 2 }));
+      if (d.vsTot) mSvg.appendChild(svgEl("text", { x: cx0 + 12 + vwW + vlW, y: y + 14, fill: "var(--muted-foreground)", "font-size": 12 }, `${d.vw}-${d.vl}`));
+    });
+  }
+
+  profFilter.addEventListener("input", e => { populateProfileSelect(e.target.value); renderProfile(); });
+  profSelect.addEventListener("change", e => openPlayerProfile(Number(e.target.value)));
+  document.getElementById("chk-rolling").addEventListener("change", e => { state.rollingWin = e.target.checked; renderProfile(); });
+  document.getElementById("min-shared").addEventListener("input", e => {
+    state.minShared = Number(e.target.value);
+    document.getElementById("min-shared-val").textContent = state.minShared;
+    renderProfile();
+  });
+  document.getElementById("matchup-sort").addEventListener("change", e => { state.matchupSort = e.target.value; renderProfile(); });
+
+  // TAB 4: MODEL & TELEMETRY
+  function renderEngine() {
+    if (!hasPbp) return;
+    const m = SITE_DATA.meta;
+    document.getElementById("bpm-sub").textContent = `Scaled to pts = +3.0 across ${m.box_matches} box-score matches (LOO-CV R² = ${m.bpm_r2 ?? "—"}). Passive volume touches turn negative once points are controlled.`;
+    document.getElementById("cv-sub").textContent = `Out-of-sample rally log-loss (lower is better) and Spearman-Brown split-half reliability across ${m.pbp_qualified} qualified players.`;
+
+    const svg = document.getElementById("kinds-svg");
+    svg.innerHTML = "";
+    const kinds = SITE_DATA.markov_kinds;
+    const valFn = k => state.kindMetric === "epa" ? k[2] : (state.kindMetric === "v_all" ? 100 * k[3] : (state.kindMetric === "v_nt" ? 100 * k[4] : k[1]));
+    const vals = kinds.map(valFn);
+    const minV = state.kindMetric === "epa" ? Math.min(...vals, 0) : 0, maxV = Math.max(...vals, 1);
+    const sx0 = 100 + ((0 - minV) / (maxV - minV)) * 390;
+    const sc = v => 100 + ((v - minV) / (maxV - minV)) * 390;
+    svg.appendChild(svgEl("line", { x1: sx0, y1: 18, x2: sx0, y2: 316, stroke: "var(--muted-foreground)", "stroke-dasharray": "3,3" }));
+    kinds.forEach((k, i) => {
+      const v = valFn(k), y = 24 + i * 26, sel = k[0] === state.selectedKind;
+      const xStart = Math.min(sx0, sc(v)), bw = Math.max(2, Math.abs(sc(v) - sx0));
+      const rect = svgEl("rect", { x: xStart, y: y + 2, width: bw, height: 18, rx: 3, fill: state.kindMetric === "epa" ? (v >= 0 ? "var(--success)" : "var(--error)") : "var(--chart-1)", "fill-opacity": sel ? 1 : 0.72, stroke: sel ? "var(--foreground)" : "none", "stroke-width": sel ? 1.5 : 0, style: "cursor:pointer;" });
+      const lbl = svgEl("text", { x: 92, y: y + 15, "text-anchor": "end", fill: "var(--foreground)", "font-size": 12, "font-weight": sel ? 700 : 400, style: "cursor:pointer;" }, k[0]);
+      const pick = () => { state.selectedKind = k[0]; renderEngine(); };
+      rect.addEventListener("click", pick); lbl.addEventListener("click", pick);
+      svg.appendChild(rect); svg.appendChild(lbl);
+      const txtVal = state.kindMetric === "count" ? `${k[1]}` : (state.kindMetric === "epa" ? `${v >= 0 ? "+" : ""}${v.toFixed(2)}` : `${v.toFixed(1)}%`);
+      svg.appendChild(svgEl("text", { x: v >= 0 ? xStart + bw + 6 : xStart - 6, y: y + 15, "text-anchor": v >= 0 ? "start" : "end", fill: "var(--muted-foreground)", "font-size": 12 }, txtVal));
+    });
+
+    document.getElementById("substate-title").textContent = "Sub-States: " + state.selectedKind;
+    const rows = SITE_DATA.markov_states.filter(s => s[0] === state.selectedKind).sort((a, b) => a[1] - b[1] || a[2].localeCompare(b[2]));
+    document.getElementById("substate-body").innerHTML = rows.map(s => `
+      <tr>
+        <td class="left">T${s[1]}</td><td class="left muted">${esc(s[2])}</td>
+        <td class="right">${s[3]}</td>
+        <td class="right">${(100 * s[4]).toFixed(1)}%</td>
+        <td class="right pri"><b>${s[6] !== null ? (100 * s[6]).toFixed(1) + "%" : "—"}</b></td>
+        <td class="right">${(100 * s[7]).toFixed(1)}%</td>
+      </tr>`).join("");
+
+    // BPM Weights
+    const bpmSvg = document.getElementById("bpm-svg");
+    bpmSvg.innerHTML = "";
+    const bpm = SITE_DATA.bpm_weights;
+    if (bpm.length) {
+      const zeroX = 180, scB = v => zeroX + (v + 3.5) / 7.5 * 300 - (3.5 / 7.5 * 300);
+      bpmSvg.appendChild(svgEl("line", { x1: zeroX, y1: 24, x2: zeroX, y2: 266, stroke: "var(--muted-foreground)", "stroke-dasharray": "3,3" }));
+      bpm.forEach((b, i) => {
+        const y = 32 + i * 29;
+        bpmSvg.appendChild(svgEl("text", { x: 64, y: y + 15, "text-anchor": "end", fill: "var(--foreground)", "font-size": 12, "font-weight": 600 }, b[0]));
+        const ox = Math.min(zeroX, scB(b[1])), ow = Math.max(2, Math.abs(scB(b[1]) - zeroX));
+        const ex = Math.min(zeroX, scB(b[2])), ew = Math.max(2, Math.abs(scB(b[2]) - zeroX));
+        bpmSvg.appendChild(svgEl("rect", { x: ox, y: y + 2, width: ow, height: 9, fill: "var(--chart-3)", rx: 2 }));
+        bpmSvg.appendChild(svgEl("rect", { x: ex, y: y + 13, width: ew, height: 9, fill: b[2] >= 0 ? "var(--chart-1)" : "var(--error)", rx: 2 }));
+        bpmSvg.appendChild(svgEl("text", { x: Math.max(ox + ow, ex + ew) + 6, y: y + 16, fill: "var(--muted-foreground)", "font-size": 12 }, `Off ${b[1].toFixed(1)} / Emp ${b[2] >= 0 ? "+" : ""}${b[2].toFixed(2)}`));
+      });
+      bpmSvg.appendChild(svgEl("rect", { x: 180, y: 276, width: 12, height: 8, fill: "var(--chart-3)" }));
+      bpmSvg.appendChild(svgEl("text", { x: 196, y: 284, fill: "var(--foreground)", "font-size": 12 }, "In-Game MVP"));
+      bpmSvg.appendChild(svgEl("rect", { x: 295, y: 276, width: 12, height: 8, fill: "var(--chart-1)" }));
+      bpmSvg.appendChild(svgEl("text", { x: 311, y: 284, fill: "var(--foreground)", "font-size": 12 }, "Empirical LOO-CV BPM"));
+    }
+
+    // CV Chart
+    const cvSvg = document.getElementById("cv-svg");
+    cvSvg.innerHTML = "";
+    SITE_DATA.cv_bench.forEach((c, i) => {
+      const y = 16 + i * 26, w = ((0.692 - c[2]) / 0.018) * 230;
+      const last = i === SITE_DATA.cv_bench.length - 1;
+      cvSvg.appendChild(svgEl("text", { x: 175, y: y + 14, "text-anchor": "end", fill: "var(--foreground)", "font-size": 12, "font-weight": last ? 700 : 400 }, c[0]));
+      cvSvg.appendChild(svgEl("rect", { x: 182, y: y + 2, width: Math.max(8, w), height: 15, rx: 3, fill: last ? "var(--success)" : "var(--chart-1)" }));
+      cvSvg.appendChild(svgEl("text", { x: 188 + Math.max(8, w), y: y + 14, fill: "var(--muted-foreground)", "font-size": 12 }, `${c[2].toFixed(5)} · AUC ${c[4].toFixed(3)}`));
+    });
+
+    // Reliability Chart
+    const relSvg = document.getElementById("rel-svg");
+    relSvg.innerHTML = "";
+    SITE_DATA.reliability.forEach((r, i) => {
+      const y = 14 + i * 21;
+      relSvg.appendChild(svgEl("text", { x: 185, y: y + 13, "text-anchor": "end", fill: "var(--foreground)", "font-size": 12 }, r[0]));
+      relSvg.appendChild(svgEl("rect", { x: 192, y: y + 3, width: Math.max(4, r[2] * 240), height: 11, rx: 2, fill: r[2] >= 0.6 ? "var(--success)" : "var(--chart-3)" }));
+      relSvg.appendChild(svgEl("text", { x: 198 + Math.max(4, r[2] * 240), y: y + 13, fill: "var(--muted-foreground)", "font-size": 12 }, `SB ${r[2].toFixed(2)} (r=${r[1].toFixed(2)})`));
+    });
+  }
+  document.getElementById("kind-metric").addEventListener("change", e => { state.kindMetric = e.target.value; renderEngine(); });
+
+  // Glossary Modal (100% player-agnostic)
+  const GLOSSARY_GROUPS = [
+    {
+      title: "Core Composite & Efficiency Metrics",
+      items: [
+        ["VPM", "Volleyball Plus-Minus", "Flagship overall effectiveness rating (team-equivalent expected point margin per 100 rallies above average): 75% calibrated PBP EPA/100R + 25% Rally RAPM."],
+        ["O-VPM / D-VPM", "Offensive & Defensive VPM", "Additive split of VPM (O-VPM + D-VPM = VPM) combining offensive PBP EPA + Sideout RAPM vs. defensive PBP EPA + Serve RAPM."],
+        ["V-Eff", "Volleyball Touch Efficiency", "Play-by-play Markov Expected Points Added per 100 Touches (EPA/100T). Measures per-touch execution quality independent of touch volume."],
+        ["EPA", "Expected Points Added", "Zero-sum change in rally win probability caused by a contact: V(after) - V(before). Positive EPA increases your team's rally win odds."],
+        ["Usage (Use)", "Touch Share per Rally", "Attributed contacts divided by rallies played."],
+        ["V-WAR", "Volleyball Wins Above Replacement", "Cumulative Best-of-3 (21-pt) match wins contributed above replacement level (p20 of qualified humans), scaled by 1/team_size slot exposure."]
+      ]
+    },
+    {
+      title: "Lineup Impact & Matchmaking Ratings",
+      items: [
+        ["RAPM", "Regularized Adjusted Plus-Minus", "Ridge regression (alpha = 40) predicting rally outcomes from on-court lineups, controlling for teammates, opponents, CPU fills, and serving team."],
+        ["Serve / Sideout RAPM", "Phase-Split RAPM", "Serve RAPM measures breakpoint impact when your team serves; Sideout RAPM measures receive/offense impact when returning serve."],
+        ["BT MMR", "Global Bradley-Terry MMR", "L2-regularized logistic skill rating fitted across all verified matches simultaneously, scaled to Elo units and centered at 1500 (no match-order bias)."],
+        ["Elo MMR", "Chronological Team Elo", "Sequential match-by-match rating (start 1500, K = 32) updated from mean team Elo after each game."]
+      ]
+    },
+    {
+      title: "Volleyball Splits & Validation",
+      items: [
+        ["TrueHit%", "True Hitting Percentage", "(True Kills - Direct Attack Errors) / Attack Attempts across spikes, tips, and dumps, including kills forced off a failed defensive touch."],
+        ["TrueAce% / ServeErr%", "Serve Splits", "TrueAce% counts direct aces plus serves forcing a failed receive/shank; ServeErr% is direct serve fault rate."],
+        ["Shank%", "Shank Rate", "Percentage of defensive/receive touches classified as a shank."],
+        ["Empirical BPM", "LOO-CV Box Plus-Minus", "Match point-margin weights learned via Leave-One-Out Ridge regression across box-score matches, compared against the game's hardcoded MVP weights."],
+        ["V_all / V_nt", "Markov State Values", "V_all = overall empirical win probability after a state; V_nt = win probability conditioned on the rally continuing (used in EPA to prevent mixture bias)."],
+        ["SB", "Spearman-Brown Reliability", "Full-sample reliability estimate 2r / (1 + r) from odd/even rally split-half correlation r."]
+      ]
+    }
+  ];
+
+  const glossaryModal = document.getElementById("glossary-modal"), glossarySearch = document.getElementById("glossary-search");
+  function renderGlossary(filter = "") {
+    const q = filter.trim().toLowerCase();
+    const html = GLOSSARY_GROUPS.map(g => {
+      const hits = g.items.filter(([c, n, d]) => !q || c.toLowerCase().includes(q) || n.toLowerCase().includes(q) || d.toLowerCase().includes(q));
+      if (!hits.length) return "";
+      return `<div><h3>${esc(g.title)}</h3><div class="grid-2">${hits.map(([c, n, d]) => `
+        <div class="subcard">
+          <div class="between" style="margin-bottom:4px;"><b class="mono pri">${esc(c)}</b><span class="muted">${esc(n)}</span></div>
+          <p>${esc(d)}</p>
+        </div>`).join("")}</div></div>`;
+    }).join("");
+    document.getElementById("glossary-body").innerHTML = html || `<p class="muted">No glossary entries match "${esc(filter)}".</p>`;
+  }
+  document.getElementById("open-glossary").addEventListener("click", () => { glossaryModal.classList.remove("hidden"); renderGlossary(glossarySearch.value); glossarySearch.focus(); });
+  document.getElementById("close-glossary").addEventListener("click", () => glossaryModal.classList.add("hidden"));
+  glossaryModal.addEventListener("click", e => { if (e.target === glossaryModal) glossaryModal.classList.add("hidden"); });
+  glossarySearch.addEventListener("input", e => renderGlossary(e.target.value));
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !glossaryModal.classList.contains("hidden")) glossaryModal.classList.add("hidden"); });
+
+  function renderActiveTab() {
+    if (state.tab === "scatter") { renderScatter(); renderSandboxTable(); }
+    else if (state.tab === "compare") { renderCompare(); renderMainTable(); }
+    else if (state.tab === "profile") { renderProfile(); }
+    else if (state.tab === "engine") { renderEngine(); }
+  }
+
+  // Graceful MMR-only mode if dataset has no PBP telemetry
+  if (!hasPbp) {
+    document.querySelector('[data-tab="scatter"]').classList.add("hidden");
+    document.querySelector('[data-tab="engine"]').classList.add("hidden");
+  }
+
+  initHeader();
+  recomputeSandbox();
+  syncSandboxLabels();
+  switchTab(state.tab);
+
+  </script>
+</body>
+</html>

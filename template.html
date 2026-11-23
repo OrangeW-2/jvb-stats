@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Just Volleyball — Efficiency &amp; MMR Lab</title>
+  <style>
+    :root {
+      --background: #0b0f17;
+      --card: #121826;
+      --card-alt: #0f1522;
+      --foreground: #e6edf7;
+      --muted-foreground: #94a3b8;
+      --border: #253047;
+      --primary: #38bdf8;
+      --primary-foreground: #07131d;
+      --success: #34d399;
+      --error: #f87171;
+      --warning: #fbbf24;
+      --chart-1: #38bdf8;
+      --chart-2: #a78bfa;
+      --chart-3: #fbbf24;
+      --chart-5: #fb7185;
+      --link: #60a5fa;
+      --placeholder: #64748b;
+    }
+    [data-theme="light"] {
+      --background: #f4f7fb;
+      --card: #ffffff;
+      --card-alt: #f8fafc;
+      --foreground: #0f172a;
+      --muted-foreground: #475569;
+      --border: #cbd5e1;
+      --primary: #0284c7;
+      --primary-foreground: #ffffff;
+      --success: #059669;
+      --error: #dc2626;
+      --warning: #d97706;
+      --chart-1: #0284c7;
+      --chart-2: #7c3aed;
+      --chart-3: #d97706;
+      --chart-5: #e11d48;
+      --link: #0369a1;
+      --placeholder: #94a3b8;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 16px;
+      background: var(--background);
+      color: var(--foreground);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 13px;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+    }
+    @media (min-width: 768px) { body { padding: 24px; } }
+    .wrap { max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+    .subcard { background: var(--card-alt); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+    .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .between { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+    .grid-2 { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .grid-6 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .grid-12 { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    @media (min-width: 640px) { .grid-4 { grid-template-columns: repeat(4, 1fr); } .grid-6 { grid-template-columns: repeat(3, 1fr); } }
+    @media (min-width: 1024px) {
+      .grid-2 { grid-template-columns: 1fr 1fr; }
+      .grid-6 { grid-template-columns: repeat(6, 1fr); }
+      .grid-12 { grid-template-columns: repeat(12, 1fr); }
+      .col-5 { grid-column: span 5; }
+      .col-7 { grid-column: span 7; }
+      .col-4 { grid-column: span 4; }
+      .col-8 { grid-column: span 8; }
+    }
+    h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+    h2 { margin: 0; font-size: 16px; font-weight: 600; }
+    h3 { margin: 0 0 8px 0; font-size: 14px; font-weight: 600; }
+    p { margin: 0; }
+    .muted { color: var(--muted-foreground); font-size: 12px; }
+    .tabnum { font-variant-numeric: tabular-nums; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .btn {
+      background: var(--background); color: var(--foreground); border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px 11px; font-size: 12px; font-weight: 500; cursor: pointer;
+    }
+    .btn:hover { border-color: var(--primary); }
+    .btn-sm { padding: 4px 8px; border-radius: 6px; font-size: 12px; }
+    .btn-active, .tab-btn[aria-selected="true"] {
+      background: var(--primary); color: var(--primary-foreground); border-color: var(--primary);
+    }
+    .kpi { cursor: pointer; transition: border-color 0.15s; }
+    .kpi:hover { border-color: var(--primary); }
+    .kpi-val { font-size: 15px; font-weight: 700; margin-top: 2px; }
+    input[type="text"], select {
+      background: var(--background); color: var(--foreground); border: 1px solid var(--border);
+      border-radius: 6px; padding: 5px 9px; font-size: 12px; outline: none;
+    }
+    input[type="text"]::placeholder { color: var(--placeholder); }
+    input[type="text"]:focus, select:focus { border-color: var(--primary); }
+    input[type="range"] { accent-color: var(--primary); cursor: pointer; }
+    .hidden { display: none !important; }
+    .rel { position: relative; }
+    .dropdown {
+      position: absolute; left: 0; right: 0; top: 100%; margin-top: 4px; z-index: 40;
+      background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.35); max-height: 290px; overflow-y: auto;
+    }
+    .dd-item {
+      width: 100%; text-align: left; background: transparent; color: var(--foreground);
+      border: none; border-bottom: 1px solid var(--border); padding: 8px 12px; font-size: 12px;
+      cursor: pointer; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px;
+    }
+    .dd-item:last-child { border-bottom: none; }
+    .dd-item:hover { background: var(--card-alt); }
+    .clear-btn {
+      position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+      background: transparent; border: none; color: var(--muted-foreground); font-size: 12px; cursor: pointer;
+    }
+    .clear-btn:hover { color: var(--foreground); }
+    svg.chart { width: 100%; height: auto; display: block; background: var(--card-alt); border: 1px solid var(--border); border-radius: 8px; }
+    svg text { user-select: none; }
+    .tbl-wrap { border: 1px solid var(--border); border-radius: 8px; overflow: auto; max-height: 480px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { padding: 7px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    thead th {
+      position: sticky; top: 0; background: var(--card); color: var(--muted-foreground);
+      font-weight: 600; text-align: right; z-index: 5;
+    }
+    thead th.left, td.left { text-align: left; }
+    td.right { text-align: right; }
+    th.sort { cursor: pointer; }
+    th.sort:hover { color: var(--primary); }
+    tbody tr.clickable { cursor: pointer; }
+    tbody tr.clickable:hover { background: var(--card-alt); }
+    .tooltip {
+      position: fixed; z-index: 60; pointer-events: none; max-width: 260px; font-size: 12px;
+      background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+      padding: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    }
+    .modal-bg {
+      position: fixed; inset: 0; z-index: 70; background: rgba(0,0,0,0.55);
+      display: flex; align-items: center; justify-content: center; padding: 16px;
+    }
+    .modal-box {
+      background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+      max-width: 860px; width: 100%; max-height: 85vh; display: flex; flex-direction: column;
+    }
+    .bar-track { background: var(--background); border-radius: 4px; height: 8px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 4px; }
+    .pill { display: inline-block; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--border); background: var(--background); font-size: 12px; color: var(--muted-foreground); }
+    .pos { color: var(--success); }
+    .neg { color: var(--error); }
+    .pri { color: var(--primary); }
+    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="card" style="display:flex;flex-direction:column;gap:14px;">
+      <div class="between">
+        <div>
+          <h1>Just Volleyball — Efficiency &amp; MMR Lab</h1>
+          <p id="hdr-sub" class="muted" style="font-size:13px;margin-top:4px;"></p>
+        </div>
+        <nav class="row" role="tablist" aria-label="Dashboard sections">
+          <button class="btn tab-btn" role="tab" aria-selected="true" data-tab="scatter">Landscape &amp; Sandbox</button>
+          <button class="btn tab-btn" role="tab" aria-selected="false" data-tab="compare">Compare &amp; Leaderboards</button>
+          <button class="btn tab-btn" role="tab" aria-selected="false" data-tab="profile">Player Profile &amp; Matchups</button>
+          <button class="btn tab-btn" role="tab" aria-selected="false" data-tab="engine">Model &amp; Telemetry</button>
+          <button id="open-glossary" type="button" class="btn" style="color:var(--link);" title="Open searchable acronym and metric glossary">Glossary (?)</button>
+          <button id="theme-toggle" type="button" class="btn" title="Toggle light/dark theme">Light Theme</button>
+        </nav>
+      </div>
+      <div id="kpi-strip" class="grid-6" style="padding-top:10px;border-top:1px solid var(--border);"></div>
+    </header>
+
+    <!-- TAB 1: LANDSCAPE & SANDBOX -->
+    <section id="tab-scatter" class="tab-panel" style="display:flex;flex-direction:column;gap:16px;">
+      <div class="card row">
+        <label for="main-player-search" style="font-size:12px;font-weight:600;white-space:nowrap;">Player Search</label>
+        <div id="main-search-wrap" class="rel" style="flex:1;min-width:220px;">
+          <input id="main-player-search" type="text" style="width:100%;padding:7px 60px 7px 10px;" placeholder="Search any player across PBP telemetry + global MMR (name or SteamID digits)..." autocomplete="off" />
+          <button id="main-search-clear" type="button" class="clear-btn hidden">Clear</button>
+          <div id="main-search-results" class="dropdown hidden"></div>
+        </div>
+        <span id="main-search-status" class="muted tabnum" style="white-space:nowrap;"></span>
+      </div>
+
+      <div class="grid-12">
+        <div class="card col-8" style="display:flex;flex-direction:column;gap:12px;">
+          <div class="between">
+            <h2>Interactive Player Landscape</h2>
+            <div class="row" id="preset-btns">
+              <button data-preset="eff_vpm" class="btn btn-sm">Eff vs. VPM</button>
+              <button data-preset="use_eff" class="btn btn-sm">Usage vs. Eff</button>
+              <button data-preset="off_def" class="btn btn-sm">O-VPM vs. D-VPM</button>
+              <button data-preset="rapm_eff" class="btn btn-sm">Touch EPA vs. RAPM</button>
+              <button data-preset="mvp_margin" class="btn btn-sm">Naive MVP vs. Margin</button>
+            </div>
+          </div>
+
+          <div class="grid-4">
+            <label><span class="muted" style="display:block;margin-bottom:3px;">X-Axis</span><select id="sel-x" style="width:100%;"></select></label>
+            <label><span class="muted" style="display:block;margin-bottom:3px;">Y-Axis</span><select id="sel-y" style="width:100%;"></select></label>
+            <label><span class="muted" style="display:block;margin-bottom:3px;">Bubble Size</span>
+              <select id="sel-size" style="width:100%;">
+                <option value="rallies">Rallies Played</option>
+                <option value="touches">Attributed Touches</option>
+                <option value="custom_war">Custom V-WAR</option>
+                <option value="uniform">Uniform</option>
+              </select>
+            </label>
+            <label><span class="muted" style="display:block;margin-bottom:3px;">Color By</span>
+              <select id="sel-color" style="width:100%;">
+                <option value="arch">Archetype</option>
+                <option value="veff">V-Eff Sign</option>
+                <option value="pinned">Pinned Player</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="between">
+            <label class="row muted" style="gap:8px;">
+              Min Rallies: <span id="min-rallies-val" class="mono tabnum" style="color:var(--foreground);font-weight:600;">100</span>
+              <input id="min-rallies" type="range" min="100" max="600" step="25" value="100" />
+            </label>
+            <div class="row muted" id="scatter-legend"></div>
+          </div>
+
+          <div class="rel">
+            <svg id="scatter-svg" viewBox="0 0 820 450" class="chart"></svg>
+            <div id="scatter-tooltip" class="tooltip hidden"></div>
+          </div>
+          <div id="scatter-inspector" class="subcard between"></div>
+        </div>
+
+        <div class="card col-4" style="display:flex;flex-direction:column;gap:12px;">
+          <div class="between">
+            <h2>Custom Formula Sandbox</h2>
+            <button id="reset-sandbox" class="btn btn-sm">Reset CV Optimal</button>
+          </div>
+          <p class="muted">Tune how <b>VPM</b> blends play-by-play EPA against Rally RAPM and sample shrinkage. Updates scatter and rankings live.</p>
+          <div class="subcard" style="display:flex;flex-direction:column;gap:10px;font-size:12px;">
+            <div>
+              <div class="between"><span>PBP EPA Weight (<code class="mono">w_epa</code>)</span><b id="lbl-wepa" class="mono tabnum">75% EPA / 25% RAPM</b></div>
+              <input id="sld-wepa" type="range" min="0" max="100" step="5" value="75" style="width:100%;" />
+            </div>
+            <div>
+              <div class="between"><span>Sample Shrinkage (<code class="mono">m</code> rallies)</span><b id="lbl-m" class="mono tabnum">200</b></div>
+              <input id="sld-m" type="range" min="0" max="500" step="25" value="200" style="width:100%;" />
+            </div>
+            <div>
+              <div class="between"><span>Offense / Defense Tilt</span><b id="lbl-tilt" class="mono tabnum">Balanced (50/50)</b></div>
+              <input id="sld-tilt" type="range" min="-50" max="50" step="5" value="0" style="width:100%;" />
+            </div>
+          </div>
+          <div style="flex:1;overflow:auto;">
+            <div id="sandbox-table-title" style="font-size:12px;font-weight:600;margin-bottom:6px;">Live Top 12 by Custom VPM (vs. Default Rank)</div>
+            <div class="tbl-wrap" style="max-height:360px;">
+              <table class="tabnum">
+                <thead><tr><th class="left">#</th><th class="left">Player</th><th>Custom</th><th>WAR</th><th>Shift</th></tr></thead>
+                <tbody id="sandbox-top12"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: COMPARE & LEADERBOARDS -->
+    <section id="tab-compare" class="tab-panel hidden" style="display:flex;flex-direction:column;gap:16px;">
+      <div id="compare-cards" class="grid-12">
+        <div class="card col-5" style="display:flex;flex-direction:column;gap:10px;">
+          <div class="between">
+            <h2>6-Axis Percentile Radar</h2>
+            <span id="radar-qual-lbl" class="muted"></span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;font-size:12px;">
+            <label><span class="muted" style="display:block;margin-bottom:3px;">Player A (Solid)</span><select id="cmp-a" style="width:100%;"></select></label>
+            <label><span class="muted" style="display:block;margin-bottom:3px;">Player B (Dashed)</span><select id="cmp-b" style="width:100%;"></select></label>
+            <button id="cmp-swap" type="button" class="btn btn-sm" title="Swap Player A and Player B">Swap</button>
+          </div>
+          <div class="row" id="quick-chips"></div>
+          <svg id="radar-svg" viewBox="0 0 420 340" class="chart"></svg>
+        </div>
+
+        <div class="card col-7" style="display:flex;flex-direction:column;gap:10px;">
+          <h2>Head-to-Head Metric Breakdown</h2>
+          <div id="cmp-bars" style="display:flex;flex-direction:column;gap:9px;font-size:12px;"></div>
+        </div>
+      </div>
+
+      <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+        <div class="between">
+          <div class="row">
+            <button id="tbl-mode-eff" class="btn btn-active"></button>
+            <button id="tbl-mode-mmr" class="btn"></button>
+          </div>
+          <div class="row">
+            <select id="tbl-arch-filter">
+              <option value="all">All Archetypes</option>
+              <option value="0">Elite Both</option>
+              <option value="1">Pure Efficiency</option>
+              <option value="2">Effective Anchor</option>
+              <option value="3">Developing</option>
+              <option value="4">Box-Only (&lt;100R)</option>
+            </select>
+            <input id="tbl-search" type="text" placeholder="Filter by name or ID..." />
+          </div>
+        </div>
+        <p id="tbl-hint" class="muted"></p>
+        <div class="tbl-wrap">
+          <table class="tabnum">
+            <thead id="main-tbl-head"></thead>
+            <tbody id="main-tbl-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: UNIVERSAL PLAYER PROFILE & MATCHUPS -->
+    <section id="tab-profile" class="tab-panel hidden" style="display:flex;flex-direction:column;gap:16px;">
+      <div class="card" style="display:flex;flex-direction:column;gap:12px;">
+        <div class="between">
+          <h2>Player Profile &amp; Elo Trajectory</h2>
+          <div class="row">
+            <input id="prof-filter" type="text" placeholder="Quick filter players..." style="width:170px;" />
+            <select id="prof-select" style="min-width:230px;"></select>
+            <button id="prof-compare-btn" type="button" class="btn btn-sm hidden">Open in Comparator</button>
+          </div>
+        </div>
+        <div id="prof-summary" class="grid-6"></div>
+        <div class="between">
+          <p id="prof-traj-sub" class="muted"></p>
+          <label class="row" style="font-size:12px;cursor:pointer;">
+            <input id="chk-rolling" type="checkbox" checked />
+            <span>Show 10-Game Rolling Win %</span>
+          </label>
+        </div>
+        <svg id="elo-svg" viewBox="0 0 960 320" class="chart"></svg>
+        <div id="match-inspector" class="subcard"></div>
+      </div>
+
+      <div class="grid-12">
+        <div class="card col-7" style="display:flex;flex-direction:column;gap:10px;">
+          <div class="between">
+            <div>
+              <h2 id="matchups-title">Teammates &amp; Opponents Synergy</h2>
+              <p class="muted">Green = wins, Red = losses (With player vs. Across the net). Click any bar to inspect that player.</p>
+            </div>
+            <div class="row" style="font-size:12px;">
+              <label class="row">Min Shared: <b id="min-shared-val" class="mono tabnum">2</b><input id="min-shared" type="range" min="1" max="8" step="1" value="2" /></label>
+              <select id="matchup-sort">
+                <option value="total">Sort by Shared Games</option>
+                <option value="with">Sort by With Player</option>
+                <option value="vs">Sort by Vs Player</option>
+              </select>
+            </div>
+          </div>
+          <svg id="matchups-svg" viewBox="0 0 640 390" class="chart"></svg>
+        </div>
+
+        <div class="card col-5" style="display:flex;flex-direction:column;gap:10px;">
+          <h2>Match Log</h2>
+          <p class="muted">Click any match row to highlight it on the Elo chart.</p>
+          <div class="tbl-wrap" style="max-height:420px;">
+            <table class="tabnum">
+              <thead><tr><th class="left">#</th><th class="left">Date</th><th class="left">Mode</th><th>Res</th><th>Score</th><th>Elo</th></tr></thead>
+              <tbody id="prof-match-log"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: MODEL & TELEMETRY -->
+    <section id="tab-engine" class="tab-panel hidden" style="display:flex;flex-direction:column;gap:16px;">
+      <div class="grid-12">
+        <div class="card col-7" style="display:flex;flex-direction:column;gap:10px;">
+          <div class="between">
+            <h2>Markov Contact Value &amp; EPA by Contact Kind</h2>
+            <select id="kind-metric">
+              <option value="epa">Mean EPA / 100 Touches</option>
+              <option value="v_all">Overall Rally Win Prob (V_all)</option>
+              <option value="v_nt">In-Play Win Prob (V_nonterm)</option>
+              <option value="count">Total Contacts</option>
+            </select>
+          </div>
+          <p class="muted">Click any bar to inspect touch-number and power-bin sub-states on the right.</p>
+          <svg id="kinds-svg" viewBox="0 0 560 340" class="chart"></svg>
+        </div>
+
+        <div class="card col-5" style="display:flex;flex-direction:column;gap:10px;">
+          <h2 id="substate-title">Sub-States: attack</h2>
+          <p class="muted">Empirical rally win probabilities by side touch number and power tertile (or float serve).</p>
+          <div class="tbl-wrap" style="max-height:340px;">
+            <table class="tabnum">
+              <thead><tr><th class="left">Touch#</th><th class="left">Power</th><th>n</th><th>V_all</th><th>V_nt</th><th>Term%</th></tr></thead>
+              <tbody id="substate-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+          <h2>Official In-Game MVP Weights vs. Empirical LOO-CV BPM</h2>
+          <p id="bpm-sub" class="muted"></p>
+          <svg id="bpm-svg" viewBox="0 0 520 300" class="chart"></svg>
+        </div>
+        <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+          <h2>5-Fold Session-Grouped CV &amp; Split-Half Reliability</h2>
+          <p id="cv-sub" class="muted"></p>
+          <svg id="cv-svg" viewBox="0 0 520 155" class="chart"></svg>
+          <svg id="rel-svg" viewBox="0 0 520 190" class="chart"></svg>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Searchable Glossary Modal -->
+  <div id="glossary-modal" class="modal-bg hidden" role="dialog" aria-modal="true" aria-labelledby="glossary-title">
+    <div class="modal-box">
+      <div class="between" style="padding:14px 16px;border-bottom:1px solid var(--border);">
+        <div>
+          <h2 id="glossary-title">Metrics &amp; Acronyms Glossary</h2>
+          <p class="muted">Reference for every volleyball, NBA-style impact, and validation term on this site.</p>
+        </div>
+        <div class="row">
+          <input id="glossary-search" type="text" placeholder="Filter acronyms (e.g. RAPM, V_nt)..." />
+          <button id="close-glossary" type="button" class="btn btn-sm">Close (Esc)</button>
+        </div>
+      </div>
+      <div id="glossary-body" style="padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;font-size:12px;"></div>
+    </div>
+  </div>
+
+  <script>
+  const SITE_DATA = __SITE_DATA_JSON__;
+__APP_CORE_JS__
+__APP_VIEWS_JS__
+  </script>
+</body>
+</html>
