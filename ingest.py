@@ -190,11 +190,21 @@ def discover_profile_blobs(
                     names = sorted(
                         n
                         for n in zf.namelist()
-                        if (n.startswith("data/") or n.startswith("save_backups/"))
+                        if not n.endswith("/")
+                        and (
+                            "data" in pathlib.PurePosixPath(n).parts[:-1]
+                            or "save_backups" in pathlib.PurePosixPath(n).parts[:-1]
+                        )
                         and "profiles" in pathlib.PurePosixPath(n).name
                     )
                     # Process older/backups first so newer profiles.json wins tiebreaks
-                    names.sort(key=lambda n: (n.startswith("data/profiles.json"), n == "data/profiles.json", n))
+                    names.sort(
+                        key=lambda n: (
+                            "data" in pathlib.PurePosixPath(n).parts[:-1],
+                            pathlib.PurePosixPath(n).name == "profiles.json",
+                            n,
+                        )
+                    )
                     for nm in names:
                         try:
                             blobs.append((f"{zp.name}:{nm}", json.loads(zf.read(nm).decode("utf-8"))))
@@ -576,29 +586,40 @@ def load_vbr_matches(
         for zp in sorted(submissions_dir.glob("*.zip")):
             try:
                 with zipfile.ZipFile(zp, "r") as zf:
-                    if "replays/vbr_replays.json" not in zf.namelist():
-                        continue
-                    entries = json.loads(zf.read("replays/vbr_replays.json").decode("utf-8"))
-                    for item in entries:
-                        stats["total_entries"] += 1
-                        mt = item.get("mtime_utc", "")
-                        try:
-                            mt_ts = dt.datetime.fromisoformat(mt.replace("Z", "+00:00")).timestamp()
-                        except Exception:
-                            mt_ts = 0.0
-                        src_id = f"{zp.name}:{item.get('file', 'unknown.vbr')}"
-                        rec, st = match_from_vbr_parsed(
-                            src_id,
-                            mt_ts,
-                            item.get("meta") or {},
-                            item.get("slots") or [],
-                            item.get("events") or [],
-                            sid_latest_name,
-                            name_to_sid,
-                        )
-                        stats[st] += 1
-                        if rec:
-                            records.append(rec)
+                    if "replays/vbr_replays.json" in zf.namelist():
+                        entries = json.loads(zf.read("replays/vbr_replays.json").decode("utf-8"))
+                        for item in entries:
+                            stats["total_entries"] += 1
+                            mt = item.get("mtime_utc", "")
+                            try:
+                                mt_ts = dt.datetime.fromisoformat(mt.replace("Z", "+00:00")).timestamp()
+                            except Exception:
+                                mt_ts = 0.0
+                            src_id = f"{zp.name}:{item.get('file', 'unknown.vbr')}"
+                            rec, st = match_from_vbr_parsed(
+                                src_id,
+                                mt_ts,
+                                item.get("meta") or {},
+                                item.get("slots") or [],
+                                item.get("events") or [],
+                                sid_latest_name,
+                                name_to_sid,
+                            )
+                            stats[st] += 1
+                            if rec:
+                                records.append(rec)
+                    else:
+                        for nm in sorted(n for n in zf.namelist() if n.lower().endswith(".vbr") and not n.endswith("/")):
+                            stats["total_entries"] += 1
+                            info = zf.getinfo(nm)
+                            mt_ts = dt.datetime(*info.date_time).timestamp()
+                            meta, slots, events = read_vbr_meta_slots_events(zf.read(nm))
+                            rec, st = match_from_vbr_parsed(
+                                f"{zp.name}:{nm}", mt_ts, meta, slots, events, sid_latest_name, name_to_sid
+                            )
+                            stats[st] += 1
+                            if rec:
+                                records.append(rec)
             except Exception:
                 continue
 
