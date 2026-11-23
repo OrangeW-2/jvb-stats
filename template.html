@@ -166,6 +166,9 @@
         </div>
         <nav class="row" role="tablist" aria-label="Dashboard sections">
           <button class="btn tab-btn" role="tab" aria-selected="true" data-tab="scatter">Landscape &amp; Sandbox</button>
+          <button class="btn tab-btn" role="tab" aria-selected="false" data-tab="spiker">Spiker</button>
+          <button class="btn tab-btn" role="tab" aria-selected="false" data-tab="setter">Setter</button>
+          <button class="btn tab-btn" role="tab" aria-selected="false" data-tab="libero">Libero</button>
           <button class="btn tab-btn" role="tab" aria-selected="false" data-tab="compare">Compare &amp; Leaderboards</button>
           <button class="btn tab-btn" role="tab" aria-selected="false" data-tab="profile">Player Profile &amp; Matchups</button>
           <button class="btn tab-btn" role="tab" aria-selected="false" data-tab="engine">Model &amp; Telemetry</button>
@@ -418,6 +421,201 @@
         </div>
       </div>
     </section>
+
+    <!-- TAB: SPIKER ROLE -->
+    <section id="tab-spiker" class="tab-panel hidden" style="display:flex;flex-direction:column;gap:16px;">
+      <div class="card" style="display:flex;flex-direction:column;gap:12px;">
+        <div class="between">
+          <div>
+            <h2>Spiker Attack Efficiency &amp; Volume</h2>
+            <p class="muted">Attack, tip, and dump EPA per 100 attempts (A-Eff), shrunk toward zero with Bayesian pseudo-attempts m.</p>
+          </div>
+          <div class="row">
+            <button id="r-spk-mode-load" type="button" class="btn btn-sm btn-active">Att/R vs A-Eff</button>
+            <button id="r-spk-mode-hit" type="button" class="btn btn-sm">TrueHit% vs A-Eff</button>
+          </div>
+        </div>
+        <div id="spiker-kpis" class="grid-4"></div>
+      </div>
+
+      <div class="grid-12">
+        <div class="card col-8" style="display:flex;flex-direction:column;gap:12px;">
+          <div class="between">
+            <h3>Spiker Explorer (Dot Size = Attack Attempts)</h3>
+            <div class="row" style="font-size:12px;">
+              <label class="row muted" title="Bayesian shrinkage pseudo-attempts pulling small samples toward 0">
+                Shrinkage m: <b id="r-k-m-val" class="mono tabnum" style="color:var(--foreground);">40</b>
+                <input id="r-k-m-slider" type="range" min="0" max="100" step="5" value="40" />
+              </label>
+              <label class="row" style="cursor:pointer;"><input id="r-k-primary-only" type="checkbox" /><span>Primary Only (&gt;=25%T)</span></label>
+              <label class="row" style="cursor:pointer;"><input id="r-k-show-unqual" type="checkbox" checked /><span>Include &lt;100R</span></label>
+              <input id="r-k-search" type="text" placeholder="Filter player..." style="width:140px;" />
+            </div>
+          </div>
+          <div class="rel">
+            <svg id="r-spiker-svg" viewBox="0 0 640 340" class="chart"></svg>
+            <div id="r-spiker-tip" class="tooltip hidden"></div>
+          </div>
+        </div>
+        <div id="r-spiker-detail" class="card col-4" style="display:flex;flex-direction:column;gap:10px;"></div>
+      </div>
+
+      <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+        <div class="between">
+          <h3>Spiker Ratings Table (Click Any Row to Inspect)</h3>
+          <span class="muted">Eligibility: &gt;= 20 attack attempts (spikes, tips, dumps). Primary Spiker &gt;= 25% of touches.</span>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tabnum">
+            <thead id="r-spiker-tbl-head"></thead>
+            <tbody id="r-spiker-tbl-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: SETTER ROLE -->
+    <section id="tab-setter" class="tab-panel hidden" style="display:flex;flex-direction:column;gap:16px;">
+      <div class="card" style="display:flex;flex-direction:column;gap:12px;">
+        <div>
+          <h2>Setter Delivery &amp; Dump Efficiency</h2>
+          <p id="setter-sub" class="muted">5-fold out-of-fold set-delivery value above context-matched human baselines (sets touch 1-2 + 2nd-touch dumps).</p>
+        </div>
+        <div id="setter-kpis" class="grid-4"></div>
+      </div>
+
+      <div class="grid-12">
+        <div class="card col-8" style="display:flex;flex-direction:column;gap:12px;">
+          <div class="between">
+            <h3>Setter Delivery Explorer (Dot Size = Set Actions)</h3>
+            <div class="row" style="font-size:12px;">
+              <label class="row muted" title="Bayesian shrinkage pseudo-actions pulling small samples toward 0">
+                Shrinkage m: <b id="r-s-m-val" class="mono tabnum" style="color:var(--foreground);">40</b>
+                <input id="r-s-m-slider" type="range" min="0" max="100" step="5" value="40" />
+              </label>
+              <label class="row" style="cursor:pointer;"><input id="r-s-primary-only" type="checkbox" /><span>Primary Only (&gt;=35%T)</span></label>
+              <label class="row" style="cursor:pointer;"><input id="r-s-show-unqual" type="checkbox" checked /><span>Include &lt;100R</span></label>
+              <input id="r-s-search" type="text" placeholder="Filter player..." style="width:140px;" />
+            </div>
+          </div>
+          <div class="rel">
+            <svg id="r-setter-svg" viewBox="0 0 640 340" class="chart"></svg>
+            <div id="r-setter-tip" class="tooltip hidden"></div>
+          </div>
+        </div>
+        <div id="r-setter-detail" class="card col-4" style="display:flex;flex-direction:column;gap:10px;"></div>
+      </div>
+
+      <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+        <div class="between">
+          <h3>Setter Ratings Table (Click Any Row to Inspect)</h3>
+          <span class="muted">Eligibility: &gt;= 35 setting actions. Primary Setter &gt;= 35% of touches.</span>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tabnum">
+            <thead id="r-setter-tbl-head"></thead>
+            <tbody id="r-setter-tbl-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+          <h3>Set-Delivery &amp; Dump Ladder (Rally Win %)</h3>
+          <p class="muted">Empirical rally win rates by outcome following a set or 2nd-touch dump.</p>
+          <svg id="r-set-ladder-svg" viewBox="0 0 540 265" class="chart"></svg>
+        </div>
+        <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+          <h3>Setter Split-Half Reliability (Spearman-Brown SB)</h3>
+          <p class="muted">Even vs. odd rally split-half reliability comparing S-Eff against 1-step Markov and Hitter-Adjusted Ridge.</p>
+          <svg id="r-set-rel-svg" viewBox="0 0 540 200" class="chart"></svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: LIBERO ROLE -->
+    <section id="tab-libero" class="tab-panel hidden" style="display:flex;flex-direction:column;gap:16px;">
+      <div class="card" style="display:flex;flex-direction:column;gap:12px;">
+        <div class="between">
+          <div>
+            <h2>Libero &amp; First-Contact Pass Ratings</h2>
+            <p id="libero-sub" class="muted">5-fold out-of-fold DataVolley pass-grade efficiency (L-Eff, SR-Eff, Dig-Eff) across cross-net non-block first contacts.</p>
+          </div>
+          <div class="row">
+            <button id="r-lib-mode-sr" type="button" class="btn btn-sm btn-active">SR-Eff vs Dig-Eff</button>
+            <button id="r-lib-mode-dvpm" type="button" class="btn btn-sm">L-Eff vs D-VPM</button>
+          </div>
+        </div>
+        <div id="libero-kpis" class="grid-4"></div>
+      </div>
+
+      <div class="grid-12">
+        <div class="card col-8" style="display:flex;flex-direction:column;gap:12px;">
+          <div class="between">
+            <h3>Libero Explorer (Dot Size = First Contacts)</h3>
+            <div class="row" style="font-size:12px;">
+              <label class="row muted" title="Bayesian shrinkage pseudo-contacts for L-Eff">
+                Shrinkage m: <b id="r-l-m-val" class="mono tabnum" style="color:var(--foreground);">40</b>
+                <input id="r-l-m-slider" type="range" min="0" max="100" step="5" value="40" />
+              </label>
+              <label class="row" style="cursor:pointer;"><input id="r-l-primary-only" type="checkbox" /><span>Primary Only (&gt;=35%T)</span></label>
+              <label class="row" style="cursor:pointer;"><input id="r-l-show-unqual" type="checkbox" checked /><span>Include &lt;100R</span></label>
+              <input id="r-l-search" type="text" placeholder="Filter player..." style="width:140px;" />
+            </div>
+          </div>
+          <div class="rel">
+            <svg id="r-libero-svg" viewBox="0 0 640 340" class="chart"></svg>
+            <div id="r-libero-tip" class="tooltip hidden"></div>
+          </div>
+        </div>
+        <div id="r-libero-detail" class="card col-4" style="display:flex;flex-direction:column;gap:10px;"></div>
+      </div>
+
+      <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+        <div class="between">
+          <h3>Libero &amp; First-Contact Table (Click Any Row to Inspect)</h3>
+          <span class="muted">Eligibility: &gt;= 40 cross-net non-block first contacts. Primary Libero &gt;= 35% of touches.</span>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tabnum">
+            <thead id="r-libero-tbl-head"></thead>
+            <tbody id="r-libero-tbl-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card" style="display:flex;flex-direction:column;gap:12px;">
+          <div>
+            <h3>DataVolley Pass-Grade Ladder</h3>
+            <p class="muted">Capping lucky bounce overpasses and neutralizing terminal setter errors isolates passing skill.</p>
+          </div>
+          <svg id="r-pass-ladder-svg" viewBox="0 0 540 245" class="chart"></svg>
+          <div>
+            <h3>Libero Split-Half Reliability (Spearman-Brown SB)</h3>
+            <svg id="r-lib-rel-svg" viewBox="0 0 540 200" class="chart"></svg>
+          </div>
+        </div>
+        <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+          <h3>Why D-VPM != Libero (Top-10 D-VPM Decomposition)</h3>
+          <p id="r-dvpm-proof-sub" class="muted"></p>
+          <div class="tbl-wrap" style="max-height:480px;">
+            <table class="tabnum">
+              <thead>
+                <tr>
+                  <th class="left">Player</th>
+                  <th title="Defensive VPM">D-VPM</th>
+                  <th title="Breakpoint Serve RAPM">Serve RAPM</th>
+                  <th title="Block EPA per 100 rallies (blocks)">BlkEPA/100R</th>
+                  <th title="True First-Contact L-Eff (first contacts)">L-Eff (FC)</th>
+                </tr>
+              </thead>
+              <tbody id="r-top10-d-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 
   <!-- Searchable Glossary Modal -->
@@ -440,6 +638,7 @@
   <script>
   const SITE_DATA = __SITE_DATA_JSON__;
 __APP_CORE_JS__
+__APP_ROLES_JS__
 __APP_VIEWS_JS__
   </script>
 </body>

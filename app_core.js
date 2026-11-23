@@ -248,7 +248,12 @@
     { key: "bt_mmr", label: "BT MMR", zero: false },
     { key: "v_war", label: "V-WAR (Match Wins)", zero: true },
     { key: "box_mvp_r", label: "Box Naive MVP / Rally", zero: false },
-    { key: "box_margin", label: "Box Team Margin / 100R", zero: true }
+    { key: "box_margin", label: "Box Team Margin / 100R", zero: true },
+    { key: "a_eff", label: "A-Eff (Spiker EPA / 100 Att)", zero: true },
+    { key: "s_eff", label: "S-Eff (Setter Delivery / 100 Acts)", zero: true },
+    { key: "l_eff", label: "L-Eff (Libero Pass-Grade / 100 FC)", zero: true },
+    { key: "sr_eff", label: "SR-Eff (Serve-Receive / 100 SR)", zero: true },
+    { key: "dig_eff", label: "Dig-Eff (Floor Hard-Dig / 100 Digs)", zero: true }
   ];
   const AXIS_MAP = Object.fromEntries(AXES.map(a => [a.key, a]));
 

@@ -22,6 +22,7 @@ from sklearn.model_selection import GroupKFold, LeaveOneOut
 SITE_DIR = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(SITE_DIR))
 import ingest as ing  # noqa: E402
+import role_metrics as rm  # noqa: E402
 
 CPU_KEY = ing.CPU_KEY
 OFFENSE_KINDS = {"attack", "tip", "dump", "set", "serve"}
@@ -754,6 +755,11 @@ def build_site(
         if has_pbp
         else {"k_epa": 10.0, "repl_vpm": 0.0, "n_qual": 0, "pbp_rows": [], "markov_kinds": [], "markov_states": [], "cv_bench": [], "reliability": []}
     )
+    roles_res = (
+        rm.compute_role_metrics(rallies, box_data["matches"], pbp_res["pbp_rows"], mmr_key_to_idx, display_names)
+        if has_pbp
+        else None
+    )
 
     pbp_players = [
         [
@@ -801,28 +807,38 @@ def build_site(
         "cv_bench": pbp_res["cv_bench"],
         "bpm_weights": box_res["weights"],
         "reliability": pbp_res["reliability"],
+        "roles": roles_res,
     }
 
     check_finite(bundle)
     template_path = SITE_DIR / "template.html"
     tpl = template_path.read_text(encoding="utf-8")
-    for ph in ("__SITE_DATA_JSON__", "__APP_CORE_JS__", "__APP_VIEWS_JS__"):
+    for ph in ("__SITE_DATA_JSON__", "__APP_CORE_JS__", "__APP_ROLES_JS__", "__APP_VIEWS_JS__"):
         if ph not in tpl:
             raise RuntimeError(f"Missing {ph} placeholder in template.html")
     site_json = json.dumps(bundle, ensure_ascii=False, separators=(",", ":"))
     core_js = (SITE_DIR / "app_core.js").read_text(encoding="utf-8")
+    roles_js = (SITE_DIR / "app_roles.js").read_text(encoding="utf-8")
     views_js = (SITE_DIR / "app_views.js").read_text(encoding="utf-8")
     out_html = (
         tpl.replace("__SITE_DATA_JSON__", site_json, 1)
         .replace("__APP_CORE_JS__", core_js, 1)
+        .replace("__APP_ROLES_JS__", roles_js, 1)
         .replace("__APP_VIEWS_JS__", views_js, 1)
     )
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(out_html, encoding="utf-8")
+    role_summary = ""
+    if roles_res:
+        rmeta = roles_res["meta"]
+        role_summary = (
+            f"; roles qualified: {rmeta['spiker_qualified_n']} spikers, "
+            f"{rmeta['setter_qualified_n']} setters, {rmeta['libero_qualified_n']} liberos"
+        )
     print(
         f"Built {out_path} ({len(out_html.encode('utf-8')):,} bytes): "
         f"{len(matches)} matches, {len(mmr_players)} MMR players, "
-        f"{len(rallies)} PBP rallies ({pbp_res['n_qual']} qualified)"
+        f"{len(rallies)} PBP rallies ({pbp_res['n_qual']} qualified){role_summary}"
     )
 
 

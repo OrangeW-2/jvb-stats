@@ -348,6 +348,17 @@
         ["V_all / V_nt", "Markov State Values", "V_all = overall empirical win probability after a state; V_nt = win probability conditioned on the rally continuing (used in EPA to prevent mixture bias)."],
         ["SB", "Spearman-Brown Reliability", "Full-sample reliability estimate 2r / (1 + r) from odd/even rally split-half correlation r."]
       ]
+    },
+    {
+      title: "Role Metrics (Spiker, Setter, Libero)",
+      items: [
+        ["A-Eff / A-VPM", "Spiker Attack Efficiency & Impact", "Non-terminal Markov attack EPA per 100 attempts (spikes, tips, dumps) shrunk by m=40 (A-Eff), or per 100 rallies at m=150 (A-VPM)."],
+        ["S-Eff / S-VPM", "Setter Delivery Efficiency & Impact", "Expected win-probability points per 100 setting actions (sets touch 1-2 + 2nd-touch dumps) above context-matched human baselines, shrunk by m=40 (S-Eff) or per 100 rallies at m=150 (S-VPM)."],
+        ["Att% (Setter)", "Attackable Set Rate", "Share of setting actions producing a 3rd-touch teammate attack or an active 2nd-touch dump."],
+        ["L-Eff / L-VPM", "Libero First-Contact Efficiency & Impact", "DataVolley pass-grade points per 100 cross-net non-block first contacts above the human incoming-ball baseline, shrunk by m=40 (L-Eff) or per 100 rallies at m=150 (L-VPM)."],
+        ["SR-Eff / Dig-Eff", "Serve-Receive vs. Floor-Dig Efficiency", "Sub-skill splits of L-Eff (m=25) separating incoming serves (SR-Eff) from incoming attacks, tips, and blocks (Dig-Eff)."],
+        ["G3 / G2 / G1 / G0", "DataVolley Pass-Grade Ladder", "G3_insys_att leads to attack/dump; G_overpass_nt caps lucky bounce overpasses; G2_insys_tip; G1_shank_alive; G1_oos; G2_set_neutral neutralizes setter errors; G0_err is a terminal error."]
+      ]
     }
   ];
 
@@ -373,6 +384,9 @@
 
   function renderActiveTab() {
     if (state.tab === "scatter") { renderScatter(); renderSandboxTable(); }
+    else if (state.tab === "spiker") { renderSpikerTab(); }
+    else if (state.tab === "setter") { renderSetterTab(); }
+    else if (state.tab === "libero") { renderLiberoTab(); }
     else if (state.tab === "compare") { renderCompare(); renderMainTable(); }
     else if (state.tab === "profile") { renderProfile(); }
     else if (state.tab === "engine") { renderEngine(); }
@@ -380,8 +394,9 @@
 
   // Graceful MMR-only mode if dataset has no PBP telemetry
   if (!hasPbp) {
-    document.querySelector('[data-tab="scatter"]').classList.add("hidden");
-    document.querySelector('[data-tab="engine"]').classList.add("hidden");
+    ["scatter", "spiker", "setter", "libero", "engine"].forEach(t => {
+      document.querySelector(`[data-tab="${t}"]`).classList.add("hidden");
+    });
   }
 
   initHeader();

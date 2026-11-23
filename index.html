@@ -166,6 +166,9 @@
         </div>
         <nav class="row" role="tablist" aria-label="Dashboard sections">
           <button class="btn tab-btn" role="tab" aria-selected="true" data-tab="scatter">Landscape &amp; Sandbox</button>
+          <button class="btn tab-btn" role="tab" aria-selected="false" data-tab="spiker">Spiker</button>
+          <button class="btn tab-btn" role="tab" aria-selected="false" data-tab="setter">Setter</button>
+          <button class="btn tab-btn" role="tab" aria-selected="false" data-tab="libero">Libero</button>
           <button class="btn tab-btn" role="tab" aria-selected="false" data-tab="compare">Compare &amp; Leaderboards</button>
           <button class="btn tab-btn" role="tab" aria-selected="false" data-tab="profile">Player Profile &amp; Matchups</button>
           <button class="btn tab-btn" role="tab" aria-selected="false" data-tab="engine">Model &amp; Telemetry</button>
@@ -418,6 +421,201 @@
         </div>
       </div>
     </section>
+
+    <!-- TAB: SPIKER ROLE -->
+    <section id="tab-spiker" class="tab-panel hidden" style="display:flex;flex-direction:column;gap:16px;">
+      <div class="card" style="display:flex;flex-direction:column;gap:12px;">
+        <div class="between">
+          <div>
+            <h2>Spiker Attack Efficiency &amp; Volume</h2>
+            <p class="muted">Attack, tip, and dump EPA per 100 attempts (A-Eff), shrunk toward zero with Bayesian pseudo-attempts m.</p>
+          </div>
+          <div class="row">
+            <button id="r-spk-mode-load" type="button" class="btn btn-sm btn-active">Att/R vs A-Eff</button>
+            <button id="r-spk-mode-hit" type="button" class="btn btn-sm">TrueHit% vs A-Eff</button>
+          </div>
+        </div>
+        <div id="spiker-kpis" class="grid-4"></div>
+      </div>
+
+      <div class="grid-12">
+        <div class="card col-8" style="display:flex;flex-direction:column;gap:12px;">
+          <div class="between">
+            <h3>Spiker Explorer (Dot Size = Attack Attempts)</h3>
+            <div class="row" style="font-size:12px;">
+              <label class="row muted" title="Bayesian shrinkage pseudo-attempts pulling small samples toward 0">
+                Shrinkage m: <b id="r-k-m-val" class="mono tabnum" style="color:var(--foreground);">40</b>
+                <input id="r-k-m-slider" type="range" min="0" max="100" step="5" value="40" />
+              </label>
+              <label class="row" style="cursor:pointer;"><input id="r-k-primary-only" type="checkbox" /><span>Primary Only (&gt;=25%T)</span></label>
+              <label class="row" style="cursor:pointer;"><input id="r-k-show-unqual" type="checkbox" checked /><span>Include &lt;100R</span></label>
+              <input id="r-k-search" type="text" placeholder="Filter player..." style="width:140px;" />
+            </div>
+          </div>
+          <div class="rel">
+            <svg id="r-spiker-svg" viewBox="0 0 640 340" class="chart"></svg>
+            <div id="r-spiker-tip" class="tooltip hidden"></div>
+          </div>
+        </div>
+        <div id="r-spiker-detail" class="card col-4" style="display:flex;flex-direction:column;gap:10px;"></div>
+      </div>
+
+      <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+        <div class="between">
+          <h3>Spiker Ratings Table (Click Any Row to Inspect)</h3>
+          <span class="muted">Eligibility: &gt;= 20 attack attempts (spikes, tips, dumps). Primary Spiker &gt;= 25% of touches.</span>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tabnum">
+            <thead id="r-spiker-tbl-head"></thead>
+            <tbody id="r-spiker-tbl-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: SETTER ROLE -->
+    <section id="tab-setter" class="tab-panel hidden" style="display:flex;flex-direction:column;gap:16px;">
+      <div class="card" style="display:flex;flex-direction:column;gap:12px;">
+        <div>
+          <h2>Setter Delivery &amp; Dump Efficiency</h2>
+          <p id="setter-sub" class="muted">5-fold out-of-fold set-delivery value above context-matched human baselines (sets touch 1-2 + 2nd-touch dumps).</p>
+        </div>
+        <div id="setter-kpis" class="grid-4"></div>
+      </div>
+
+      <div class="grid-12">
+        <div class="card col-8" style="display:flex;flex-direction:column;gap:12px;">
+          <div class="between">
+            <h3>Setter Delivery Explorer (Dot Size = Set Actions)</h3>
+            <div class="row" style="font-size:12px;">
+              <label class="row muted" title="Bayesian shrinkage pseudo-actions pulling small samples toward 0">
+                Shrinkage m: <b id="r-s-m-val" class="mono tabnum" style="color:var(--foreground);">40</b>
+                <input id="r-s-m-slider" type="range" min="0" max="100" step="5" value="40" />
+              </label>
+              <label class="row" style="cursor:pointer;"><input id="r-s-primary-only" type="checkbox" /><span>Primary Only (&gt;=35%T)</span></label>
+              <label class="row" style="cursor:pointer;"><input id="r-s-show-unqual" type="checkbox" checked /><span>Include &lt;100R</span></label>
+              <input id="r-s-search" type="text" placeholder="Filter player..." style="width:140px;" />
+            </div>
+          </div>
+          <div class="rel">
+            <svg id="r-setter-svg" viewBox="0 0 640 340" class="chart"></svg>
+            <div id="r-setter-tip" class="tooltip hidden"></div>
+          </div>
+        </div>
+        <div id="r-setter-detail" class="card col-4" style="display:flex;flex-direction:column;gap:10px;"></div>
+      </div>
+
+      <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+        <div class="between">
+          <h3>Setter Ratings Table (Click Any Row to Inspect)</h3>
+          <span class="muted">Eligibility: &gt;= 35 setting actions. Primary Setter &gt;= 35% of touches.</span>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tabnum">
+            <thead id="r-setter-tbl-head"></thead>
+            <tbody id="r-setter-tbl-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+          <h3>Set-Delivery &amp; Dump Ladder (Rally Win %)</h3>
+          <p class="muted">Empirical rally win rates by outcome following a set or 2nd-touch dump.</p>
+          <svg id="r-set-ladder-svg" viewBox="0 0 540 265" class="chart"></svg>
+        </div>
+        <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+          <h3>Setter Split-Half Reliability (Spearman-Brown SB)</h3>
+          <p class="muted">Even vs. odd rally split-half reliability comparing S-Eff against 1-step Markov and Hitter-Adjusted Ridge.</p>
+          <svg id="r-set-rel-svg" viewBox="0 0 540 200" class="chart"></svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: LIBERO ROLE -->
+    <section id="tab-libero" class="tab-panel hidden" style="display:flex;flex-direction:column;gap:16px;">
+      <div class="card" style="display:flex;flex-direction:column;gap:12px;">
+        <div class="between">
+          <div>
+            <h2>Libero &amp; First-Contact Pass Ratings</h2>
+            <p id="libero-sub" class="muted">5-fold out-of-fold DataVolley pass-grade efficiency (L-Eff, SR-Eff, Dig-Eff) across cross-net non-block first contacts.</p>
+          </div>
+          <div class="row">
+            <button id="r-lib-mode-sr" type="button" class="btn btn-sm btn-active">SR-Eff vs Dig-Eff</button>
+            <button id="r-lib-mode-dvpm" type="button" class="btn btn-sm">L-Eff vs D-VPM</button>
+          </div>
+        </div>
+        <div id="libero-kpis" class="grid-4"></div>
+      </div>
+
+      <div class="grid-12">
+        <div class="card col-8" style="display:flex;flex-direction:column;gap:12px;">
+          <div class="between">
+            <h3>Libero Explorer (Dot Size = First Contacts)</h3>
+            <div class="row" style="font-size:12px;">
+              <label class="row muted" title="Bayesian shrinkage pseudo-contacts for L-Eff">
+                Shrinkage m: <b id="r-l-m-val" class="mono tabnum" style="color:var(--foreground);">40</b>
+                <input id="r-l-m-slider" type="range" min="0" max="100" step="5" value="40" />
+              </label>
+              <label class="row" style="cursor:pointer;"><input id="r-l-primary-only" type="checkbox" /><span>Primary Only (&gt;=35%T)</span></label>
+              <label class="row" style="cursor:pointer;"><input id="r-l-show-unqual" type="checkbox" checked /><span>Include &lt;100R</span></label>
+              <input id="r-l-search" type="text" placeholder="Filter player..." style="width:140px;" />
+            </div>
+          </div>
+          <div class="rel">
+            <svg id="r-libero-svg" viewBox="0 0 640 340" class="chart"></svg>
+            <div id="r-libero-tip" class="tooltip hidden"></div>
+          </div>
+        </div>
+        <div id="r-libero-detail" class="card col-4" style="display:flex;flex-direction:column;gap:10px;"></div>
+      </div>
+
+      <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+        <div class="between">
+          <h3>Libero &amp; First-Contact Table (Click Any Row to Inspect)</h3>
+          <span class="muted">Eligibility: &gt;= 40 cross-net non-block first contacts. Primary Libero &gt;= 35% of touches.</span>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tabnum">
+            <thead id="r-libero-tbl-head"></thead>
+            <tbody id="r-libero-tbl-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card" style="display:flex;flex-direction:column;gap:12px;">
+          <div>
+            <h3>DataVolley Pass-Grade Ladder</h3>
+            <p class="muted">Capping lucky bounce overpasses and neutralizing terminal setter errors isolates passing skill.</p>
+          </div>
+          <svg id="r-pass-ladder-svg" viewBox="0 0 540 245" class="chart"></svg>
+          <div>
+            <h3>Libero Split-Half Reliability (Spearman-Brown SB)</h3>
+            <svg id="r-lib-rel-svg" viewBox="0 0 540 200" class="chart"></svg>
+          </div>
+        </div>
+        <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+          <h3>Why D-VPM != Libero (Top-10 D-VPM Decomposition)</h3>
+          <p id="r-dvpm-proof-sub" class="muted"></p>
+          <div class="tbl-wrap" style="max-height:480px;">
+            <table class="tabnum">
+              <thead>
+                <tr>
+                  <th class="left">Player</th>
+                  <th title="Defensive VPM">D-VPM</th>
+                  <th title="Breakpoint Serve RAPM">Serve RAPM</th>
+                  <th title="Block EPA per 100 rallies (blocks)">BlkEPA/100R</th>
+                  <th title="True First-Contact L-Eff (first contacts)">L-Eff (FC)</th>
+                </tr>
+              </thead>
+              <tbody id="r-top10-d-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 
   <!-- Searchable Glossary Modal -->
@@ -438,7 +636,7 @@
   </div>
 
   <script>
-  const SITE_DATA = {"meta":{"generated_utc":"2026-11-23 22:49 UTC","date_min":"2026-11-13","date_max":"2026-11-23","has_pbp":true,"mmr_matches":92,"mmr_players":364,"pbp_rallies":5204,"pbp_sessions":115,"pbp_contacts":28584,"pbp_qualified":110,"box_matches":46,"k_epa":9.7109,"default_w_epa":0.75,"default_m":200.0,"repl_vpm":-7.187,"bo3_slope":7.8984,"bo3_rallies":93.0898,"bpm_r2":0.974},"mmr_players":[["OrangeW","…0317",1915.3,1853.6,77,55,22],["Quack","…3800",1661.6,1587.3,14,10,4],["Bomby","…4623",1629.1,1556.3,18,11,7],["Jaco","unlinked",1609.5,1548.5,3,3,0],["KayzzeR","…5201",1603.2,1568.2,14,10,4],["OS | P1","…8764",1595.7,1539.7,2,2,0],["bmw enjoyer","…1741",1593.8,1534.1,16,9,7],["Andros","…7691",1580.7,1530.2,6,4,2],["speaky dermix","unlinked",1578.1,1532.7,2,2,0],["Jöremy","…7590",1577.7,1540.5,6,4,2],["Melle Muck","…3147",1575.2,1532.6,2,2,0],["Shmingus McDingus","…4955",1573.5,1532.5,2,2,0],["suna","unlinked",1571.9,1544.2,3,3,0],["Cheglet","…8751",1571.4,1530.6,2,2,0],["Omex PatXD","unlinked",1570.5,1532.0,2,2,0],["Zero Kara","unlinked",1570.5,1532.0,2,2,0],["finn","…8329",1568.5,1531.3,4,3,1],["Hoshiumi","…7409",1563.1,1541.6,8,6,2],["firework","…4354",1561.3,1526.3,2,2,0],["Don Pitas Pollos","…2800",1561.2,1524.2,5,3,2],["Jane","…3915",1560.7,1531.6,2,2,0],["Cinshay","…9447",1560.4,1525.7,2,2,0],["koel","…0871",1560.1,1528.3,6,4,2],["UnluckyRos","unlinked",1556.2,1531.6,2,2,0],["BN | Isaac Foster_fr","unlinked",1554.4,1531.7,2,2,0],["Ket","…2316",1551.9,1520.2,1,1,0],["亗 F R 么 Nᴳᵒᵈ 亗","…3557",1551.9,1520.2,1,1,0],["stings, doesn't it","unlinked",1551.6,1517.8,1,1,0],["Zomb","…8766",1551.3,1526.0,2,2,0],["femilambda203","…7595",1551.1,1521.0,1,1,0],["Necoli","…7215",1551.1,1521.0,1,1,0],["Sapera","…2813",1550.7,1526.8,2,2,0],["akselgoklahie","unlinked",1550.5,1516.0,1,1,0],["Gugor","unlinked",1550.5,1516.0,1,1,0],["Sbonkeydonkey","unlinked",1550.5,1516.0,1,1,0],["omermorag10","…2598",1549.8,1527.9,4,3,1],["Skariway","…3635",1549.2,1520.5,1,1,0],["d1monchill","…0316",1547.8,1524.1,2,2,0],["GoofChilean","…0475",1547.8,1524.1,2,2,0],["shinjitsu","…0395",1547.7,1518.5,1,1,0],["Raccooon0","…4561",1547.2,1529.4,6,4,2],["3zoosE","unlinked",1546.8,1516.0,1,1,0],["Jjjpa","unlinked",1546.8,1516.0,1,1,0],["basil","…3095",1546.6,1518.4,1,1,0],["taneaven","…6913",1546.6,1518.4,1,1,0],["pp","unlinked",1546.2,1517.9,1,1,0],["Vasile Electric","unlinked",1546.2,1517.9,1,1,0],["_Kr1P4_","unlinked",1545.2,1515.8,1,1,0],["Coyl","unlinked",1545.2,1515.8,1,1,0],["FATAL","unlinked",1545.2,1515.8,1,1,0],["Mandy","unlinked",1545.2,1515.8,1,1,0],["m","…9871",1544.9,1523.2,2,2,0],["DANTEEEEHHHH","unlinked",1544.5,1516.5,1,1,0],["Iamnotdeadd","…5049",1544.4,1515.1,3,2,1],["Aristr0","…0679",1544.0,1518.5,1,1,0],["Dramatic Bear","unlinked",1543.0,1531.9,2,2,0],["Pells","…3598",1541.0,1502.4,8,4,4],["HZ | Reptil","…2622",1539.9,1519.0,3,2,1],["TomLTT","…8897",1538.8,1522.6,10,6,4],["Couchkartoffel","unlinked",1538.1,1516.0,1,1,0],["Suicida0dj","unlinked",1538.1,1516.0,1,1,0],["JUST CHO","unlinked",1536.8,1518.6,1,1,0],["Bamzy","…3736",1536.3,1515.0,1,1,0],["Nickname","…4358",1536.3,1515.9,1,1,0],["Máximoo","unlinked",1535.8,1516.4,1,1,0],["Rs11","unlinked",1535.8,1516.4,1,1,0],["PcSuchi","…6291",1534.5,1513.3,4,2,2],["mugs","unlinked",1534.4,1515.2,1,1,0],["pNg","…6693",1534.0,1511.1,4,2,2],["FC TELETRAVAIL","unlinked",1533.5,1516.0,1,1,0],["thekachowemall","unlinked",1533.5,1516.0,1,1,0],["osh","…1242",1533.0,1505.7,4,2,2],["HZ | hyk","unlinked",1533.0,1516.0,1,1,0],["Yktrasdi","…1523",1532.0,1509.6,4,2,2],["victortaku","…3633",1531.8,1514.2,3,2,1],["NSTEMU","…9265",1531.8,1514.1,1,1,0],["sagané","…8915",1531.8,1514.1,1,1,0],["hendt_0","unlinked",1531.7,1517.3,1,1,0],["pepesda841","unlinked",1531.7,1517.3,1,1,0],["Renas21","unlinked",1531.7,1517.3,1,1,0],["Toast","unlinked",1531.7,1517.3,1,1,0],["Xy","unlinked",1531.7,1517.3,1,1,0],["sznorbert glejczak","…0263",1531.0,1513.3,5,3,2],["Hiry","unlinked",1530.0,1514.9,1,1,0],["Topo","unlinked",1530.0,1514.9,1,1,0],["Cho7","…1393",1529.5,1512.9,1,1,0],["CRYPT4LIS","…9338",1529.5,1512.9,1,1,0],["Dragis","unlinked",1529.5,1516.5,1,1,0],["dumbapple","unlinked",1529.5,1516.0,1,1,0],["FiZZi","unlinked",1529.5,1516.0,1,1,0],["Loro_2006","unlinked",1529.5,1516.5,1,1,0],["Ramen","unlinked",1529.5,1513.9,1,1,0],["Shrekk","unlinked",1529.5,1513.9,1,1,0],["Snow","…0172",1529.2,1506.1,4,2,2],["Matiu","…6856",1528.6,1512.4,1,1,0],["Ters","unlinked",1527.9,1514.1,1,1,0],["Serendipity","…1335",1527.7,1514.1,3,2,1],["Ararararagi","…4870",1527.2,1514.1,1,1,0],["Tony","…3375",1526.5,1514.0,1,1,0],["Altovoltio^^","unlinked",1526.0,1514.8,1,1,0],["Armorio","unlinked",1526.0,1514.8,1,1,0],["biber10","…0058",1526.0,1512.7,1,1,0],["Caio","…7605",1526.0,1512.7,1,1,0],["choukill","unlinked",1526.0,1514.6,1,1,0],["Clean Ocean","unlinked",1526.0,1514.8,1,1,0],["dinzxr","…0063",1526.0,1512.7,1,1,0],["froj1k","…4015",1526.0,1512.7,1,1,0],["janohoop","…5692",1526.0,1512.9,1,1,0],["Mathieu_Mdg","…6250",1526.0,1514.0,1,1,0],["Nandete","…1645",1526.0,1512.9,1,1,0],["rrezz","unlinked",1526.0,1512.9,1,1,0],["Salphex","unlinked",1526.0,1514.6,1,1,0],["supermega500","…9879",1526.0,1514.0,1,1,0],["Tenturun","unlinked",1526.0,1514.6,1,1,0],["Victor","…0179",1526.0,1512.7,1,1,0],["Papo","unlinked",1525.6,1515.8,1,1,0],["tomserra2a","unlinked",1525.6,1515.8,1,1,0],["kuko","…9237",1525.5,1512.3,1,1,0],["marshmallowumi","…4503",1525.5,1512.3,1,1,0],["Ctteigh","…1716",1525.4,1513.2,1,1,0],["Mahiro","unlinked",1525.4,1516.4,1,1,0],["Nephitys","…6782",1525.4,1513.6,1,1,0],["Nic","…1695",1525.4,1513.2,1,1,0],["TonnyGCL","…7047",1525.4,1512.1,1,1,0],["twhd","…5923",1525.4,1512.1,1,1,0],["windsofkira","…0964",1525.4,1513.6,1,1,0],["Kippo Fan #1 (Aapperatus","unlinked",1525.3,1515.8,1,1,0],["Max","unlinked",1525.3,1515.8,1,1,0],["nessir","unlinked",1525.3,1515.8,1,1,0],["sawers014","unlinked",1525.3,1515.8,1,1,0],["ꜱᴄᴇ . Shieldister","unlinked",1525.3,1515.8,1,1,0],["JxstYui","…6702",1524.9,1512.2,1,1,0],["SoyEmanuel","…8772",1524.9,1512.2,1,1,0],["Ganbort","unlinked",1524.7,1516.5,1,1,0],["10na.","…9175",1524.2,1511.7,1,1,0],["Rinkamoshi","…5381",1523.9,1504.1,2,1,1],["crowl_o3","unlinked",1522.9,1515.8,1,1,0],["Céréales Lion 2x2","unlinked",1522.9,1515.8,1,1,0],["Gotta get a grip","unlinked",1522.9,1515.8,1,1,0],["Yu-Wen","unlinked",1522.9,1515.8,1,1,0],["Nacho","…5541",1522.5,1503.7,19,9,10],["AzDark_","…5347",1522.5,1511.4,1,1,0],["LaughingStock","…2353",1520.7,1513.9,1,1,0],["Mahito 👑","…3486",1520.7,1513.9,1,1,0],["OS | Aster","…5051",1520.7,1513.9,1,1,0],["Sky","…9268",1520.7,1513.9,1,1,0],["Sergi","unlinked",1520.2,1503.5,2,1,1],["peottamalik","unlinked",1518.3,1503.8,2,1,1],["SirBubbleChu","unlinked",1518.0,1503.6,2,1,1],["Aluk","unlinked",1517.6,1516.1,1,1,0],["Lacruz","unlinked",1517.6,1516.1,1,1,0],["P☯","unlinked",1517.6,1516.1,1,1,0],["Oni","…8900",1517.3,1512.5,5,3,2],["Lukeviral","…0366",1516.9,1509.3,4,2,2],["Saitaike","…3130",1513.2,1512.9,7,4,3],["iD_Galaxy","…5757",1511.4,1503.5,4,2,2],["Cozza Pelosa","…0688",1509.6,1505.2,3,2,1],["Inferno","…0150",1507.9,1502.7,2,1,1],["Nerologicals","unlinked",1505.5,1500.2,2,1,1],["sterlowhite","…4684",1502.8,1499.7,2,1,1],["RandomName","unlinked",1502.3,1499.7,2,1,1],["hauntsy","…8374",1502.2,1500.1,2,1,1],["XoXy","unlinked",1500.9,1499.8,2,1,1],["Marvalz.","unlinked",1500.1,1500.4,2,1,1],["HARVZ4","unlinked",1499.3,1500.2,2,1,1],["AxMikeas","…3912",1497.4,1500.3,2,1,1],["petronavt","…5208",1495.6,1499.1,2,1,1],["fredlee583","…5076",1495.3,1500.0,4,2,2],["MrMandau","…6807",1495.2,1495.1,2,1,1],["Lord Tarascoun","…0448",1493.0,1495.4,3,1,2],["YNSC","unlinked",1491.4,1487.2,3,1,2],["Caillou","…3327",1487.7,1500.0,6,3,3],["entri","…0700",1487.3,1488.5,3,1,2],["greenYolong","unlinked",1486.5,1501.2,6,3,3],["PAGANEC","unlinked",1481.9,1496.2,2,1,1],["andreaghini","…0877",1480.8,1496.2,2,1,1],["SLOTH | I.Niko<3","unlinked",1479.9,1496.5,2,1,1],["dluminoxx","unlinked",1479.8,1485.3,1,0,1],["Nichita.9","unlinked",1479.8,1485.3,1,0,1],["Bot Rix Rix","…2915",1479.5,1486.1,1,0,1],["iamhassangohar","…0169",1479.5,1486.1,1,0,1],["masuraou","…6953",1479.5,1486.1,1,0,1],["nooobil","…7932",1479.5,1486.1,1,0,1],["twelve","…4764",1479.5,1486.1,1,0,1],["Wis","…2870",1479.3,1487.4,5,2,3],["Aetos","…5114",1479.2,1488.7,1,0,1],["Lykossino","…9516",1479.2,1488.7,1,0,1],["Ashuraplex","unlinked",1479.1,1483.3,3,1,2],["Milan","unlinked",1479.1,1483.3,3,1,2],["mash2311","…7001",1478.7,1484.5,3,1,2],["Rayx","…5778",1478.4,1487.9,1,0,1],["yukame","unlinked",1478.4,1487.9,1,0,1],["Abod7","…5639",1477.7,1488.2,1,0,1],["Khora","…1841",1477.7,1488.6,1,0,1],["Levine","unlinked",1477.7,1486.2,1,0,1],["Alekami","unlinked",1477.3,1484.2,1,0,1],["админ лобби","unlinked",1477.3,1484.2,1,0,1],["большой путь","unlinked",1477.3,1484.2,1,0,1],["Главный босс","unlinked",1477.3,1484.2,1,0,1],["ЗАВИСИМЫЙ","unlinked",1477.3,1484.2,1,0,1],["TRABISCOTT","…6341",1476.5,1485.3,3,1,2],["Ksmm","…7677",1475.2,1487.8,1,0,1],["KxmiDH","…5286",1475.2,1487.8,1,0,1],["Sento","…2810",1475.2,1487.8,1,0,1],["¹ᵁᴾ × Clocky","…8617",1475.2,1487.8,1,0,1],["KlLLHUNTER","unlinked",1475.0,1497.2,2,1,1],["veos","unlinked",1474.9,1483.9,3,1,2],["Jimi","unlinked",1474.9,1484.2,1,0,1],["Lynx","unlinked",1474.9,1484.2,1,0,1],["marioduck","unlinked",1474.9,1484.2,1,0,1],["SCOTFIELD","unlinked",1474.9,1484.2,1,0,1],["Aced","…4523",1474.8,1486.4,1,0,1],["Corbac","…1940",1474.8,1486.8,1,0,1],["DaBilly","…0566",1474.8,1487.7,1,0,1],["Eterky le Magichien Doge","…6041",1474.8,1487.9,1,0,1],["Hayashi","…1166",1474.8,1487.7,1,0,1],["kdgdemir","…2617",1474.8,1486.4,1,0,1],["kirkei òwó","…3188",1474.8,1487.7,1,0,1],["Le Renard","…0386",1474.8,1487.9,1,0,1],["Luckysan","…9492",1474.8,1486.8,1,0,1],["Noctilight","…3195",1474.8,1487.9,1,0,1],["poisson","unlinked",1474.8,1483.6,1,0,1],["Roulette Rider","…0283",1474.8,1486.8,1,0,1],["salad","…2747",1474.8,1486.4,1,0,1],["SneakyMagicGoat","…2288",1474.8,1486.8,1,0,1],["TRKN","…0623",1474.8,1487.9,1,0,1],["Warikan","…8643",1474.8,1486.4,1,0,1],["†  Koya  †","unlinked",1474.8,1483.6,1,0,1],["Abounini","unlinked",1474.6,1484.2,1,0,1],["DerLiam","unlinked",1474.6,1484.2,1,0,1],["Jelly","…6684",1474.6,1487.7,1,0,1],["Jimmy Larp","…0617",1474.6,1487.7,1,0,1],["pippococa","unlinked",1474.6,1484.2,1,0,1],["piratafrancis","…4442",1474.6,1487.7,1,0,1],["SiiNerGia","unlinked",1474.6,1484.2,1,0,1],["uagu","…6906",1474.6,1487.7,1,0,1],["AlexitoPito","unlinked",1474.2,1485.2,1,0,1],["alphazfrittox","unlinked",1474.2,1485.2,1,0,1],["Bastox","…5559",1474.2,1487.3,1,0,1],["BIGDAWG","unlinked",1474.2,1487.3,1,0,1],["CheezySmile","unlinked",1474.2,1485.4,1,0,1],["Fridoll","…4197",1474.2,1487.3,1,0,1],["Jonathan","…5777",1474.2,1487.1,1,0,1],["Kamal","…4036",1474.2,1487.1,1,0,1],["Lûsmįk","…6132",1474.2,1487.1,1,0,1],["metodsaglam","…6250",1474.2,1487.3,1,0,1],["Pec_BucciaNera_69_","…5955",1474.2,1487.3,1,0,1],["PixelPhantom","unlinked",1474.2,1485.2,1,0,1],["PoloxDisc","…7686",1474.2,1487.3,1,0,1],["RED JHON","…3799",1474.2,1487.1,1,0,1],["Revener","…8264",1474.2,1486.0,1,0,1],["Spelyolog","unlinked",1474.2,1485.4,1,0,1],["virkoni","…4492",1474.2,1487.3,1,0,1],["xXCarlesgamerelprofortni","unlinked",1474.2,1485.2,1,0,1],["Yumju","…8286",1474.2,1487.3,1,0,1],["сосик","unlinked",1474.2,1485.4,1,0,1],["杜姆卡","unlinked",1474.2,1485.4,1,0,1],["DexerXPL","…0980",1473.8,1485.6,1,0,1],["Markiuhh.","…8585",1473.8,1485.6,1,0,1],["nicolai","…3362",1473.8,1485.6,1,0,1],["AJAY","…0820",1473.7,1486.0,1,0,1],["futoshi","…2741",1473.7,1486.0,1,0,1],["President.","…3186",1473.7,1486.0,1,0,1],["GiottoArts","…6191",1473.6,1485.9,3,1,2],["Søuma","unlinked",1473.6,1485.1,1,0,1],["TheIzu","unlinked",1473.6,1485.1,1,0,1],["LEFITACALIENTE","unlinked",1473.3,1484.0,1,0,1],["Pollloio","unlinked",1473.3,1484.0,1,0,1],["OneDrag","…8170",1473.0,1485.9,1,0,1],["Squishygod","…0674",1473.0,1485.9,1,0,1],["Viyer","…5292",1472.9,1487.6,1,0,1],["Wyjin","…8102",1472.9,1487.6,1,0,1],["Carrys","unlinked",1472.6,1484.2,1,0,1],["hugros","…0346",1472.6,1486.0,1,0,1],["YTRAM","…2657",1472.6,1486.0,1,0,1],["Marble","unlinked",1472.2,1485.9,1,0,1],["󠀡󠀡mhtsaras","unlinked",1472.2,1485.9,1,0,1],["Cilantro25_","…1863",1472.0,1487.2,1,0,1],["Katomme","…0686",1472.0,1487.2,1,0,1],["Immortal-OliveTTV","unlinked",1471.9,1483.6,3,1,2],["Optimum","…0521",1471.6,1487.6,1,0,1],["san diego","…2496",1471.6,1487.6,1,0,1],["Tom ⛴⛟","…4499",1471.6,1487.6,1,0,1],["SamBirdo","…3637",1471.5,1486.4,1,0,1],["5huv4n","…9159",1470.7,1487.1,1,0,1],["abcyygdr","unlinked",1470.7,1484.0,1,0,1],["canholas","unlinked",1470.7,1484.0,1,0,1],["Choice Specs","…4224",1470.7,1487.1,1,0,1],["cracKu","unlinked",1470.7,1483.5,1,0,1],["Enjin","unlinked",1470.7,1484.0,1,0,1],["ibr","…2475",1470.7,1487.1,1,0,1],["Kid A","unlinked",1470.7,1486.1,1,0,1],["Quatron","unlinked",1470.7,1483.5,1,0,1],["Sycosen","unlinked",1470.7,1486.1,1,0,1],["Wojtas!","unlinked",1470.7,1483.5,1,0,1],["Xylos","unlinked",1470.7,1486.1,1,0,1],["xChrxz","unlinked",1470.2,1485.1,1,0,1],["yoyoman69","unlinked",1470.2,1485.1,1,0,1],["Clynix","…6054",1469.9,1487.1,3,1,2],["Yx47","unlinked",1469.1,1483.8,1,0,1],["Blxxnq","unlinked",1468.5,1482.7,1,0,1],["bratiy_oy74","unlinked",1468.5,1482.7,1,0,1],["Nelay","unlinked",1468.5,1482.7,1,0,1],["raru","unlinked",1468.5,1482.7,1,0,1],["iZealous","…8167",1468.4,1485.9,1,0,1],["Nevstar","…2332",1467.4,1486.1,3,1,2],["JJNL73","unlinked",1467.1,1482.7,1,0,1],["s☆fir","unlinked",1467.1,1482.7,1,0,1],["amorette","unlinked",1466.7,1484.0,1,0,1],["BreXa","unlinked",1466.7,1484.0,1,0,1],["LIMErence","unlinked",1466.7,1484.0,1,0,1],["Saggan","unlinked",1466.7,1484.0,1,0,1],["3ABOUD","unlinked",1466.3,1484.4,1,0,1],["BoonZ","unlinked",1466.3,1484.4,1,0,1],["Lipton","unlinked",1465.8,1484.8,1,0,1],["Brunawolf","unlinked",1464.4,1483.6,1,0,1],["pham hanni εїз","unlinked",1464.4,1483.6,1,0,1],["TravisGlock","unlinked",1464.4,1483.6,1,0,1],["LuckyBug24","…6622",1463.4,1481.4,1,0,1],["malletsean","…7643",1463.4,1481.4,1,0,1],["にMØNSTERに","unlinked",1462.1,1484.0,1,0,1],["Shurek","…9377",1456.2,1481.5,1,0,1],["Bufferingo","unlinked",1455.7,1483.5,1,0,1],["Zhuo","unlinked",1455.7,1483.5,1,0,1],["Fae","…7892",1455.3,1476.8,2,0,2],["Tovay","…0977",1455.3,1476.8,2,0,2],["Celius","unlinked",1455.0,1484.2,1,0,1],["ZenCrhxs","unlinked",1455.0,1484.2,1,0,1],["__chikchirik","unlinked",1454.0,1482.1,1,0,1],["Khalid Kashmiri","unlinked",1454.0,1482.1,1,0,1],["LiL-Gatochill","…8005",1453.6,1481.6,1,0,1],["lorex546","…6720",1453.6,1481.6,1,0,1],["ChangeUser","unlinked",1453.4,1484.0,1,0,1],["Jungz","unlinked",1453.4,1484.0,1,0,1],["LongLostBruddah","unlinked",1453.4,1484.0,1,0,1],["CustomCheese.Com","…2153",1452.5,1481.5,1,0,1],["Fiver","unlinked",1452.4,1484.4,1,0,1],["L","…4414",1450.1,1480.6,3,1,2],["SltCKira","…7570",1449.9,1479.5,1,0,1],["The Rat Man","…8730",1449.6,1480.0,1,0,1],["Wii Strike","unlinked",1449.6,1484.0,1,0,1],["LRBeanz23","unlinked",1448.8,1484.6,1,0,1],["jaccboi","unlinked",1448.6,1482.2,1,0,1],["UFG | GeoBreaker","unlinked",1448.5,1470.5,2,0,2],["Rajehh","…1130",1447.8,1472.1,2,0,2],["Averanite","unlinked",1445.8,1468.3,2,0,2],["lil scoobert","…8895",1439.7,1458.8,7,2,5],["0hjjjiiiiiiii优雅","unlinked",1439.3,1467.1,2,0,2],["ᏫᏟ ×͜× prize","…1183",1438.9,1473.7,2,0,2],["SylverByrd","unlinked",1435.2,1469.1,4,1,3],["bahay62","…3480",1433.6,1464.7,3,0,3],["Exsavitator","…7602",1432.0,1463.9,3,0,3],["adrian-len","unlinked",1429.6,1468.0,2,0,2],["Laccet","unlinked",1429.6,1468.0,2,0,2],["Le Dam'S","…5950",1429.5,1465.7,3,0,3],["Un Gatto Arancione","unlinked",1428.2,1455.8,3,0,3],["orchdwve","…3535",1425.8,1467.8,2,0,2],["cretinpl","…4261",1425.0,1467.2,2,0,2],["Marre","unlinked",1423.3,1467.7,2,0,2],["fiszlet","unlinked",1412.7,1483.9,1,0,1],["zekk","unlinked",1410.5,1467.7,2,0,2],["Casa","…4940",1404.5,1460.3,2,0,2],["Grat (999)","…1278",1399.2,1459.3,2,0,2],["Mees","unlinked",1377.0,1438.9,4,0,4]],"matches":[["2026-11-13 13:31","4v4","beach",2,0,1,[6,71,70,69],[311,310,308,309]],["2026-11-14 20:39","3v3","school",1,2,0,[-1,-1,340],[33,34,32]],["2026-11-14 20:53","6v6","tutorial",1,2,0,[206,209,207,210,208,-1],[130,23,126,128,127,129]],["2026-11-14 22:15","4v4","grass",2,0,1,[59,1,140,60],[4,68,173,320]],["2026-11-14 23:14","4v4","grass",0,2,0,[299,206,140,363],[4,173,1,163]],["2026-11-14 23:29","4v4","grass",1,2,0,[173,163,140,363],[4,1,23,206]],["2026-11-15 02:42","3v3","beach",0,2,0,[285,289,286],[88,89,0]],["2026-11-15 12:52","4v4","school",1,2,0,[140,315,316,317],[64,19,65,-1]],["2026-11-15 18:56","4v4","tutorial",2,0,1,[68,52,6,-1],[360,0,322,323]],["2026-11-15 19:57","4v4","tutorial",1,2,0,[0,326,327,360],[50,49,48,47]],["2026-11-15 20:17","4v4","tutorial",0,2,0,[313,19,312,170],[4,58,6,17]],["2026-11-15 21:54","4v4","tutorial",2,0,1,[4,83,84,1],[296,337,297,173]],["2026-11-15 22:14","5v5","school",1,2,0,[172,152,155,154,9],[2,56,171,72,158]],["2026-11-16 19:28","4v4","nationals",0,2,0,[4,363,347,-1],[3,-1,-1,-1]],["2026-11-16 20:04","4v4","outer_space",2,0,1,[154,120,0,9],[221,227,347,135]],["2026-11-17 17:45","4v4","beach",2,0,1,[42,7,168,41],[0,334,332,333]],["2026-11-17 18:11","4v4","nationals",2,0,1,[2,56,188,187],[279,341,0,40]],["2026-11-17 18:24","4v4","nationals",2,0,1,[2,279,56,40],[188,0,187,336]],["2026-11-17 18:39","4v4","nationals",2,0,1,[2,133,0,40],[279,56,188,187]],["2026-11-17 20:34","3v3","grass",2,0,1,[90,87,0],[288,294,292]],["2026-11-17 20:40","3v3","practice",2,0,1,[55,149,151,0,150],[359]],["2026-11-17 20:46","4v4","practice",2,0,1,[116,55,115,0],[229,234,232,228]],["2026-11-17 21:01","5v5","practice",1,2,0,[197,196,195,199,198],[136,139,137,0,138]],["2026-11-17 21:24","4v4","beach",0,2,0,[345,266,162,267],[24,0,173,164]],["2026-11-17 21:58","4v4","beach",1,2,0,[345,272,158,164],[24,0,162,173]],["2026-11-17 22:14","4v4","grass",2,0,1,[4,12,0,17],[177,178,355,346]],["2026-11-17 22:35","4v4","grass",2,1,1,[4,12,0,17],[346,355,74,343]],["2026-11-17 22:54","4v4","grass",2,1,1,[74,346,12,0],[4,343,355,17]],["2026-11-18 10:23","4v4","clouds",3,0,1,[8,205,0,140],[265,170,189,264]],["2026-11-18 10:52","4v4","grass",2,3,0,[205,342,0,140],[170,189,8,27]],["2026-11-18 10:57","4v4","practice",2,0,1,[104,99,100,0],[247,253,236,237]],["2026-11-18 11:09","4v4","tutorial",0,2,0,[256,255,240,251],[113,0,111,103]],["2026-11-18 14:12","3v3","tutorial",0,2,0,[293,295,291],[91,0,92]],["2026-11-18 15:01","4v4","grass",0,2,0,[35,275,276,147],[3,0,95,174]],["2026-11-18 15:18","4v4","grass",1,2,0,[0,174,329,328],[3,147,46,45]],["2026-11-18 16:07","4v4","school",2,0,1,[1,7,140,0],[160,194,93,349]],["2026-11-18 16:18","4v4","nationals",2,0,1,[1,0,160,93],[7,140,358,349]],["2026-11-18 16:32","4v4","nationals",2,0,1,[7,140,93,148],[1,0,358,349]],["2026-11-18 16:49","4v4","nationals",1,2,0,[1,148,140,314],[7,0,349,67]],["2026-11-18 18:33","4v4","beach",0,2,0,[352,176,0,353],[15,146,71,14]],["2026-11-18 18:50","4v4","beach",2,0,1,[15,176,0,14],[146,352,71,353]],["2026-11-19 10:37","6v6","tutorial",2,1,1,[79,77,81,78,175,80],[300,302,303,0,53,301]],["2026-11-19 13:17","4v4","nationals",2,1,1,[167,153,0,35],[259,200,258,257]],["2026-11-19 13:37","4v4","school",2,0,1,[0,-1,97,96],[268,-1,263,269]],["2026-11-19 13:53","4v4","school",2,0,1,[0,263,96,98],[344,260,262,261]],["2026-11-19 14:09","4v4","school",2,0,1,[0,108,112,28],[344,250,263,96]],["2026-11-19 14:27","4v4","nationals",0,2,0,[171,337,335,0],[172,10,22,39]],["2026-11-19 14:38","4v4","nationals",2,0,1,[10,22,337,0],[172,274,273,-1]],["2026-11-19 16:57","3v3","practice",0,2,0,[290,287,284],[0,85,86]],["2026-11-19 17:03","4v4","outer_space",2,0,1,[121,125,31,0],[211,216,226,223]],["2026-11-19 17:13","4v4","nationals",0,2,0,[212,224,219,222],[122,119,0,31]],["2026-11-19 17:19","4v4","nationals",2,1,1,[2,40,167,0],[277,1,278,298]],["2026-11-19 17:29","4v4","nationals",2,0,1,[40,0,1,298],[2,167,161,283]],["2026-11-19 17:44","4v4","nationals",0,2,0,[40,167,1,298],[2,0,161,35]],["2026-11-19 18:17","4v4","grass",2,0,1,[4,58,74,0],[190,350,351,191]],["2026-11-19 18:50","4v4","grass",2,0,1,[4,17,58,0],[185,186,351,354]],["2026-11-19 19:11","4v4","grass",2,0,1,[4,17,58,1],[363,351,354,140]],["2026-11-19 19:32","4v4","grass",2,0,1,[4,17,0,1],[68,6,140,354]],["2026-11-19 20:22","4v4","grass",0,2,0,[4,17,168,0],[68,140,6,1]],["2026-11-21 13:26","4v4","clouds",2,0,1,[0,105,102,106],[241,238,245,254]],["2026-11-21 13:53","4v4","grass",1,2,0,[66,305,153,348],[156,18,6,-1]],["2026-11-21 13:58","4v4","grass",1,2,0,[66,305,153,348],[156,18,6,0]],["2026-11-21 14:21","4v4","grass",0,2,0,[156,6,361,0],[66,5,153,157]],["2026-11-21 14:37","4v4","grass",0,2,0,[321,0,157,361],[66,5,6,54]],["2026-11-21 16:58","5v5","nationals",2,0,1,[2,154,9,61,20],[0,6,318,319,184]],["2026-11-21 17:18","5v5","nationals",2,1,1,[2,154,0,152,20],[6,171,184,9,346]],["2026-11-21 17:35","5v5","nationals",0,2,0,[0,6,184,57,346],[2,154,171,152,9]],["2026-11-21 17:54","4v4","nationals",2,1,1,[6,184,57,346],[2,154,171,152]],["2026-11-21 18:10","5v5","nationals",2,0,1,[184,9,171,152,57],[2,154,306,307,346]],["2026-11-21 20:29","4v4","nationals",1,2,0,[0,331,330,189],[43,44,13,58]],["2026-11-21 20:47","4v4","school",2,0,1,[0,75,166,76],[140,304,22,58]],["2026-11-21 21:14","4v4","school",2,1,1,[0,140,62,58],[6,166,2,22]],["2026-11-21 21:33","4v4","school",2,0,1,[0,2,22,6],[56,140,19,58]],["2026-11-21 21:51","4v4","school",0,2,0,[2,6,56,58],[0,140,63,19]],["2026-11-21 22:13","4v4","school",0,2,0,[0,7,339,58],[140,2,53,19]],["2026-11-22 20:07","4v4","tutorial",2,0,1,[109,110,107,0],[244,249,242,243]],["2026-11-23 12:26","6v6","tutorial",0,2,0,[181,180,71,182,179,183],[142,0,35,143,144,145]],["2026-11-23 12:40","4v4","grass",1,2,0,[246,248,252,239],[140,114,101,0]],["2026-11-23 17:22","4v4","tutorial",1,2,0,[202,201,203,204],[0,131,13,132]],["2026-11-23 17:54","4v4","tutorial",2,1,1,[0,37,38,22],[213,93,217,215]],["2026-11-23 18:09","4v4","tutorial",2,0,1,[0,38,51,37],[324,325,192,350]],["2026-11-23 18:25","4v4","tutorial",2,0,1,[0,141,11,51],[350,325,324,193]],["2026-11-23 20:09","4v4","grass",2,0,1,[25,26,200,159],[165,56,362,0]],["2026-11-23 20:37","4v4","grass",2,1,1,[165,56,135,36],[159,0,200,362]],["2026-11-23 20:50","4v4","tutorial",0,2,0,[231,230,235,233],[117,118,53,0]],["2026-11-23 20:58","4v4","nationals",0,2,0,[214,225,218,220],[0,123,124,28]],["2026-11-23 21:03","4v4","nationals",0,2,0,[281,282,280,-1],[305,94,0,-1]],["2026-11-23 21:26","4v4","tutorial",1,3,0,[0,175,2,357],[30,11,29,82]],["2026-11-23 21:41","4v4","tutorial",2,0,1,[0,82,16,134],[169,356,73,357]],["2026-11-23 22:01","4v4","tutorial",2,0,1,[155,16,169,73],[0,356,82,338]],["2026-11-23 22:13","4v4","tutorial",0,2,0,[2,16,155,169],[0,21,82,73]],["2026-11-23 22:31","4v4","tutorial",2,1,1,[0,21,16,155],[271,270,82,73]]],"pbp_players":[["OrangeW","…0317",0,0,29.01,22.25,6.76,3.56,2.73,2.5,0.23,0.767,0.394,827,28.6,3.3,4.8,39.61,34.83,33.38,18.841,1226.82,4925,3779,1915.3,1853.6,77,55,22,46,1.285,13.3,4.26],["Hoshiumi","…7409",17,0,17.06,20.87,-3.81,4.02,2.87,3.56,-0.69,0.715,0.427,110,36.1,0.9,0.0,7.12,1.9,10.03,1.396,135.75,543,388,1563.1,1541.6,8,6,2,3,1.235,17.0,14.23],["pepesda841","unlinked",78,0,15.32,10.8,4.51,7.55,5.54,3.77,1.77,0.733,0.6,15,27.3,9.1,0.0,5.73,0.59,5.7,0.167,17.5,105,77,1531.7,1517.3,1,1,0,0,null,null,null],["KayzzeR","…5201",4,2,12.4,8.06,4.34,1.96,1.73,0.92,0.81,0.882,0.2,90,27.8,2.5,0.0,12.17,2.89,15.56,1.201,144.5,578,510,1603.2,1568.2,14,10,4,4,1.56,23.39,4.28],["finn","…8329",16,0,12.35,11.13,1.22,4.79,2.84,2.59,0.25,0.593,0.435,46,33.3,0.0,24.4,6.63,1.95,6.38,0.443,53.5,214,127,1568.5,1531.3,4,3,1,4,0.952,15.08,5.5],["Pells","…3598",56,0,12.22,10.78,1.44,2.26,1.84,1.45,0.39,0.812,0.195,41,30.3,3.0,1.4,13.69,-0.31,16.71,0.788,95.75,383,311,1541.0,1502.4,8,4,4,4,1.258,-7.33,1.98],["PcSuchi","…6291",66,0,11.92,11.36,0.55,2.5,2.19,2.23,-0.04,0.877,0.353,68,25.0,4.2,0.0,11.61,3.91,9.82,0.527,65.0,260,228,1534.5,1513.3,4,2,2,3,1.601,6.17,10.63],["OS | P1","…8764",5,0,11.37,7.47,3.9,2.77,2.25,1.81,0.44,0.812,0.315,54,10.0,5.0,0.0,15.42,10.81,6.76,0.335,42.5,170,138,1595.7,1539.7,2,2,0,2,1.176,18.31,7.43],["Shmingus McDingus","…4955",11,0,10.81,7.46,3.35,3.41,2.29,1.81,0.48,0.673,0.412,17,10.5,0.0,20.6,13.34,9.15,8.24,0.307,40.25,162,109,1573.5,1532.5,2,2,0,2,1.16,20.83,-0.18],["Mahiro","unlinked",120,0,10.75,8.67,2.08,4.85,3.14,3.15,-0.01,0.647,0.368,19,38.9,0.0,0.0,12.11,9.59,4.87,0.194,25.5,102,66,1525.4,1516.4,1,1,0,0,null,null,null],["Snow","…0172",93,0,10.7,1.91,8.8,2.31,1.96,0.31,1.65,0.849,0.077,39,17.1,0.0,1.1,9.58,7.35,2.55,0.528,69.5,278,236,1529.2,1506.1,4,2,2,1,1.448,-20.0,-1.99],["Jöremy","…7590",9,0,10.68,3.29,7.4,2.07,0.97,0.3,0.67,0.468,0.182,22,36.4,2.3,0.0,25.81,19.61,9.69,0.485,64.0,299,140,1577.7,1540.5,6,4,2,3,0.717,14.44,1.95],["Cozza Pelosa","…0688",156,0,10.33,7.72,2.6,2.97,3.21,2.0,1.21,1.081,0.122,41,5.0,5.0,0.0,-2.08,-5.96,3.92,0.321,43.25,173,187,1509.6,1505.2,3,2,1,2,1.394,3.33,-1.24],["Andros","…7691",7,2,9.84,7.85,2.0,1.95,1.69,1.74,-0.05,0.864,0.34,97,28.3,3.8,4.9,8.02,9.29,-0.47,0.636,88.0,352,304,1580.7,1530.2,6,4,2,1,1.321,-7.69,7.36],["Oni","…8900",152,0,9.78,7.71,2.07,3.24,2.23,1.84,0.39,0.688,0.284,74,24.1,6.9,0.0,3.07,2.17,1.18,0.391,54.25,250,172,1517.3,1512.5,5,3,2,2,1.032,7.2,7.23],["victortaku","…3633",74,0,9.62,10.37,-0.75,3.34,2.34,2.66,-0.32,0.702,0.419,43,15.8,5.3,0.0,7.04,1.49,5.97,0.305,42.75,171,120,1531.8,1514.2,3,2,1,1,1.833,50.0,6.47],["twelve","…4764",183,0,9.06,10.69,-1.64,3.31,3.39,3.48,-0.09,1.024,0.212,33,11.1,0.0,0.0,-1.37,-6.01,3.72,0.141,20.5,123,126,1479.5,1486.1,1,0,1,1,1.159,-21.74,-4.91],["suna","unlinked",12,1,9.01,10.35,-1.34,3.27,2.07,2.55,-0.48,0.633,0.381,42,14.3,4.8,0.0,6.19,3.38,6.58,0.337,49.0,196,124,1571.9,1544.2,3,3,0,0,null,null,null],["osh","…1242",71,1,8.71,7.57,1.14,3.08,1.78,1.84,-0.06,0.578,0.625,16,21.1,0.0,0.0,11.77,5.44,6.43,0.25,37.0,161,93,1533.0,1505.7,4,2,2,1,0.565,-21.74,-8.47],["Cinshay","…9447",21,0,8.57,9.03,-0.46,3.7,2.62,2.75,-0.13,0.708,0.444,27,36.0,12.0,25.8,5.67,0.36,6.93,0.201,30.0,120,85,1560.4,1525.7,2,2,0,2,1.298,20.66,12.8],["Nacho","…5541",140,2,8.07,5.29,2.78,1.26,1.06,0.85,0.21,0.839,0.127,79,21.3,4.1,4.4,6.53,5.35,-0.07,1.649,254.75,1019,855,1522.5,1503.7,19,9,10,8,1.287,-3.0,-4.98],["Saitaike","…3130",154,2,8.04,1.91,6.13,1.34,1.31,0.49,0.82,0.978,0.121,58,12.2,4.1,0.0,6.57,9.41,-0.88,0.584,90.35,405,396,1513.2,1512.9,7,4,3,3,1.256,10.0,-2.91],["BN | Isaac Foster_fr","unlinked",24,2,7.84,2.62,5.22,1.6,1.68,0.54,1.14,1.05,0.294,17,24.1,0.0,0.0,8.23,6.19,4.04,0.285,44.75,179,188,1554.4,1531.7,2,2,0,0,null,null,null],["mugs","unlinked",67,1,7.81,5.19,2.62,5.35,2.98,2.21,0.77,0.557,0.333,12,20.0,0.0,0.0,1.21,2.23,-1.99,0.169,26.5,106,59,1534.4,1515.2,1,1,0,0,null,null,null],["greenYolong","unlinked",173,1,7.58,3.52,4.06,2.48,1.61,0.8,0.8,0.648,0.267,45,15.8,0.0,0.0,8.23,6.19,4.04,0.28,44.75,179,116,1486.5,1501.2,6,3,3,0,null,null,null],["OS | Aster","…5051",144,1,6.76,8.07,-1.31,5.69,2.31,2.41,-0.1,0.407,0.75,12,7.7,7.7,0.0,1.37,-3.72,6.01,0.121,20.5,123,50,1520.7,1513.9,1,1,0,1,0.754,21.74,0.91],["Wis","…2870",184,2,6.55,4.23,2.32,1.52,1.44,0.94,0.5,0.948,0.077,26,27.5,0.0,0.0,2.2,1.46,1.7,0.337,57.85,268,254,1479.3,1487.4,5,2,3,3,1.239,-10.0,-3.36],["Iamnotdeadd","…5049",53,2,6.01,1.76,4.24,1.42,1.15,0.26,0.89,0.808,0.269,26,22.7,9.1,6.5,6.98,3.89,3.26,0.246,44.0,208,168,1544.4,1515.1,3,2,1,2,1.453,23.08,1.51],["HARVZ4","unlinked",164,2,5.97,3.98,1.99,1.38,1.11,0.92,0.19,0.799,0.184,38,25.8,6.5,0.0,8.66,5.79,3.64,0.25,44.75,179,143,1499.3,1500.2,2,1,1,0,null,null,null],["m","…9871",51,1,5.91,4.41,1.5,2.29,1.21,1.17,0.04,0.53,1.0,3,34.6,0.0,12.9,10.6,7.41,6.93,0.163,29.25,117,62,1544.9,1523.2,2,2,0,2,0.951,37.7,2.55],["lil scoobert","…8895",346,2,5.55,6.95,-1.4,1.19,0.76,1.13,-0.37,0.633,0.328,61,12.7,1.8,0.0,6.57,2.05,4.56,0.611,113.0,488,309,1439.7,1458.8,7,2,5,2,0.664,-7.2,-2.63],["AxMikeas","…3912",165,2,5.13,7.28,-2.16,1.69,1.69,2.34,-0.65,1.0,0.231,39,7.7,0.0,0.0,0.05,0.11,1.7,0.185,35.5,142,142,1497.4,1500.3,2,1,1,2,1.455,1.0,3.64],["Jaco","unlinked",3,2,4.3,3.64,0.66,0.72,0.53,0.45,0.08,0.744,0.208,24,11.8,17.6,0.0,9.53,2.25,8.87,0.234,48.0,195,145,1609.5,1548.5,3,3,0,0,null,null,null],["Yktrasdi","…1523",73,2,4.21,5.29,-1.08,0.98,0.58,1.0,-0.42,0.597,0.5,16,14.3,0.0,23.5,8.43,1.78,6.83,0.237,49.0,196,117,1532.0,1509.6,4,2,2,4,0.992,-6.35,-2.61],["Quack","…3800",1,2,4.21,4.06,0.15,-0.14,-0.09,0.21,-0.3,0.614,0.293,99,18.0,6.6,0.0,18.73,10.31,15.1,0.661,136.75,547,336,1661.6,1587.3,14,10,4,5,0.996,12.4,4.2],["L","…4414",337,3,3.89,9.28,-5.39,1.53,1.21,2.62,-1.41,0.795,0.333,27,27.3,0.0,0.0,0.37,-3.9,4.33,0.174,37.08,151,120,1450.1,1480.6,3,1,2,2,1.319,2.78,-1.03],["LaughingStock","…2353",142,3,3.44,3.86,-0.43,1.3,1.12,0.89,0.22,0.862,0.267,30,12.5,12.5,0.0,1.37,-3.72,6.01,0.092,20.5,123,106,1520.7,1513.9,1,1,0,1,1.174,21.74,-3.35],["Serendipity","…1335",96,2,2.76,2.74,0.02,0.72,0.3,0.73,-0.42,0.418,0.0,3,22.2,0.0,11.6,6.88,5.82,0.99,0.187,44.25,177,74,1527.7,1514.1,3,2,1,3,0.778,12.12,-3.32],["speaky dermix","unlinked",8,2,2.69,1.05,1.64,0.29,0.11,0.2,-0.09,0.362,0.667,3,34.6,19.2,0.0,9.35,7.66,1.37,0.182,43.5,174,63,1578.1,1532.7,2,2,0,0,null,null,null],["koel","…0871",22,2,2.47,5.7,-3.23,0.55,0.32,0.98,-0.66,0.583,0.38,71,24.4,2.2,18.4,3.69,0.36,4.72,0.395,96.5,386,225,1560.1,1528.3,6,4,2,6,0.922,7.8,2.32],["Caillou","…3327",171,3,2.28,0.99,1.3,0.57,0.41,0.3,0.11,0.72,0.238,42,12.5,0.0,0.0,2.9,3.56,-0.53,0.199,49.6,218,157,1487.7,1500.0,6,3,3,3,1.111,6.17,4.03],["Don Pitas Pollos","…2800",19,2,1.63,4.03,-2.4,0.02,0.02,1.07,-1.05,0.678,0.308,26,32.3,0.0,12.3,6.29,6.07,0.11,0.197,52.75,211,143,1561.2,1524.2,5,3,2,3,1.073,-0.46,0.45],["Inferno","…0150",157,3,1.58,1.37,0.21,1.26,0.78,0.71,0.06,0.618,0.278,18,15.0,0.0,0.0,-4.08,-0.67,-4.73,0.158,42.5,170,105,1507.9,1502.7,2,1,1,2,1.141,-11.27,-1.23],["petronavt","…5208",166,3,1.56,3.47,-1.91,0.42,0.31,1.18,-0.86,0.758,0.136,22,28.6,0.0,16.2,1.82,4.98,-2.1,0.18,48.42,186,141,1495.6,1499.1,2,1,1,2,1.349,8.43,1.69],["Sky","…9268",145,3,1.36,0.79,0.57,0.82,0.37,-0.21,0.58,0.447,0.353,17,6.2,0.0,0.0,1.37,-3.72,6.01,0.074,20.5,123,55,1520.7,1513.9,1,1,0,1,0.623,21.74,4.9],["Mahito 👑","…3486",143,3,1.24,3.26,-2.02,0.45,0.2,0.61,-0.41,0.439,0.143,14,30.0,0.0,0.0,2.77,-3.32,6.41,0.073,20.5,123,54,1520.7,1513.9,1,1,0,1,0.58,21.74,-1.26],["Averanite","unlinked",345,3,0.9,3.38,-2.48,1.02,0.86,1.36,-0.5,0.844,0.171,41,12.5,6.2,0.0,-8.23,-4.04,-6.19,0.153,44.75,179,151,1445.8,1468.3,2,0,2,0,null,null,null],["TRABISCOTT","…6341",200,3,0.88,2.69,-1.81,0.43,0.32,0.93,-0.6,0.744,0.333,24,35.7,3.6,0.0,-0.77,-0.22,-2.57,0.144,42.0,168,125,1476.5,1485.3,3,1,2,3,1.205,-1.71,1.93],["Nevstar","…2332",305,3,0.85,0.82,0.03,-0.19,-0.1,-0.09,-0.01,0.53,0.25,12,0.0,0.0,0.0,4.47,-0.46,3.48,0.098,28.75,115,61,1467.4,1486.1,3,1,2,2,1.0,8.7,-2.61],["andreaghini","…0877",175,3,0.68,2.02,-1.34,1.08,0.61,0.54,0.07,0.569,0.286,7,17.6,17.6,18.2,-6.41,-6.88,-0.42,0.147,44.0,211,120,1480.8,1496.2,2,1,1,1,1.171,-9.76,-10.88],["HZ | Reptil","…2622",57,3,0.39,-0.78,1.17,-0.11,-0.09,-0.26,0.17,0.793,0.244,45,11.8,5.9,0.0,2.8,2.81,0.84,0.126,39.05,174,138,1539.9,1519.0,3,2,1,1,0.787,-27.66,-5.57],["AzDark_","…5347",141,3,0.24,-0.94,1.19,-0.61,-0.33,-0.33,0.01,0.535,0.312,16,10.0,5.0,3.2,4.68,5.48,0.82,0.1,31.75,127,68,1522.5,1511.4,1,1,0,1,0.887,35.48,6.82],["Levine","unlinked",194,3,0.19,2.34,-2.15,1.1,0.7,1.48,-0.78,0.637,0.3,20,10.0,0.0,11.8,-6.13,-1.63,-5.91,0.08,25.5,102,65,1477.7,1486.2,1,0,1,0,null,null,null],["taneaven","…6913",44,2,0.08,-0.08,0.16,-0.85,-0.56,-0.29,-0.27,0.66,0.091,11,21.4,0.0,4.3,5.74,3.18,2.4,0.077,25.0,100,66,1546.6,1518.4,1,1,0,1,0.935,2.8,2.03],["MrMandau","…6807",168,3,-0.18,4.07,-4.25,-0.13,-0.13,0.64,-0.77,1.018,0.161,31,17.9,0.0,0.0,1.28,-5.44,6.26,0.163,54.75,219,223,1495.2,1495.1,2,1,1,1,1.573,-4.88,-7.85],["Lykossino","…9516",186,3,-0.41,1.79,-2.2,0.37,0.26,1.13,-0.87,0.698,0.211,19,40.0,0.0,0.0,-4.24,-1.19,-5.41,0.076,26.5,106,74,1479.2,1488.7,1,0,1,1,0.982,-30.91,0.51],["d1monchill","…0316",37,2,-0.47,-1.53,1.06,-1.11,-0.71,-1.03,0.32,0.642,0.28,25,31.0,17.2,31.7,6.94,1.54,7.88,0.106,37.0,148,95,1547.8,1524.1,2,2,0,2,1.036,27.27,4.89],["STRIDER","unlinked",-1,3,-0.75,-2.29,1.54,-1.0,-0.72,-1.51,0.8,0.72,0.0,15,20.0,0.0,0.0,3.96,-1.16,5.93,0.091,33.33,100,72,null,null,0,0,0,0,null,null,null],["President.","…3186",262,3,-0.96,-1.92,0.96,-0.8,-0.53,-0.37,-0.16,0.655,0.059,17,30.8,7.7,13.3,1.89,6.13,-3.19,0.079,29.75,119,78,1473.7,1486.0,1,0,1,1,0.868,-23.53,-0.96],["SirBubbleChu","unlinked",148,2,-1.01,5.63,-6.64,-1.42,-0.89,2.02,-2.91,0.625,0.714,14,15.4,7.7,0.0,5.22,4.51,1.98,0.073,28.0,112,70,1518.0,1503.6,2,1,1,0,null,null,null],["Immortal-OliveTTV","unlinked",279,3,-1.31,1.48,-2.78,-0.65,-0.43,-0.12,-0.31,0.661,0.5,16,15.0,20.0,0.0,-0.4,-7.93,7.01,0.079,31.75,127,84,1471.9,1483.6,3,1,2,0,null,null,null],["peottamalik","unlinked",147,3,-1.41,4.2,-5.61,-0.34,-0.24,1.6,-1.83,0.699,0.133,15,40.0,0.0,0.0,-3.14,-3.35,-0.15,0.069,28.25,113,79,1518.3,1503.8,2,1,1,0,null,null,null],["YTRAM","…2657",274,3,-1.51,-1.32,-0.18,-0.22,-0.2,-0.73,0.53,0.915,0.154,39,16.7,16.7,0.0,-3.88,-6.54,2.43,0.069,28.5,117,107,1472.6,1486.0,1,0,1,1,2.171,-25.71,6.14],["Amro Abdo","unlinked",-1,3,-1.57,6.49,-8.06,-0.24,-0.24,2.51,-2.75,0.98,0.31,29,7.7,0.0,0.0,-3.96,-5.93,1.16,0.079,33.33,100,98,null,null,0,0,0,0,null,null,null],["sznorbert glejczak","…0263",82,2,-2.09,2.06,-4.15,-1.42,-0.96,0.01,-0.98,0.679,0.283,46,13.5,3.8,7.8,8.83,1.45,8.64,0.17,78.75,315,214,1531.0,1513.3,5,3,2,5,1.06,6.59,1.57],["bmw enjoyer","…1741",6,2,-2.12,1.31,-3.43,-0.94,-0.68,-0.18,-0.5,0.725,0.227,176,15.2,3.8,5.9,7.79,-1.67,9.62,0.472,219.25,912,661,1593.8,1534.1,16,9,7,11,1.104,-0.62,1.44],["Necoli","…7215",30,3,-2.21,0.97,-3.18,-1.19,-0.94,0.31,-1.25,0.784,0.28,25,8.3,0.0,18.4,0.89,-0.09,0.24,0.059,27.75,111,87,1551.1,1521.0,1,1,0,1,1.317,9.76,7.63],["hendt_0","unlinked",77,3,-2.44,2.26,-4.7,-3.05,-1.36,0.45,-1.81,0.448,0.5,2,0.0,0.0,0.0,3.9,0.02,5.13,0.035,17.5,105,47,1531.7,1517.3,1,1,0,0,null,null,null],["Grat (999)","…1278",362,3,-2.52,1.86,-4.38,0.08,0.07,1.0,-0.93,0.901,0.294,17,11.1,11.1,0.0,-10.93,-6.82,-5.23,0.07,35.5,142,128,1399.2,1459.3,2,0,2,2,1.065,-5.0,-8.19],["omermorag10","…2598",35,2,-2.53,2.85,-5.38,-1.99,-1.23,0.55,-1.78,0.62,0.259,27,26.1,0.0,0.0,6.0,2.33,4.69,0.07,35.25,163,101,1549.8,1527.9,4,3,1,3,0.896,16.88,1.75],["k2clm","unlinked",-1,3,-2.88,-4.25,1.37,-1.88,-1.59,-2.32,0.72,0.85,0.5,10,28.6,14.3,0.0,3.96,-1.16,5.93,0.061,33.33,100,85,null,null,0,0,0,0,null,null,null],["GoofChilean","…0475",38,2,-3.41,-1.61,-1.8,-1.94,-1.66,-1.05,-0.61,0.858,0.0,4,41.2,17.6,4.2,6.94,1.54,7.88,0.059,37.0,148,127,1547.8,1524.1,2,2,0,2,1.327,27.27,-7.5],["Bomby","…4623",2,2,-3.96,-2.12,-1.84,-1.45,-1.12,-0.51,-0.61,0.776,0.212,203,22.4,3.4,6.3,11.52,9.05,5.5,0.332,242.1,1012,785,1629.1,1556.3,18,11,7,12,1.194,0.0,0.34],["femilambda203","…7595",29,3,-4.07,4.14,-8.22,-2.36,-1.59,1.6,-3.19,0.676,0.286,21,9.1,0.0,7.7,-0.03,-0.65,-0.11,0.036,27.0,108,73,1551.1,1521.0,1,1,0,1,1.037,9.76,-2.13],["Exsavitator","…7602",351,3,-4.14,-2.44,-1.69,-0.41,-0.25,0.15,-0.4,0.61,0.0,8,31.2,0.0,0.0,-13.1,-3.16,-13.73,0.057,44.25,177,108,1432.0,1463.9,3,0,3,2,1.427,-39.81,-7.01],["Ashuraplex","unlinked",187,3,-4.42,1.08,-5.5,-3.0,-1.8,-0.32,-1.48,0.6,0.211,19,15.4,0.0,0.0,3.93,-4.39,7.93,0.041,35.0,140,84,1479.1,1483.3,3,1,2,0,null,null,null],["iamhassangohar","…0169",180,3,-4.6,-8.35,3.75,-2.62,-1.54,-3.39,1.85,0.585,0.135,37,0.0,57.1,0.0,-1.37,-6.01,3.72,0.022,20.5,123,72,1479.5,1486.1,1,0,1,1,0.899,-21.74,6.27],["Un Gatto Arancione","unlinked",355,3,-4.62,0.27,-4.89,-1.44,-0.87,0.2,-1.07,0.601,0.348,23,6.7,0.0,0.0,-6.28,-6.32,-3.64,0.051,47.0,188,113,1428.2,1455.8,3,0,3,0,null,null,null],["yoyoman69","unlinked",297,3,-4.74,0.9,-5.64,-2.8,-1.68,0.3,-1.98,0.6,0.333,6,8.3,8.3,0.0,-1.1,-1.87,0.16,0.029,27.9,115,69,1470.2,1485.1,1,0,1,0,null,null,null],["Raccooon0","…4561",40,2,-4.91,-0.79,-4.11,-2.62,-1.64,-0.51,-1.14,0.628,0.167,36,19.4,6.5,0.0,6.6,2.49,5.76,0.059,60.5,242,152,1547.2,1529.4,6,4,2,3,1.177,22.12,0.0],["Casa","…4940",361,3,-5.11,-2.8,-2.31,-1.82,-0.88,-0.42,-0.46,0.485,0.133,15,30.8,7.7,0.0,-10.3,-5.39,-7.75,0.028,31.75,130,63,1404.5,1460.3,2,0,2,2,0.908,-18.31,-0.66],["Blxxnq","unlinked",300,3,-5.56,2.8,-8.36,-4.8,-1.83,1.06,-2.89,0.381,0.429,7,22.2,0.0,0.0,-3.9,-5.13,-0.02,0.012,17.5,105,40,1468.5,1482.7,1,0,1,0,null,null,null],["LuckyBug24","…6622",318,3,-5.64,-1.26,-4.38,-3.23,-1.8,-0.21,-1.59,0.558,0.1,10,23.8,0.0,0.0,-2.9,-0.31,-2.91,0.016,24.0,120,67,1463.4,1481.4,1,0,1,1,0.945,-16.36,0.67],["Lord Tarascoun","…0448",169,3,-6.24,-4.48,-1.76,-4.41,-2.29,-1.43,-0.85,0.518,0.037,27,18.2,0.0,53.6,2.1,2.99,-0.97,0.014,34.25,137,71,1493.0,1495.4,3,1,2,3,0.587,-15.08,-1.44],["UFG | GeoBreaker","unlinked",343,3,-6.4,-4.2,-2.21,-2.74,-1.7,-1.19,-0.52,0.621,-0.083,12,14.3,0.0,0.0,-5.17,-3.93,-3.84,0.012,35.0,140,87,1448.5,1470.5,2,0,2,0,null,null,null],["Lukeviral","…0366",153,3,-6.43,-3.28,-3.15,-1.78,-1.77,-1.16,-0.61,0.996,-0.111,18,10.5,5.3,0.0,2.04,-3.11,4.98,0.019,58.0,232,231,1516.9,1509.3,4,2,2,3,1.463,-1.87,-11.61],["iD_Galaxy","…5757",155,3,-6.74,-2.79,-3.95,-3.02,-2.26,-1.32,-0.94,0.748,-0.143,14,14.3,4.8,16.7,2.62,-3.07,6.42,0.008,40.75,163,122,1511.4,1503.5,4,2,2,3,1.129,6.19,-5.33],["Aetos","…5114",185,3,-7.06,-5.57,-1.49,-3.55,-2.38,-1.79,-0.59,0.67,-0.167,6,27.3,18.2,0.0,-4.24,-1.19,-5.41,0.001,26.5,106,71,1479.2,1488.7,1,0,1,1,0.691,-30.91,-8.85],["KlLLHUNTER","unlinked",205,3,-7.7,-1.7,-5.99,-4.98,-1.97,-0.12,-1.85,0.397,0.333,9,20.8,8.3,0.0,-4.03,0.73,-5.56,-0.009,43.5,174,69,1475.0,1497.2,2,1,1,0,null,null,null],["YNSC","unlinked",170,3,-8.02,-6.35,-1.67,-4.83,-2.67,-1.79,-0.87,0.552,0.154,13,46.2,7.7,0.0,4.03,5.56,-0.73,-0.015,43.5,174,96,1491.4,1487.2,3,1,2,0,null,null,null],["XoXy","unlinked",162,3,-8.42,-2.07,-6.35,-2.63,-1.62,-0.11,-1.51,0.615,0.143,14,15.8,0.0,0.0,-11.42,-5.6,-7.75,-0.023,44.75,179,110,1500.9,1499.8,2,1,1,0,null,null,null],["Milan","unlinked",188,3,-8.51,-3.61,-4.9,-6.62,-3.17,-1.88,-1.28,0.479,0.143,14,6.7,26.7,0.0,3.93,-4.39,7.93,-0.02,35.0,140,67,1479.1,1483.3,3,1,2,0,null,null,null],["TomLTT","…8897",58,3,-8.71,-4.87,-3.84,-2.65,-1.54,-0.52,-1.02,0.581,0.165,109,14.1,3.8,4.6,-0.78,8.7,-6.65,-0.102,158.0,632,367,1538.8,1522.6,10,6,4,8,0.924,-0.5,-0.87],["KxmiDH","…5286",202,3,-8.94,-4.36,-4.58,-3.89,-3.52,-2.16,-1.36,0.905,0.042,24,15.0,5.0,0.0,3.9,-2.55,7.4,-0.03,39.83,126,114,1475.2,1487.8,1,0,1,1,1.6,-5.0,10.23],["亗 F R 么 Nᴳᵒᵈ 亗","…3557",26,3,-8.95,-3.93,-5.02,-4.46,-3.64,-1.81,-1.82,0.815,0.212,33,20.0,20.0,0.0,4.75,0.67,4.86,-0.023,31.0,124,101,1551.9,1520.2,1,1,0,1,0.869,4.76,2.95],["ᏫᏟ ×͜× prize","…1183",348,3,-9.07,-4.71,-4.37,-3.36,-2.16,-1.49,-0.67,0.643,0.161,31,6.7,6.7,0.0,-10.42,-10.14,-1.68,-0.028,35.0,140,90,1438.9,1473.7,2,0,2,1,1.04,-10.89,2.47],["cretinpl","…4261",357,3,-9.22,-1.06,-8.16,-4.11,-2.34,-0.11,-2.24,0.57,0.2,5,15.4,0.0,0.0,-11.13,-9.38,-4.37,-0.026,30.25,121,69,1425.0,1467.2,2,0,2,2,0.871,-24.29,-7.13],["Tovay","…0977",325,3,-9.96,-4.9,-5.06,-6.64,-3.22,-1.46,-1.76,0.485,-0.077,13,12.5,0.0,21.7,-8.37,-4.56,-6.86,-0.03,25.25,101,49,1455.3,1476.8,2,0,2,2,0.623,-37.7,-5.18],["sterlowhite","…4684",159,3,-10.26,-5.88,-4.38,-7.35,-3.39,-2.03,-1.35,0.46,0.091,11,15.0,20.0,0.0,-0.58,-2.21,-0.11,-0.045,34.75,139,64,1502.8,1499.7,2,1,1,2,0.67,-1.0,-4.04],["0hjjjiiiiiiii优雅","unlinked",347,3,-10.3,-7.88,-2.42,-5.31,-3.38,-2.56,-0.82,0.637,-0.053,19,0.0,0.0,0.0,-7.91,-2.79,-7.51,-0.034,25.5,102,65,1439.3,1467.1,2,0,2,0,null,null,null],["mash2311","…7001",189,3,-10.7,-0.88,-9.82,-5.37,-2.88,0.14,-3.03,0.537,0.429,21,8.3,8.3,0.0,-0.53,5.41,-5.37,-0.076,50.75,203,109,1478.7,1484.5,3,1,2,1,0.869,-2.8,-6.91],["fredlee583","…5076",167,3,-11.04,-7.59,-3.45,-4.51,-2.75,-1.53,-1.23,0.611,-0.071,14,23.1,15.4,0.0,-9.92,1.69,-11.16,-0.061,37.25,149,91,1495.3,1500.0,4,2,2,4,0.755,-15.65,-7.43],["pNg","…6693",68,3,-12.33,-1.88,-10.45,-4.47,-3.73,-1.16,-2.57,0.834,-0.333,12,20.8,0.0,0.0,1.39,-7.29,7.72,-0.095,43.75,175,146,1534.0,1511.1,4,2,2,2,1.469,-11.72,-7.67],["Valid","unlinked",-1,3,-13.41,-6.01,-7.4,-6.91,-5.12,-2.64,-2.48,0.74,0.077,13,15.0,5.0,0.0,-3.96,-5.93,1.16,-0.088,33.33,100,74,null,null,0,0,0,0,null,null,null],["Rajehh","…1130",344,3,-15.62,-7.14,-8.47,-7.75,-5.11,-2.39,-2.72,0.659,0.037,27,11.1,0.0,14.7,-4.99,-4.06,-2.48,-0.113,31.5,126,83,1447.8,1472.1,2,0,2,2,0.73,-22.63,-1.86],["SylverByrd","unlinked",349,3,-16.71,-8.64,-8.06,-6.98,-3.98,-2.03,-1.95,0.57,0.154,13,25.0,0.0,0.0,-8.87,-5.3,-6.51,-0.202,50.0,200,114,1435.2,1469.1,4,1,3,0,null,null,null],["GiottoArts","…6191",263,3,-17.03,-10.36,-6.67,-6.82,-4.51,-2.68,-1.83,0.661,0.067,15,10.5,10.5,7.5,-7.0,-2.95,-6.08,-0.182,43.5,174,115,1473.6,1485.9,3,1,2,3,0.995,-11.11,-5.27],["Fae","…7892",324,3,-17.36,-7.26,-10.09,-7.81,-5.47,-2.19,-3.28,0.701,0.222,18,11.1,44.4,7.8,-10.6,-6.93,-7.41,-0.126,29.25,117,82,1455.3,1476.8,2,0,2,2,1.189,-37.7,-3.91],["Le Dam'S","…5950",354,3,-17.41,-9.26,-8.15,-6.82,-3.6,-1.79,-1.81,0.527,0.088,34,6.7,6.7,0.0,-16.85,-8.72,-13.49,-0.22,50.75,203,107,1429.5,1465.7,3,0,3,2,0.644,-32.2,-2.44],["†  Koya  †","unlinked",227,3,-18.28,-10.38,-7.9,-10.2,-6.2,-3.37,-2.84,0.608,0.0,11,0.0,12.5,0.0,-12.11,-4.87,-9.59,-0.12,25.5,102,62,1474.8,1483.6,1,0,1,0,null,null,null],["Clynix","…6054",298,4,-3.31,-2.41,-0.9,-2.56,-1.7,-0.7,-1.0,0.667,0.083,12,15.0,0.0,0.0,2.5,5.88,-2.98,0.038,23.25,93,62,1469.9,1487.1,3,1,2,3,1.018,6.19,2.68],["bahay62","…3480",350,4,-12.33,-2.17,-10.15,-6.1,-4.65,-0.23,-4.42,0.762,0.167,6,25.0,0.0,0.0,-9.27,-3.72,-7.95,-0.046,21.0,84,64,1433.6,1464.7,3,0,3,3,1.094,-41.18,-7.69]],"markov_kinds":[["block",1179,17.52,0.697,0.553],["dump",262,9.4,0.626,0.569],["attack",4747,3.55,0.595,0.479],["receive",787,0.91,0.475,0.497],["set",5842,0.19,0.514,0.564],["serve",5190,0.04,0.568,0.535],["bump",8039,-2.72,0.47,0.502],["shank",423,-4.64,0.449,0.513],["tip",819,-5.64,0.471,0.456],["dig",608,-7.03,0.449,0.49],["carom",688,-26.54,0.237,0.459]],"markov_states":[["attack",1,"high",49,0.184,25,0.36,0.49],["attack",1,"low",63,0.635,35,0.514,0.444],["attack",2,"low",346,0.581,232,0.457,0.329],["attack",2,"mid",103,0.709,59,0.576,0.427],["attack",3,"high",1433,0.626,895,0.493,0.375],["attack",3,"low",1541,0.567,1107,0.467,0.282],["attack",3,"mid",1197,0.606,811,0.481,0.322],["block",0,"base",1160,0.702,624,0.554,0.462],["block",0,"high",19,0.421,16,0.5,0.158],["bump",1,"high",2048,0.521,1957,0.534,0.044],["bump",1,"low",3272,0.463,2876,0.503,0.121],["bump",1,"mid",1273,0.506,1200,0.517,0.057],["bump",2,"high",333,0.45,302,0.487,0.093],["bump",2,"low",368,0.386,322,0.41,0.125],["bump",2,"mid",56,0.411,51,0.451,0.089],["bump",3,"high",185,0.297,133,0.406,0.281],["bump",3,"low",448,0.364,357,0.403,0.203],["bump",3,"mid",56,0.375,39,0.513,0.304],["carom",1,"low",196,0.347,117,0.453,0.403],["carom",1,"mid",458,0.203,180,0.467,0.607],["carom",2,"low",21,0.095,5,0.4,0.762],["dig",1,"base",400,0.465,369,0.493,0.077],["dig",1,"high",97,0.577,91,0.604,0.062],["dig",2,"base",77,0.351,70,0.371,0.091],["dig",3,"base",33,0.121,12,0.25,0.636],["dump",2,"high",75,0.627,60,0.55,0.2],["dump",2,"low",75,0.573,63,0.54,0.16],["dump",2,"mid",87,0.632,65,0.554,0.253],["receive",1,"high",243,0.453,236,0.466,0.029],["receive",1,"low",300,0.483,263,0.529,0.123],["receive",1,"mid",244,0.488,228,0.491,0.066],["serve",1,"float",1032,0.631,880,0.607,0.147],["serve",1,"high",573,0.558,454,0.511,0.208],["serve",1,"low",1450,0.521,1243,0.517,0.143],["serve",1,"mid",2135,0.572,1726,0.517,0.192],["set",1,"high",57,0.474,48,0.562,0.158],["set",1,"low",304,0.461,273,0.513,0.102],["set",1,"mid",72,0.514,69,0.536,0.042],["set",2,"high",1811,0.484,1594,0.549,0.12],["set",2,"low",2553,0.537,2378,0.577,0.069],["set",2,"mid",980,0.532,902,0.578,0.08],["set",3,"low",40,0.475,33,0.576,0.175],["shank",1,"base",384,0.443,314,0.513,0.182],["shank",3,"base",34,0.529,28,0.536,0.176],["tip",1,"low",35,0.286,24,0.375,0.314],["tip",1,"mid",21,0.524,15,0.6,0.286],["tip",2,"high",62,0.516,49,0.51,0.21],["tip",2,"low",104,0.519,64,0.406,0.385],["tip",2,"mid",99,0.646,63,0.571,0.364],["tip",3,"high",196,0.444,149,0.436,0.24],["tip",3,"low",143,0.42,98,0.449,0.315],["tip",3,"mid",145,0.448,111,0.45,0.234]],"cv_bench":[["Serve Baseline",0.24551,0.68415,0.5678,0.5572],["In-fold BT MMR",0.24997,0.69407,0.548,0.5727],["Rally RAPM (α=40)",0.24533,0.68392,0.5671,0.5882],["PBP Markov EPA",0.24342,0.68004,0.5709,0.5956],["Blended VPM (0.25/0.75)",0.24337,0.67989,0.5644,0.5952]],"bpm_weights":[["pts",3.0,3.0],["spk",0.0,0.64],["ast",2.0,0.67],["ace",2.0,0.74],["blk",2.0,0.45],["dig",2.0,-0.28],["set",1.0,-0.8],["rcv",1.0,-0.37]],"reliability":[["Usage (Touches/Rally)",0.761,0.865],["Rally RAPM",0.568,0.725],["PBP EPA / 100 Rallies",0.456,0.626],["Serve RAPM",0.473,0.642],["V-Eff (EPA / 100 Touches)",0.412,0.584],["O-EPA / 100 Rallies",0.398,0.569],["Sideout RAPM",0.456,0.627],["D-EPA / 100 Rallies",0.156,0.271]]};
+  const SITE_DATA = {"meta":{"generated_utc":"2026-11-23 23:28 UTC","date_min":"2026-11-13","date_max":"2026-11-23","has_pbp":true,"mmr_matches":92,"mmr_players":364,"pbp_rallies":5204,"pbp_sessions":115,"pbp_contacts":28584,"pbp_qualified":110,"box_matches":46,"k_epa":9.7109,"default_w_epa":0.75,"default_m":200.0,"repl_vpm":-7.187,"bo3_slope":7.8984,"bo3_rallies":93.0898,"bpm_r2":0.974},"mmr_players":[["OrangeW","…0317",1915.3,1853.6,77,55,22],["Quack","…3800",1661.6,1587.3,14,10,4],["Bomby","…4623",1629.1,1556.3,18,11,7],["Jaco","unlinked",1609.5,1548.5,3,3,0],["KayzzeR","…5201",1603.2,1568.2,14,10,4],["OS | P1","…8764",1595.7,1539.7,2,2,0],["bmw enjoyer","…1741",1593.8,1534.1,16,9,7],["Andros","…7691",1580.7,1530.2,6,4,2],["speaky dermix","unlinked",1578.1,1532.7,2,2,0],["Jöremy","…7590",1577.7,1540.5,6,4,2],["Melle Muck","…3147",1575.2,1532.6,2,2,0],["Shmingus McDingus","…4955",1573.5,1532.5,2,2,0],["suna","unlinked",1571.9,1544.2,3,3,0],["Cheglet","…8751",1571.4,1530.6,2,2,0],["Omex PatXD","unlinked",1570.5,1532.0,2,2,0],["Zero Kara","unlinked",1570.5,1532.0,2,2,0],["finn","…8329",1568.5,1531.3,4,3,1],["Hoshiumi","…7409",1563.1,1541.6,8,6,2],["firework","…4354",1561.3,1526.3,2,2,0],["Don Pitas Pollos","…2800",1561.2,1524.2,5,3,2],["Jane","…3915",1560.7,1531.6,2,2,0],["Cinshay","…9447",1560.4,1525.7,2,2,0],["koel","…0871",1560.1,1528.3,6,4,2],["UnluckyRos","unlinked",1556.2,1531.6,2,2,0],["BN | Isaac Foster_fr","unlinked",1554.4,1531.7,2,2,0],["Ket","…2316",1551.9,1520.2,1,1,0],["亗 F R 么 Nᴳᵒᵈ 亗","…3557",1551.9,1520.2,1,1,0],["stings, doesn't it","unlinked",1551.6,1517.8,1,1,0],["Zomb","…8766",1551.3,1526.0,2,2,0],["femilambda203","…7595",1551.1,1521.0,1,1,0],["Necoli","…7215",1551.1,1521.0,1,1,0],["Sapera","…2813",1550.7,1526.8,2,2,0],["akselgoklahie","unlinked",1550.5,1516.0,1,1,0],["Gugor","unlinked",1550.5,1516.0,1,1,0],["Sbonkeydonkey","unlinked",1550.5,1516.0,1,1,0],["omermorag10","…2598",1549.8,1527.9,4,3,1],["Skariway","…3635",1549.2,1520.5,1,1,0],["d1monchill","…0316",1547.8,1524.1,2,2,0],["GoofChilean","…0475",1547.8,1524.1,2,2,0],["shinjitsu","…0395",1547.7,1518.5,1,1,0],["Raccooon0","…4561",1547.2,1529.4,6,4,2],["3zoosE","unlinked",1546.8,1516.0,1,1,0],["Jjjpa","unlinked",1546.8,1516.0,1,1,0],["basil","…3095",1546.6,1518.4,1,1,0],["taneaven","…6913",1546.6,1518.4,1,1,0],["pp","unlinked",1546.2,1517.9,1,1,0],["Vasile Electric","unlinked",1546.2,1517.9,1,1,0],["_Kr1P4_","unlinked",1545.2,1515.8,1,1,0],["Coyl","unlinked",1545.2,1515.8,1,1,0],["FATAL","unlinked",1545.2,1515.8,1,1,0],["Mandy","unlinked",1545.2,1515.8,1,1,0],["m","…9871",1544.9,1523.2,2,2,0],["DANTEEEEHHHH","unlinked",1544.5,1516.5,1,1,0],["Iamnotdeadd","…5049",1544.4,1515.1,3,2,1],["Aristr0","…0679",1544.0,1518.5,1,1,0],["Dramatic Bear","unlinked",1543.0,1531.9,2,2,0],["Pells","…3598",1541.0,1502.4,8,4,4],["HZ | Reptil","…2622",1539.9,1519.0,3,2,1],["TomLTT","…8897",1538.8,1522.6,10,6,4],["Couchkartoffel","unlinked",1538.1,1516.0,1,1,0],["Suicida0dj","unlinked",1538.1,1516.0,1,1,0],["JUST CHO","unlinked",1536.8,1518.6,1,1,0],["Bamzy","…3736",1536.3,1515.0,1,1,0],["Nickname","…4358",1536.3,1515.9,1,1,0],["Máximoo","unlinked",1535.8,1516.4,1,1,0],["Rs11","unlinked",1535.8,1516.4,1,1,0],["PcSuchi","…6291",1534.5,1513.3,4,2,2],["mugs","unlinked",1534.4,1515.2,1,1,0],["pNg","…6693",1534.0,1511.1,4,2,2],["FC TELETRAVAIL","unlinked",1533.5,1516.0,1,1,0],["thekachowemall","unlinked",1533.5,1516.0,1,1,0],["osh","…1242",1533.0,1505.7,4,2,2],["HZ | hyk","unlinked",1533.0,1516.0,1,1,0],["Yktrasdi","…1523",1532.0,1509.6,4,2,2],["victortaku","…3633",1531.8,1514.2,3,2,1],["NSTEMU","…9265",1531.8,1514.1,1,1,0],["sagané","…8915",1531.8,1514.1,1,1,0],["hendt_0","unlinked",1531.7,1517.3,1,1,0],["pepesda841","unlinked",1531.7,1517.3,1,1,0],["Renas21","unlinked",1531.7,1517.3,1,1,0],["Toast","unlinked",1531.7,1517.3,1,1,0],["Xy","unlinked",1531.7,1517.3,1,1,0],["sznorbert glejczak","…0263",1531.0,1513.3,5,3,2],["Hiry","unlinked",1530.0,1514.9,1,1,0],["Topo","unlinked",1530.0,1514.9,1,1,0],["Cho7","…1393",1529.5,1512.9,1,1,0],["CRYPT4LIS","…9338",1529.5,1512.9,1,1,0],["Dragis","unlinked",1529.5,1516.5,1,1,0],["dumbapple","unlinked",1529.5,1516.0,1,1,0],["FiZZi","unlinked",1529.5,1516.0,1,1,0],["Loro_2006","unlinked",1529.5,1516.5,1,1,0],["Ramen","unlinked",1529.5,1513.9,1,1,0],["Shrekk","unlinked",1529.5,1513.9,1,1,0],["Snow","…0172",1529.2,1506.1,4,2,2],["Matiu","…6856",1528.6,1512.4,1,1,0],["Ters","unlinked",1527.9,1514.1,1,1,0],["Serendipity","…1335",1527.7,1514.1,3,2,1],["Ararararagi","…4870",1527.2,1514.1,1,1,0],["Tony","…3375",1526.5,1514.0,1,1,0],["Altovoltio^^","unlinked",1526.0,1514.8,1,1,0],["Armorio","unlinked",1526.0,1514.8,1,1,0],["biber10","…0058",1526.0,1512.7,1,1,0],["Caio","…7605",1526.0,1512.7,1,1,0],["choukill","unlinked",1526.0,1514.6,1,1,0],["Clean Ocean","unlinked",1526.0,1514.8,1,1,0],["dinzxr","…0063",1526.0,1512.7,1,1,0],["froj1k","…4015",1526.0,1512.7,1,1,0],["janohoop","…5692",1526.0,1512.9,1,1,0],["Mathieu_Mdg","…6250",1526.0,1514.0,1,1,0],["Nandete","…1645",1526.0,1512.9,1,1,0],["rrezz","unlinked",1526.0,1512.9,1,1,0],["Salphex","unlinked",1526.0,1514.6,1,1,0],["supermega500","…9879",1526.0,1514.0,1,1,0],["Tenturun","unlinked",1526.0,1514.6,1,1,0],["Victor","…0179",1526.0,1512.7,1,1,0],["Papo","unlinked",1525.6,1515.8,1,1,0],["tomserra2a","unlinked",1525.6,1515.8,1,1,0],["kuko","…9237",1525.5,1512.3,1,1,0],["marshmallowumi","…4503",1525.5,1512.3,1,1,0],["Ctteigh","…1716",1525.4,1513.2,1,1,0],["Mahiro","unlinked",1525.4,1516.4,1,1,0],["Nephitys","…6782",1525.4,1513.6,1,1,0],["Nic","…1695",1525.4,1513.2,1,1,0],["TonnyGCL","…7047",1525.4,1512.1,1,1,0],["twhd","…5923",1525.4,1512.1,1,1,0],["windsofkira","…0964",1525.4,1513.6,1,1,0],["Kippo Fan #1 (Aapperatus","unlinked",1525.3,1515.8,1,1,0],["Max","unlinked",1525.3,1515.8,1,1,0],["nessir","unlinked",1525.3,1515.8,1,1,0],["sawers014","unlinked",1525.3,1515.8,1,1,0],["ꜱᴄᴇ . Shieldister","unlinked",1525.3,1515.8,1,1,0],["JxstYui","…6702",1524.9,1512.2,1,1,0],["SoyEmanuel","…8772",1524.9,1512.2,1,1,0],["Ganbort","unlinked",1524.7,1516.5,1,1,0],["10na.","…9175",1524.2,1511.7,1,1,0],["Rinkamoshi","…5381",1523.9,1504.1,2,1,1],["crowl_o3","unlinked",1522.9,1515.8,1,1,0],["Céréales Lion 2x2","unlinked",1522.9,1515.8,1,1,0],["Gotta get a grip","unlinked",1522.9,1515.8,1,1,0],["Yu-Wen","unlinked",1522.9,1515.8,1,1,0],["Nacho","…5541",1522.5,1503.7,19,9,10],["AzDark_","…5347",1522.5,1511.4,1,1,0],["LaughingStock","…2353",1520.7,1513.9,1,1,0],["Mahito 👑","…3486",1520.7,1513.9,1,1,0],["OS | Aster","…5051",1520.7,1513.9,1,1,0],["Sky","…9268",1520.7,1513.9,1,1,0],["Sergi","unlinked",1520.2,1503.5,2,1,1],["peottamalik","unlinked",1518.3,1503.8,2,1,1],["SirBubbleChu","unlinked",1518.0,1503.6,2,1,1],["Aluk","unlinked",1517.6,1516.1,1,1,0],["Lacruz","unlinked",1517.6,1516.1,1,1,0],["P☯","unlinked",1517.6,1516.1,1,1,0],["Oni","…8900",1517.3,1512.5,5,3,2],["Lukeviral","…0366",1516.9,1509.3,4,2,2],["Saitaike","…3130",1513.2,1512.9,7,4,3],["iD_Galaxy","…5757",1511.4,1503.5,4,2,2],["Cozza Pelosa","…0688",1509.6,1505.2,3,2,1],["Inferno","…0150",1507.9,1502.7,2,1,1],["Nerologicals","unlinked",1505.5,1500.2,2,1,1],["sterlowhite","…4684",1502.8,1499.7,2,1,1],["RandomName","unlinked",1502.3,1499.7,2,1,1],["hauntsy","…8374",1502.2,1500.1,2,1,1],["XoXy","unlinked",1500.9,1499.8,2,1,1],["Marvalz.","unlinked",1500.1,1500.4,2,1,1],["HARVZ4","unlinked",1499.3,1500.2,2,1,1],["AxMikeas","…3912",1497.4,1500.3,2,1,1],["petronavt","…5208",1495.6,1499.1,2,1,1],["fredlee583","…5076",1495.3,1500.0,4,2,2],["MrMandau","…6807",1495.2,1495.1,2,1,1],["Lord Tarascoun","…0448",1493.0,1495.4,3,1,2],["YNSC","unlinked",1491.4,1487.2,3,1,2],["Caillou","…3327",1487.7,1500.0,6,3,3],["entri","…0700",1487.3,1488.5,3,1,2],["greenYolong","unlinked",1486.5,1501.2,6,3,3],["PAGANEC","unlinked",1481.9,1496.2,2,1,1],["andreaghini","…0877",1480.8,1496.2,2,1,1],["SLOTH | I.Niko<3","unlinked",1479.9,1496.5,2,1,1],["dluminoxx","unlinked",1479.8,1485.3,1,0,1],["Nichita.9","unlinked",1479.8,1485.3,1,0,1],["Bot Rix Rix","…2915",1479.5,1486.1,1,0,1],["iamhassangohar","…0169",1479.5,1486.1,1,0,1],["masuraou","…6953",1479.5,1486.1,1,0,1],["nooobil","…7932",1479.5,1486.1,1,0,1],["twelve","…4764",1479.5,1486.1,1,0,1],["Wis","…2870",1479.3,1487.4,5,2,3],["Aetos","…5114",1479.2,1488.7,1,0,1],["Lykossino","…9516",1479.2,1488.7,1,0,1],["Ashuraplex","unlinked",1479.1,1483.3,3,1,2],["Milan","unlinked",1479.1,1483.3,3,1,2],["mash2311","…7001",1478.7,1484.5,3,1,2],["Rayx","…5778",1478.4,1487.9,1,0,1],["yukame","unlinked",1478.4,1487.9,1,0,1],["Abod7","…5639",1477.7,1488.2,1,0,1],["Khora","…1841",1477.7,1488.6,1,0,1],["Levine","unlinked",1477.7,1486.2,1,0,1],["Alekami","unlinked",1477.3,1484.2,1,0,1],["админ лобби","unlinked",1477.3,1484.2,1,0,1],["большой путь","unlinked",1477.3,1484.2,1,0,1],["Главный босс","unlinked",1477.3,1484.2,1,0,1],["ЗАВИСИМЫЙ","unlinked",1477.3,1484.2,1,0,1],["TRABISCOTT","…6341",1476.5,1485.3,3,1,2],["Ksmm","…7677",1475.2,1487.8,1,0,1],["KxmiDH","…5286",1475.2,1487.8,1,0,1],["Sento","…2810",1475.2,1487.8,1,0,1],["¹ᵁᴾ × Clocky","…8617",1475.2,1487.8,1,0,1],["KlLLHUNTER","unlinked",1475.0,1497.2,2,1,1],["veos","unlinked",1474.9,1483.9,3,1,2],["Jimi","unlinked",1474.9,1484.2,1,0,1],["Lynx","unlinked",1474.9,1484.2,1,0,1],["marioduck","unlinked",1474.9,1484.2,1,0,1],["SCOTFIELD","unlinked",1474.9,1484.2,1,0,1],["Aced","…4523",1474.8,1486.4,1,0,1],["Corbac","…1940",1474.8,1486.8,1,0,1],["DaBilly","…0566",1474.8,1487.7,1,0,1],["Eterky le Magichien Doge","…6041",1474.8,1487.9,1,0,1],["Hayashi","…1166",1474.8,1487.7,1,0,1],["kdgdemir","…2617",1474.8,1486.4,1,0,1],["kirkei òwó","…3188",1474.8,1487.7,1,0,1],["Le Renard","…0386",1474.8,1487.9,1,0,1],["Luckysan","…9492",1474.8,1486.8,1,0,1],["Noctilight","…3195",1474.8,1487.9,1,0,1],["poisson","unlinked",1474.8,1483.6,1,0,1],["Roulette Rider","…0283",1474.8,1486.8,1,0,1],["salad","…2747",1474.8,1486.4,1,0,1],["SneakyMagicGoat","…2288",1474.8,1486.8,1,0,1],["TRKN","…0623",1474.8,1487.9,1,0,1],["Warikan","…8643",1474.8,1486.4,1,0,1],["†  Koya  †","unlinked",1474.8,1483.6,1,0,1],["Abounini","unlinked",1474.6,1484.2,1,0,1],["DerLiam","unlinked",1474.6,1484.2,1,0,1],["Jelly","…6684",1474.6,1487.7,1,0,1],["Jimmy Larp","…0617",1474.6,1487.7,1,0,1],["pippococa","unlinked",1474.6,1484.2,1,0,1],["piratafrancis","…4442",1474.6,1487.7,1,0,1],["SiiNerGia","unlinked",1474.6,1484.2,1,0,1],["uagu","…6906",1474.6,1487.7,1,0,1],["AlexitoPito","unlinked",1474.2,1485.2,1,0,1],["alphazfrittox","unlinked",1474.2,1485.2,1,0,1],["Bastox","…5559",1474.2,1487.3,1,0,1],["BIGDAWG","unlinked",1474.2,1487.3,1,0,1],["CheezySmile","unlinked",1474.2,1485.4,1,0,1],["Fridoll","…4197",1474.2,1487.3,1,0,1],["Jonathan","…5777",1474.2,1487.1,1,0,1],["Kamal","…4036",1474.2,1487.1,1,0,1],["Lûsmįk","…6132",1474.2,1487.1,1,0,1],["metodsaglam","…6250",1474.2,1487.3,1,0,1],["Pec_BucciaNera_69_","…5955",1474.2,1487.3,1,0,1],["PixelPhantom","unlinked",1474.2,1485.2,1,0,1],["PoloxDisc","…7686",1474.2,1487.3,1,0,1],["RED JHON","…3799",1474.2,1487.1,1,0,1],["Revener","…8264",1474.2,1486.0,1,0,1],["Spelyolog","unlinked",1474.2,1485.4,1,0,1],["virkoni","…4492",1474.2,1487.3,1,0,1],["xXCarlesgamerelprofortni","unlinked",1474.2,1485.2,1,0,1],["Yumju","…8286",1474.2,1487.3,1,0,1],["сосик","unlinked",1474.2,1485.4,1,0,1],["杜姆卡","unlinked",1474.2,1485.4,1,0,1],["DexerXPL","…0980",1473.8,1485.6,1,0,1],["Markiuhh.","…8585",1473.8,1485.6,1,0,1],["nicolai","…3362",1473.8,1485.6,1,0,1],["AJAY","…0820",1473.7,1486.0,1,0,1],["futoshi","…2741",1473.7,1486.0,1,0,1],["President.","…3186",1473.7,1486.0,1,0,1],["GiottoArts","…6191",1473.6,1485.9,3,1,2],["Søuma","unlinked",1473.6,1485.1,1,0,1],["TheIzu","unlinked",1473.6,1485.1,1,0,1],["LEFITACALIENTE","unlinked",1473.3,1484.0,1,0,1],["Pollloio","unlinked",1473.3,1484.0,1,0,1],["OneDrag","…8170",1473.0,1485.9,1,0,1],["Squishygod","…0674",1473.0,1485.9,1,0,1],["Viyer","…5292",1472.9,1487.6,1,0,1],["Wyjin","…8102",1472.9,1487.6,1,0,1],["Carrys","unlinked",1472.6,1484.2,1,0,1],["hugros","…0346",1472.6,1486.0,1,0,1],["YTRAM","…2657",1472.6,1486.0,1,0,1],["Marble","unlinked",1472.2,1485.9,1,0,1],["󠀡󠀡mhtsaras","unlinked",1472.2,1485.9,1,0,1],["Cilantro25_","…1863",1472.0,1487.2,1,0,1],["Katomme","…0686",1472.0,1487.2,1,0,1],["Immortal-OliveTTV","unlinked",1471.9,1483.6,3,1,2],["Optimum","…0521",1471.6,1487.6,1,0,1],["san diego","…2496",1471.6,1487.6,1,0,1],["Tom ⛴⛟","…4499",1471.6,1487.6,1,0,1],["SamBirdo","…3637",1471.5,1486.4,1,0,1],["5huv4n","…9159",1470.7,1487.1,1,0,1],["abcyygdr","unlinked",1470.7,1484.0,1,0,1],["canholas","unlinked",1470.7,1484.0,1,0,1],["Choice Specs","…4224",1470.7,1487.1,1,0,1],["cracKu","unlinked",1470.7,1483.5,1,0,1],["Enjin","unlinked",1470.7,1484.0,1,0,1],["ibr","…2475",1470.7,1487.1,1,0,1],["Kid A","unlinked",1470.7,1486.1,1,0,1],["Quatron","unlinked",1470.7,1483.5,1,0,1],["Sycosen","unlinked",1470.7,1486.1,1,0,1],["Wojtas!","unlinked",1470.7,1483.5,1,0,1],["Xylos","unlinked",1470.7,1486.1,1,0,1],["xChrxz","unlinked",1470.2,1485.1,1,0,1],["yoyoman69","unlinked",1470.2,1485.1,1,0,1],["Clynix","…6054",1469.9,1487.1,3,1,2],["Yx47","unlinked",1469.1,1483.8,1,0,1],["Blxxnq","unlinked",1468.5,1482.7,1,0,1],["bratiy_oy74","unlinked",1468.5,1482.7,1,0,1],["Nelay","unlinked",1468.5,1482.7,1,0,1],["raru","unlinked",1468.5,1482.7,1,0,1],["iZealous","…8167",1468.4,1485.9,1,0,1],["Nevstar","…2332",1467.4,1486.1,3,1,2],["JJNL73","unlinked",1467.1,1482.7,1,0,1],["s☆fir","unlinked",1467.1,1482.7,1,0,1],["amorette","unlinked",1466.7,1484.0,1,0,1],["BreXa","unlinked",1466.7,1484.0,1,0,1],["LIMErence","unlinked",1466.7,1484.0,1,0,1],["Saggan","unlinked",1466.7,1484.0,1,0,1],["3ABOUD","unlinked",1466.3,1484.4,1,0,1],["BoonZ","unlinked",1466.3,1484.4,1,0,1],["Lipton","unlinked",1465.8,1484.8,1,0,1],["Brunawolf","unlinked",1464.4,1483.6,1,0,1],["pham hanni εїз","unlinked",1464.4,1483.6,1,0,1],["TravisGlock","unlinked",1464.4,1483.6,1,0,1],["LuckyBug24","…6622",1463.4,1481.4,1,0,1],["malletsean","…7643",1463.4,1481.4,1,0,1],["にMØNSTERに","unlinked",1462.1,1484.0,1,0,1],["Shurek","…9377",1456.2,1481.5,1,0,1],["Bufferingo","unlinked",1455.7,1483.5,1,0,1],["Zhuo","unlinked",1455.7,1483.5,1,0,1],["Fae","…7892",1455.3,1476.8,2,0,2],["Tovay","…0977",1455.3,1476.8,2,0,2],["Celius","unlinked",1455.0,1484.2,1,0,1],["ZenCrhxs","unlinked",1455.0,1484.2,1,0,1],["__chikchirik","unlinked",1454.0,1482.1,1,0,1],["Khalid Kashmiri","unlinked",1454.0,1482.1,1,0,1],["LiL-Gatochill","…8005",1453.6,1481.6,1,0,1],["lorex546","…6720",1453.6,1481.6,1,0,1],["ChangeUser","unlinked",1453.4,1484.0,1,0,1],["Jungz","unlinked",1453.4,1484.0,1,0,1],["LongLostBruddah","unlinked",1453.4,1484.0,1,0,1],["CustomCheese.Com","…2153",1452.5,1481.5,1,0,1],["Fiver","unlinked",1452.4,1484.4,1,0,1],["L","…4414",1450.1,1480.6,3,1,2],["SltCKira","…7570",1449.9,1479.5,1,0,1],["The Rat Man","…8730",1449.6,1480.0,1,0,1],["Wii Strike","unlinked",1449.6,1484.0,1,0,1],["LRBeanz23","unlinked",1448.8,1484.6,1,0,1],["jaccboi","unlinked",1448.6,1482.2,1,0,1],["UFG | GeoBreaker","unlinked",1448.5,1470.5,2,0,2],["Rajehh","…1130",1447.8,1472.1,2,0,2],["Averanite","unlinked",1445.8,1468.3,2,0,2],["lil scoobert","…8895",1439.7,1458.8,7,2,5],["0hjjjiiiiiiii优雅","unlinked",1439.3,1467.1,2,0,2],["ᏫᏟ ×͜× prize","…1183",1438.9,1473.7,2,0,2],["SylverByrd","unlinked",1435.2,1469.1,4,1,3],["bahay62","…3480",1433.6,1464.7,3,0,3],["Exsavitator","…7602",1432.0,1463.9,3,0,3],["adrian-len","unlinked",1429.6,1468.0,2,0,2],["Laccet","unlinked",1429.6,1468.0,2,0,2],["Le Dam'S","…5950",1429.5,1465.7,3,0,3],["Un Gatto Arancione","unlinked",1428.2,1455.8,3,0,3],["orchdwve","…3535",1425.8,1467.8,2,0,2],["cretinpl","…4261",1425.0,1467.2,2,0,2],["Marre","unlinked",1423.3,1467.7,2,0,2],["fiszlet","unlinked",1412.7,1483.9,1,0,1],["zekk","unlinked",1410.5,1467.7,2,0,2],["Casa","…4940",1404.5,1460.3,2,0,2],["Grat (999)","…1278",1399.2,1459.3,2,0,2],["Mees","unlinked",1377.0,1438.9,4,0,4]],"matches":[["2026-11-13 13:31","4v4","beach",2,0,1,[6,71,70,69],[311,310,308,309]],["2026-11-14 20:39","3v3","school",1,2,0,[-1,-1,340],[33,34,32]],["2026-11-14 20:53","6v6","tutorial",1,2,0,[206,209,207,210,208,-1],[130,23,126,128,127,129]],["2026-11-14 22:15","4v4","grass",2,0,1,[59,1,140,60],[4,68,173,320]],["2026-11-14 23:14","4v4","grass",0,2,0,[299,206,140,363],[4,173,1,163]],["2026-11-14 23:29","4v4","grass",1,2,0,[173,163,140,363],[4,1,23,206]],["2026-11-15 02:42","3v3","beach",0,2,0,[285,289,286],[88,89,0]],["2026-11-15 12:52","4v4","school",1,2,0,[140,315,316,317],[64,19,65,-1]],["2026-11-15 18:56","4v4","tutorial",2,0,1,[68,52,6,-1],[360,0,322,323]],["2026-11-15 19:57","4v4","tutorial",1,2,0,[0,326,327,360],[50,49,48,47]],["2026-11-15 20:17","4v4","tutorial",0,2,0,[313,19,312,170],[4,58,6,17]],["2026-11-15 21:54","4v4","tutorial",2,0,1,[4,83,84,1],[296,337,297,173]],["2026-11-15 22:14","5v5","school",1,2,0,[172,152,155,154,9],[2,56,171,72,158]],["2026-11-16 19:28","4v4","nationals",0,2,0,[4,363,347,-1],[3,-1,-1,-1]],["2026-11-16 20:04","4v4","outer_space",2,0,1,[154,120,0,9],[221,227,347,135]],["2026-11-17 17:45","4v4","beach",2,0,1,[42,7,168,41],[0,334,332,333]],["2026-11-17 18:11","4v4","nationals",2,0,1,[2,56,188,187],[279,341,0,40]],["2026-11-17 18:24","4v4","nationals",2,0,1,[2,279,56,40],[188,0,187,336]],["2026-11-17 18:39","4v4","nationals",2,0,1,[2,133,0,40],[279,56,188,187]],["2026-11-17 20:34","3v3","grass",2,0,1,[90,87,0],[288,294,292]],["2026-11-17 20:40","3v3","practice",2,0,1,[55,149,151,0,150],[359]],["2026-11-17 20:46","4v4","practice",2,0,1,[116,55,115,0],[229,234,232,228]],["2026-11-17 21:01","5v5","practice",1,2,0,[197,196,195,199,198],[136,139,137,0,138]],["2026-11-17 21:24","4v4","beach",0,2,0,[345,266,162,267],[24,0,173,164]],["2026-11-17 21:58","4v4","beach",1,2,0,[345,272,158,164],[24,0,162,173]],["2026-11-17 22:14","4v4","grass",2,0,1,[4,12,0,17],[177,178,355,346]],["2026-11-17 22:35","4v4","grass",2,1,1,[4,12,0,17],[346,355,74,343]],["2026-11-17 22:54","4v4","grass",2,1,1,[74,346,12,0],[4,343,355,17]],["2026-11-18 10:23","4v4","clouds",3,0,1,[8,205,0,140],[265,170,189,264]],["2026-11-18 10:52","4v4","grass",2,3,0,[205,342,0,140],[170,189,8,27]],["2026-11-18 10:57","4v4","practice",2,0,1,[104,99,100,0],[247,253,236,237]],["2026-11-18 11:09","4v4","tutorial",0,2,0,[256,255,240,251],[113,0,111,103]],["2026-11-18 14:12","3v3","tutorial",0,2,0,[293,295,291],[91,0,92]],["2026-11-18 15:01","4v4","grass",0,2,0,[35,275,276,147],[3,0,95,174]],["2026-11-18 15:18","4v4","grass",1,2,0,[0,174,329,328],[3,147,46,45]],["2026-11-18 16:07","4v4","school",2,0,1,[1,7,140,0],[160,194,93,349]],["2026-11-18 16:18","4v4","nationals",2,0,1,[1,0,160,93],[7,140,358,349]],["2026-11-18 16:32","4v4","nationals",2,0,1,[7,140,93,148],[1,0,358,349]],["2026-11-18 16:49","4v4","nationals",1,2,0,[1,148,140,314],[7,0,349,67]],["2026-11-18 18:33","4v4","beach",0,2,0,[352,176,0,353],[15,146,71,14]],["2026-11-18 18:50","4v4","beach",2,0,1,[15,176,0,14],[146,352,71,353]],["2026-11-19 10:37","6v6","tutorial",2,1,1,[79,77,81,78,175,80],[300,302,303,0,53,301]],["2026-11-19 13:17","4v4","nationals",2,1,1,[167,153,0,35],[259,200,258,257]],["2026-11-19 13:37","4v4","school",2,0,1,[0,-1,97,96],[268,-1,263,269]],["2026-11-19 13:53","4v4","school",2,0,1,[0,263,96,98],[344,260,262,261]],["2026-11-19 14:09","4v4","school",2,0,1,[0,108,112,28],[344,250,263,96]],["2026-11-19 14:27","4v4","nationals",0,2,0,[171,337,335,0],[172,10,22,39]],["2026-11-19 14:38","4v4","nationals",2,0,1,[10,22,337,0],[172,274,273,-1]],["2026-11-19 16:57","3v3","practice",0,2,0,[290,287,284],[0,85,86]],["2026-11-19 17:03","4v4","outer_space",2,0,1,[121,125,31,0],[211,216,226,223]],["2026-11-19 17:13","4v4","nationals",0,2,0,[212,224,219,222],[122,119,0,31]],["2026-11-19 17:19","4v4","nationals",2,1,1,[2,40,167,0],[277,1,278,298]],["2026-11-19 17:29","4v4","nationals",2,0,1,[40,0,1,298],[2,167,161,283]],["2026-11-19 17:44","4v4","nationals",0,2,0,[40,167,1,298],[2,0,161,35]],["2026-11-19 18:17","4v4","grass",2,0,1,[4,58,74,0],[190,350,351,191]],["2026-11-19 18:50","4v4","grass",2,0,1,[4,17,58,0],[185,186,351,354]],["2026-11-19 19:11","4v4","grass",2,0,1,[4,17,58,1],[363,351,354,140]],["2026-11-19 19:32","4v4","grass",2,0,1,[4,17,0,1],[68,6,140,354]],["2026-11-19 20:22","4v4","grass",0,2,0,[4,17,168,0],[68,140,6,1]],["2026-11-21 13:26","4v4","clouds",2,0,1,[0,105,102,106],[241,238,245,254]],["2026-11-21 13:53","4v4","grass",1,2,0,[66,305,153,348],[156,18,6,-1]],["2026-11-21 13:58","4v4","grass",1,2,0,[66,305,153,348],[156,18,6,0]],["2026-11-21 14:21","4v4","grass",0,2,0,[156,6,361,0],[66,5,153,157]],["2026-11-21 14:37","4v4","grass",0,2,0,[321,0,157,361],[66,5,6,54]],["2026-11-21 16:58","5v5","nationals",2,0,1,[2,154,9,61,20],[0,6,318,319,184]],["2026-11-21 17:18","5v5","nationals",2,1,1,[2,154,0,152,20],[6,171,184,9,346]],["2026-11-21 17:35","5v5","nationals",0,2,0,[0,6,184,57,346],[2,154,171,152,9]],["2026-11-21 17:54","4v4","nationals",2,1,1,[6,184,57,346],[2,154,171,152]],["2026-11-21 18:10","5v5","nationals",2,0,1,[184,9,171,152,57],[2,154,306,307,346]],["2026-11-21 20:29","4v4","nationals",1,2,0,[0,331,330,189],[43,44,13,58]],["2026-11-21 20:47","4v4","school",2,0,1,[0,75,166,76],[140,304,22,58]],["2026-11-21 21:14","4v4","school",2,1,1,[0,140,62,58],[6,166,2,22]],["2026-11-21 21:33","4v4","school",2,0,1,[0,2,22,6],[56,140,19,58]],["2026-11-21 21:51","4v4","school",0,2,0,[2,6,56,58],[0,140,63,19]],["2026-11-21 22:13","4v4","school",0,2,0,[0,7,339,58],[140,2,53,19]],["2026-11-22 20:07","4v4","tutorial",2,0,1,[109,110,107,0],[244,249,242,243]],["2026-11-23 12:26","6v6","tutorial",0,2,0,[181,180,71,182,179,183],[142,0,35,143,144,145]],["2026-11-23 12:40","4v4","grass",1,2,0,[246,248,252,239],[140,114,101,0]],["2026-11-23 17:22","4v4","tutorial",1,2,0,[202,201,203,204],[0,131,13,132]],["2026-11-23 17:54","4v4","tutorial",2,1,1,[0,37,38,22],[213,93,217,215]],["2026-11-23 18:09","4v4","tutorial",2,0,1,[0,38,51,37],[324,325,192,350]],["2026-11-23 18:25","4v4","tutorial",2,0,1,[0,141,11,51],[350,325,324,193]],["2026-11-23 20:09","4v4","grass",2,0,1,[25,26,200,159],[165,56,362,0]],["2026-11-23 20:37","4v4","grass",2,1,1,[165,56,135,36],[159,0,200,362]],["2026-11-23 20:50","4v4","tutorial",0,2,0,[231,230,235,233],[117,118,53,0]],["2026-11-23 20:58","4v4","nationals",0,2,0,[214,225,218,220],[0,123,124,28]],["2026-11-23 21:03","4v4","nationals",0,2,0,[281,282,280,-1],[305,94,0,-1]],["2026-11-23 21:26","4v4","tutorial",1,3,0,[0,175,2,357],[30,11,29,82]],["2026-11-23 21:41","4v4","tutorial",2,0,1,[0,82,16,134],[169,356,73,357]],["2026-11-23 22:01","4v4","tutorial",2,0,1,[155,16,169,73],[0,356,82,338]],["2026-11-23 22:13","4v4","tutorial",0,2,0,[2,16,155,169],[0,21,82,73]],["2026-11-23 22:31","4v4","tutorial",2,1,1,[0,21,16,155],[271,270,82,73]]],"pbp_players":[["OrangeW","…0317",0,0,29.01,22.25,6.76,3.56,2.73,2.5,0.23,0.767,0.394,827,28.6,3.3,4.8,39.61,34.83,33.38,18.841,1226.82,4925,3779,1915.3,1853.6,77,55,22,46,1.285,13.3,4.26],["Hoshiumi","…7409",17,0,17.06,20.87,-3.81,4.02,2.87,3.56,-0.69,0.715,0.427,110,36.1,0.9,0.0,7.12,1.9,10.03,1.396,135.75,543,388,1563.1,1541.6,8,6,2,3,1.235,17.0,14.23],["pepesda841","unlinked",78,0,15.32,10.8,4.51,7.55,5.54,3.77,1.77,0.733,0.6,15,27.3,9.1,0.0,5.73,0.59,5.7,0.167,17.5,105,77,1531.7,1517.3,1,1,0,0,null,null,null],["KayzzeR","…5201",4,2,12.4,8.06,4.34,1.96,1.73,0.92,0.81,0.882,0.2,90,27.8,2.5,0.0,12.17,2.89,15.56,1.201,144.5,578,510,1603.2,1568.2,14,10,4,4,1.56,23.39,4.28],["finn","…8329",16,0,12.35,11.13,1.22,4.79,2.84,2.59,0.25,0.593,0.435,46,33.3,0.0,24.4,6.63,1.95,6.38,0.443,53.5,214,127,1568.5,1531.3,4,3,1,4,0.952,15.08,5.5],["Pells","…3598",56,0,12.22,10.78,1.44,2.26,1.84,1.45,0.39,0.812,0.195,41,30.3,3.0,1.4,13.69,-0.31,16.71,0.788,95.75,383,311,1541.0,1502.4,8,4,4,4,1.258,-7.33,1.98],["PcSuchi","…6291",66,0,11.92,11.36,0.55,2.5,2.19,2.23,-0.04,0.877,0.353,68,25.0,4.2,0.0,11.61,3.91,9.82,0.527,65.0,260,228,1534.5,1513.3,4,2,2,3,1.601,6.17,10.63],["OS | P1","…8764",5,0,11.37,7.47,3.9,2.77,2.25,1.81,0.44,0.812,0.315,54,10.0,5.0,0.0,15.42,10.81,6.76,0.335,42.5,170,138,1595.7,1539.7,2,2,0,2,1.176,18.31,7.43],["Shmingus McDingus","…4955",11,0,10.81,7.46,3.35,3.41,2.29,1.81,0.48,0.673,0.412,17,10.5,0.0,20.6,13.34,9.15,8.24,0.307,40.25,162,109,1573.5,1532.5,2,2,0,2,1.16,20.83,-0.18],["Mahiro","unlinked",120,0,10.75,8.67,2.08,4.85,3.14,3.15,-0.01,0.647,0.368,19,38.9,0.0,0.0,12.11,9.59,4.87,0.194,25.5,102,66,1525.4,1516.4,1,1,0,0,null,null,null],["Snow","…0172",93,0,10.7,1.91,8.8,2.31,1.96,0.31,1.65,0.849,0.077,39,17.1,0.0,1.1,9.58,7.35,2.55,0.528,69.5,278,236,1529.2,1506.1,4,2,2,1,1.448,-20.0,-1.99],["Jöremy","…7590",9,0,10.68,3.29,7.4,2.07,0.97,0.3,0.67,0.468,0.182,22,36.4,2.3,0.0,25.81,19.61,9.69,0.485,64.0,299,140,1577.7,1540.5,6,4,2,3,0.717,14.44,1.95],["Cozza Pelosa","…0688",156,0,10.33,7.72,2.6,2.97,3.21,2.0,1.21,1.081,0.122,41,5.0,5.0,0.0,-2.08,-5.96,3.92,0.321,43.25,173,187,1509.6,1505.2,3,2,1,2,1.394,3.33,-1.24],["Andros","…7691",7,2,9.84,7.85,2.0,1.95,1.69,1.74,-0.05,0.864,0.34,97,28.3,3.8,4.9,8.02,9.29,-0.47,0.636,88.0,352,304,1580.7,1530.2,6,4,2,1,1.321,-7.69,7.36],["Oni","…8900",152,0,9.78,7.71,2.07,3.24,2.23,1.84,0.39,0.688,0.284,74,24.1,6.9,0.0,3.07,2.17,1.18,0.391,54.25,250,172,1517.3,1512.5,5,3,2,2,1.032,7.2,7.23],["victortaku","…3633",74,0,9.62,10.37,-0.75,3.34,2.34,2.66,-0.32,0.702,0.419,43,15.8,5.3,0.0,7.04,1.49,5.97,0.305,42.75,171,120,1531.8,1514.2,3,2,1,1,1.833,50.0,6.47],["twelve","…4764",183,0,9.06,10.69,-1.64,3.31,3.39,3.48,-0.09,1.024,0.212,33,11.1,0.0,0.0,-1.37,-6.01,3.72,0.141,20.5,123,126,1479.5,1486.1,1,0,1,1,1.159,-21.74,-4.91],["suna","unlinked",12,1,9.01,10.35,-1.34,3.27,2.07,2.55,-0.48,0.633,0.381,42,14.3,4.8,0.0,6.19,3.38,6.58,0.337,49.0,196,124,1571.9,1544.2,3,3,0,0,null,null,null],["osh","…1242",71,1,8.71,7.57,1.14,3.08,1.78,1.84,-0.06,0.578,0.625,16,21.1,0.0,0.0,11.77,5.44,6.43,0.25,37.0,161,93,1533.0,1505.7,4,2,2,1,0.565,-21.74,-8.47],["Cinshay","…9447",21,0,8.57,9.03,-0.46,3.7,2.62,2.75,-0.13,0.708,0.444,27,36.0,12.0,25.8,5.67,0.36,6.93,0.201,30.0,120,85,1560.4,1525.7,2,2,0,2,1.298,20.66,12.8],["Nacho","…5541",140,2,8.07,5.29,2.78,1.26,1.06,0.85,0.21,0.839,0.127,79,21.3,4.1,4.4,6.53,5.35,-0.07,1.649,254.75,1019,855,1522.5,1503.7,19,9,10,8,1.287,-3.0,-4.98],["Saitaike","…3130",154,2,8.04,1.91,6.13,1.34,1.31,0.49,0.82,0.978,0.121,58,12.2,4.1,0.0,6.57,9.41,-0.88,0.584,90.35,405,396,1513.2,1512.9,7,4,3,3,1.256,10.0,-2.91],["BN | Isaac Foster_fr","unlinked",24,2,7.84,2.62,5.22,1.6,1.68,0.54,1.14,1.05,0.294,17,24.1,0.0,0.0,8.23,6.19,4.04,0.285,44.75,179,188,1554.4,1531.7,2,2,0,0,null,null,null],["mugs","unlinked",67,1,7.81,5.19,2.62,5.35,2.98,2.21,0.77,0.557,0.333,12,20.0,0.0,0.0,1.21,2.23,-1.99,0.169,26.5,106,59,1534.4,1515.2,1,1,0,0,null,null,null],["greenYolong","unlinked",173,1,7.58,3.52,4.06,2.48,1.61,0.8,0.8,0.648,0.267,45,15.8,0.0,0.0,8.23,6.19,4.04,0.28,44.75,179,116,1486.5,1501.2,6,3,3,0,null,null,null],["OS | Aster","…5051",144,1,6.76,8.07,-1.31,5.69,2.31,2.41,-0.1,0.407,0.75,12,7.7,7.7,0.0,1.37,-3.72,6.01,0.121,20.5,123,50,1520.7,1513.9,1,1,0,1,0.754,21.74,0.91],["Wis","…2870",184,2,6.55,4.23,2.32,1.52,1.44,0.94,0.5,0.948,0.077,26,27.5,0.0,0.0,2.2,1.46,1.7,0.337,57.85,268,254,1479.3,1487.4,5,2,3,3,1.239,-10.0,-3.36],["Iamnotdeadd","…5049",53,2,6.01,1.76,4.24,1.42,1.15,0.26,0.89,0.808,0.269,26,22.7,9.1,6.5,6.98,3.89,3.26,0.246,44.0,208,168,1544.4,1515.1,3,2,1,2,1.453,23.08,1.51],["HARVZ4","unlinked",164,2,5.97,3.98,1.99,1.38,1.11,0.92,0.19,0.799,0.184,38,25.8,6.5,0.0,8.66,5.79,3.64,0.25,44.75,179,143,1499.3,1500.2,2,1,1,0,null,null,null],["m","…9871",51,1,5.91,4.41,1.5,2.29,1.21,1.17,0.04,0.53,1.0,3,34.6,0.0,12.9,10.6,7.41,6.93,0.163,29.25,117,62,1544.9,1523.2,2,2,0,2,0.951,37.7,2.55],["lil scoobert","…8895",346,2,5.55,6.95,-1.4,1.19,0.76,1.13,-0.37,0.633,0.328,61,12.7,1.8,0.0,6.57,2.05,4.56,0.611,113.0,488,309,1439.7,1458.8,7,2,5,2,0.664,-7.2,-2.63],["AxMikeas","…3912",165,2,5.13,7.28,-2.16,1.69,1.69,2.34,-0.65,1.0,0.231,39,7.7,0.0,0.0,0.05,0.11,1.7,0.185,35.5,142,142,1497.4,1500.3,2,1,1,2,1.455,1.0,3.64],["Jaco","unlinked",3,2,4.3,3.64,0.66,0.72,0.53,0.45,0.08,0.744,0.208,24,11.8,17.6,0.0,9.53,2.25,8.87,0.234,48.0,195,145,1609.5,1548.5,3,3,0,0,null,null,null],["Yktrasdi","…1523",73,2,4.21,5.29,-1.08,0.98,0.58,1.0,-0.42,0.597,0.5,16,14.3,0.0,23.5,8.43,1.78,6.83,0.237,49.0,196,117,1532.0,1509.6,4,2,2,4,0.992,-6.35,-2.61],["Quack","…3800",1,2,4.21,4.06,0.15,-0.14,-0.09,0.21,-0.3,0.614,0.293,99,18.0,6.6,0.0,18.73,10.31,15.1,0.661,136.75,547,336,1661.6,1587.3,14,10,4,5,0.996,12.4,4.2],["L","…4414",337,3,3.89,9.28,-5.39,1.53,1.21,2.62,-1.41,0.795,0.333,27,27.3,0.0,0.0,0.37,-3.9,4.33,0.174,37.08,151,120,1450.1,1480.6,3,1,2,2,1.319,2.78,-1.03],["LaughingStock","…2353",142,3,3.44,3.86,-0.43,1.3,1.12,0.89,0.22,0.862,0.267,30,12.5,12.5,0.0,1.37,-3.72,6.01,0.092,20.5,123,106,1520.7,1513.9,1,1,0,1,1.174,21.74,-3.35],["Serendipity","…1335",96,2,2.76,2.74,0.02,0.72,0.3,0.73,-0.42,0.418,0.0,3,22.2,0.0,11.6,6.88,5.82,0.99,0.187,44.25,177,74,1527.7,1514.1,3,2,1,3,0.778,12.12,-3.32],["speaky dermix","unlinked",8,2,2.69,1.05,1.64,0.29,0.11,0.2,-0.09,0.362,0.667,3,34.6,19.2,0.0,9.35,7.66,1.37,0.182,43.5,174,63,1578.1,1532.7,2,2,0,0,null,null,null],["koel","…0871",22,2,2.47,5.7,-3.23,0.55,0.32,0.98,-0.66,0.583,0.38,71,24.4,2.2,18.4,3.69,0.36,4.72,0.395,96.5,386,225,1560.1,1528.3,6,4,2,6,0.922,7.8,2.32],["Caillou","…3327",171,3,2.28,0.99,1.3,0.57,0.41,0.3,0.11,0.72,0.238,42,12.5,0.0,0.0,2.9,3.56,-0.53,0.199,49.6,218,157,1487.7,1500.0,6,3,3,3,1.111,6.17,4.03],["Don Pitas Pollos","…2800",19,2,1.63,4.03,-2.4,0.02,0.02,1.07,-1.05,0.678,0.308,26,32.3,0.0,12.3,6.29,6.07,0.11,0.197,52.75,211,143,1561.2,1524.2,5,3,2,3,1.073,-0.46,0.45],["Inferno","…0150",157,3,1.58,1.37,0.21,1.26,0.78,0.71,0.06,0.618,0.278,18,15.0,0.0,0.0,-4.08,-0.67,-4.73,0.158,42.5,170,105,1507.9,1502.7,2,1,1,2,1.141,-11.27,-1.23],["petronavt","…5208",166,3,1.56,3.47,-1.91,0.42,0.31,1.18,-0.86,0.758,0.136,22,28.6,0.0,16.2,1.82,4.98,-2.1,0.18,48.42,186,141,1495.6,1499.1,2,1,1,2,1.349,8.43,1.69],["Sky","…9268",145,3,1.36,0.79,0.57,0.82,0.37,-0.21,0.58,0.447,0.353,17,6.2,0.0,0.0,1.37,-3.72,6.01,0.074,20.5,123,55,1520.7,1513.9,1,1,0,1,0.623,21.74,4.9],["Mahito 👑","…3486",143,3,1.24,3.26,-2.02,0.45,0.2,0.61,-0.41,0.439,0.143,14,30.0,0.0,0.0,2.77,-3.32,6.41,0.073,20.5,123,54,1520.7,1513.9,1,1,0,1,0.58,21.74,-1.26],["Averanite","unlinked",345,3,0.9,3.38,-2.48,1.02,0.86,1.36,-0.5,0.844,0.171,41,12.5,6.2,0.0,-8.23,-4.04,-6.19,0.153,44.75,179,151,1445.8,1468.3,2,0,2,0,null,null,null],["TRABISCOTT","…6341",200,3,0.88,2.69,-1.81,0.43,0.32,0.93,-0.6,0.744,0.333,24,35.7,3.6,0.0,-0.77,-0.22,-2.57,0.144,42.0,168,125,1476.5,1485.3,3,1,2,3,1.205,-1.71,1.93],["Nevstar","…2332",305,3,0.85,0.82,0.03,-0.19,-0.1,-0.09,-0.01,0.53,0.25,12,0.0,0.0,0.0,4.47,-0.46,3.48,0.098,28.75,115,61,1467.4,1486.1,3,1,2,2,1.0,8.7,-2.61],["andreaghini","…0877",175,3,0.68,2.02,-1.34,1.08,0.61,0.54,0.07,0.569,0.286,7,17.6,17.6,18.2,-6.41,-6.88,-0.42,0.147,44.0,211,120,1480.8,1496.2,2,1,1,1,1.171,-9.76,-10.88],["HZ | Reptil","…2622",57,3,0.39,-0.78,1.17,-0.11,-0.09,-0.26,0.17,0.793,0.244,45,11.8,5.9,0.0,2.8,2.81,0.84,0.126,39.05,174,138,1539.9,1519.0,3,2,1,1,0.787,-27.66,-5.57],["AzDark_","…5347",141,3,0.24,-0.94,1.19,-0.61,-0.33,-0.33,0.01,0.535,0.312,16,10.0,5.0,3.2,4.68,5.48,0.82,0.1,31.75,127,68,1522.5,1511.4,1,1,0,1,0.887,35.48,6.82],["Levine","unlinked",194,3,0.19,2.34,-2.15,1.1,0.7,1.48,-0.78,0.637,0.3,20,10.0,0.0,11.8,-6.13,-1.63,-5.91,0.08,25.5,102,65,1477.7,1486.2,1,0,1,0,null,null,null],["taneaven","…6913",44,2,0.08,-0.08,0.16,-0.85,-0.56,-0.29,-0.27,0.66,0.091,11,21.4,0.0,4.3,5.74,3.18,2.4,0.077,25.0,100,66,1546.6,1518.4,1,1,0,1,0.935,2.8,2.03],["MrMandau","…6807",168,3,-0.18,4.07,-4.25,-0.13,-0.13,0.64,-0.77,1.018,0.161,31,17.9,0.0,0.0,1.28,-5.44,6.26,0.163,54.75,219,223,1495.2,1495.1,2,1,1,1,1.573,-4.88,-7.85],["Lykossino","…9516",186,3,-0.41,1.79,-2.2,0.37,0.26,1.13,-0.87,0.698,0.211,19,40.0,0.0,0.0,-4.24,-1.19,-5.41,0.076,26.5,106,74,1479.2,1488.7,1,0,1,1,0.982,-30.91,0.51],["d1monchill","…0316",37,2,-0.47,-1.53,1.06,-1.11,-0.71,-1.03,0.32,0.642,0.28,25,31.0,17.2,31.7,6.94,1.54,7.88,0.106,37.0,148,95,1547.8,1524.1,2,2,0,2,1.036,27.27,4.89],["STRIDER","unlinked",-1,3,-0.75,-2.29,1.54,-1.0,-0.72,-1.51,0.8,0.72,0.0,15,20.0,0.0,0.0,3.96,-1.16,5.93,0.091,33.33,100,72,null,null,0,0,0,0,null,null,null],["President.","…3186",262,3,-0.96,-1.92,0.96,-0.8,-0.53,-0.37,-0.16,0.655,0.059,17,30.8,7.7,13.3,1.89,6.13,-3.19,0.079,29.75,119,78,1473.7,1486.0,1,0,1,1,0.868,-23.53,-0.96],["SirBubbleChu","unlinked",148,2,-1.01,5.63,-6.64,-1.42,-0.89,2.02,-2.91,0.625,0.714,14,15.4,7.7,0.0,5.22,4.51,1.98,0.073,28.0,112,70,1518.0,1503.6,2,1,1,0,null,null,null],["Immortal-OliveTTV","unlinked",279,3,-1.31,1.48,-2.78,-0.65,-0.43,-0.12,-0.31,0.661,0.5,16,15.0,20.0,0.0,-0.4,-7.93,7.01,0.079,31.75,127,84,1471.9,1483.6,3,1,2,0,null,null,null],["peottamalik","unlinked",147,3,-1.41,4.2,-5.61,-0.34,-0.24,1.6,-1.83,0.699,0.133,15,40.0,0.0,0.0,-3.14,-3.35,-0.15,0.069,28.25,113,79,1518.3,1503.8,2,1,1,0,null,null,null],["YTRAM","…2657",274,3,-1.51,-1.32,-0.18,-0.22,-0.2,-0.73,0.53,0.915,0.154,39,16.7,16.7,0.0,-3.88,-6.54,2.43,0.069,28.5,117,107,1472.6,1486.0,1,0,1,1,2.171,-25.71,6.14],["Amro Abdo","unlinked",-1,3,-1.57,6.49,-8.06,-0.24,-0.24,2.51,-2.75,0.98,0.31,29,7.7,0.0,0.0,-3.96,-5.93,1.16,0.079,33.33,100,98,null,null,0,0,0,0,null,null,null],["sznorbert glejczak","…0263",82,2,-2.09,2.06,-4.15,-1.42,-0.96,0.01,-0.98,0.679,0.283,46,13.5,3.8,7.8,8.83,1.45,8.64,0.17,78.75,315,214,1531.0,1513.3,5,3,2,5,1.06,6.59,1.57],["bmw enjoyer","…1741",6,2,-2.12,1.31,-3.43,-0.94,-0.68,-0.18,-0.5,0.725,0.227,176,15.2,3.8,5.9,7.79,-1.67,9.62,0.472,219.25,912,661,1593.8,1534.1,16,9,7,11,1.104,-0.62,1.44],["Necoli","…7215",30,3,-2.21,0.97,-3.18,-1.19,-0.94,0.31,-1.25,0.784,0.28,25,8.3,0.0,18.4,0.89,-0.09,0.24,0.059,27.75,111,87,1551.1,1521.0,1,1,0,1,1.317,9.76,7.63],["hendt_0","unlinked",77,3,-2.44,2.26,-4.7,-3.05,-1.36,0.45,-1.81,0.448,0.5,2,0.0,0.0,0.0,3.9,0.02,5.13,0.035,17.5,105,47,1531.7,1517.3,1,1,0,0,null,null,null],["Grat (999)","…1278",362,3,-2.52,1.86,-4.38,0.08,0.07,1.0,-0.93,0.901,0.294,17,11.1,11.1,0.0,-10.93,-6.82,-5.23,0.07,35.5,142,128,1399.2,1459.3,2,0,2,2,1.065,-5.0,-8.19],["omermorag10","…2598",35,2,-2.53,2.85,-5.38,-1.99,-1.23,0.55,-1.78,0.62,0.259,27,26.1,0.0,0.0,6.0,2.33,4.69,0.07,35.25,163,101,1549.8,1527.9,4,3,1,3,0.896,16.88,1.75],["k2clm","unlinked",-1,3,-2.88,-4.25,1.37,-1.88,-1.59,-2.32,0.72,0.85,0.5,10,28.6,14.3,0.0,3.96,-1.16,5.93,0.061,33.33,100,85,null,null,0,0,0,0,null,null,null],["GoofChilean","…0475",38,2,-3.41,-1.61,-1.8,-1.94,-1.66,-1.05,-0.61,0.858,0.0,4,41.2,17.6,4.2,6.94,1.54,7.88,0.059,37.0,148,127,1547.8,1524.1,2,2,0,2,1.327,27.27,-7.5],["Bomby","…4623",2,2,-3.96,-2.12,-1.84,-1.45,-1.12,-0.51,-0.61,0.776,0.212,203,22.4,3.4,6.3,11.52,9.05,5.5,0.332,242.1,1012,785,1629.1,1556.3,18,11,7,12,1.194,0.0,0.34],["femilambda203","…7595",29,3,-4.07,4.14,-8.22,-2.36,-1.59,1.6,-3.19,0.676,0.286,21,9.1,0.0,7.7,-0.03,-0.65,-0.11,0.036,27.0,108,73,1551.1,1521.0,1,1,0,1,1.037,9.76,-2.13],["Exsavitator","…7602",351,3,-4.14,-2.44,-1.69,-0.41,-0.25,0.15,-0.4,0.61,0.0,8,31.2,0.0,0.0,-13.1,-3.16,-13.73,0.057,44.25,177,108,1432.0,1463.9,3,0,3,2,1.427,-39.81,-7.01],["Ashuraplex","unlinked",187,3,-4.42,1.08,-5.5,-3.0,-1.8,-0.32,-1.48,0.6,0.211,19,15.4,0.0,0.0,3.93,-4.39,7.93,0.041,35.0,140,84,1479.1,1483.3,3,1,2,0,null,null,null],["iamhassangohar","…0169",180,3,-4.6,-8.35,3.75,-2.62,-1.54,-3.39,1.85,0.585,0.135,37,0.0,57.1,0.0,-1.37,-6.01,3.72,0.022,20.5,123,72,1479.5,1486.1,1,0,1,1,0.899,-21.74,6.27],["Un Gatto Arancione","unlinked",355,3,-4.62,0.27,-4.89,-1.44,-0.87,0.2,-1.07,0.601,0.348,23,6.7,0.0,0.0,-6.28,-6.32,-3.64,0.051,47.0,188,113,1428.2,1455.8,3,0,3,0,null,null,null],["yoyoman69","unlinked",297,3,-4.74,0.9,-5.64,-2.8,-1.68,0.3,-1.98,0.6,0.333,6,8.3,8.3,0.0,-1.1,-1.87,0.16,0.029,27.9,115,69,1470.2,1485.1,1,0,1,0,null,null,null],["Raccooon0","…4561",40,2,-4.91,-0.79,-4.11,-2.62,-1.64,-0.51,-1.14,0.628,0.167,36,19.4,6.5,0.0,6.6,2.49,5.76,0.059,60.5,242,152,1547.2,1529.4,6,4,2,3,1.177,22.12,0.0],["Casa","…4940",361,3,-5.11,-2.8,-2.31,-1.82,-0.88,-0.42,-0.46,0.485,0.133,15,30.8,7.7,0.0,-10.3,-5.39,-7.75,0.028,31.75,130,63,1404.5,1460.3,2,0,2,2,0.908,-18.31,-0.66],["Blxxnq","unlinked",300,3,-5.56,2.8,-8.36,-4.8,-1.83,1.06,-2.89,0.381,0.429,7,22.2,0.0,0.0,-3.9,-5.13,-0.02,0.012,17.5,105,40,1468.5,1482.7,1,0,1,0,null,null,null],["LuckyBug24","…6622",318,3,-5.64,-1.26,-4.38,-3.23,-1.8,-0.21,-1.59,0.558,0.1,10,23.8,0.0,0.0,-2.9,-0.31,-2.91,0.016,24.0,120,67,1463.4,1481.4,1,0,1,1,0.945,-16.36,0.67],["Lord Tarascoun","…0448",169,3,-6.24,-4.48,-1.76,-4.41,-2.29,-1.43,-0.85,0.518,0.037,27,18.2,0.0,53.6,2.1,2.99,-0.97,0.014,34.25,137,71,1493.0,1495.4,3,1,2,3,0.587,-15.08,-1.44],["UFG | GeoBreaker","unlinked",343,3,-6.4,-4.2,-2.21,-2.74,-1.7,-1.19,-0.52,0.621,-0.083,12,14.3,0.0,0.0,-5.17,-3.93,-3.84,0.012,35.0,140,87,1448.5,1470.5,2,0,2,0,null,null,null],["Lukeviral","…0366",153,3,-6.43,-3.28,-3.15,-1.78,-1.77,-1.16,-0.61,0.996,-0.111,18,10.5,5.3,0.0,2.04,-3.11,4.98,0.019,58.0,232,231,1516.9,1509.3,4,2,2,3,1.463,-1.87,-11.61],["iD_Galaxy","…5757",155,3,-6.74,-2.79,-3.95,-3.02,-2.26,-1.32,-0.94,0.748,-0.143,14,14.3,4.8,16.7,2.62,-3.07,6.42,0.008,40.75,163,122,1511.4,1503.5,4,2,2,3,1.129,6.19,-5.33],["Aetos","…5114",185,3,-7.06,-5.57,-1.49,-3.55,-2.38,-1.79,-0.59,0.67,-0.167,6,27.3,18.2,0.0,-4.24,-1.19,-5.41,0.001,26.5,106,71,1479.2,1488.7,1,0,1,1,0.691,-30.91,-8.85],["KlLLHUNTER","unlinked",205,3,-7.7,-1.7,-5.99,-4.98,-1.97,-0.12,-1.85,0.397,0.333,9,20.8,8.3,0.0,-4.03,0.73,-5.56,-0.009,43.5,174,69,1475.0,1497.2,2,1,1,0,null,null,null],["YNSC","unlinked",170,3,-8.02,-6.35,-1.67,-4.83,-2.67,-1.79,-0.87,0.552,0.154,13,46.2,7.7,0.0,4.03,5.56,-0.73,-0.015,43.5,174,96,1491.4,1487.2,3,1,2,0,null,null,null],["XoXy","unlinked",162,3,-8.42,-2.07,-6.35,-2.63,-1.62,-0.11,-1.51,0.615,0.143,14,15.8,0.0,0.0,-11.42,-5.6,-7.75,-0.023,44.75,179,110,1500.9,1499.8,2,1,1,0,null,null,null],["Milan","unlinked",188,3,-8.51,-3.61,-4.9,-6.62,-3.17,-1.88,-1.28,0.479,0.143,14,6.7,26.7,0.0,3.93,-4.39,7.93,-0.02,35.0,140,67,1479.1,1483.3,3,1,2,0,null,null,null],["TomLTT","…8897",58,3,-8.71,-4.87,-3.84,-2.65,-1.54,-0.52,-1.02,0.581,0.165,109,14.1,3.8,4.6,-0.78,8.7,-6.65,-0.102,158.0,632,367,1538.8,1522.6,10,6,4,8,0.924,-0.5,-0.87],["KxmiDH","…5286",202,3,-8.94,-4.36,-4.58,-3.89,-3.52,-2.16,-1.36,0.905,0.042,24,15.0,5.0,0.0,3.9,-2.55,7.4,-0.03,39.83,126,114,1475.2,1487.8,1,0,1,1,1.6,-5.0,10.23],["亗 F R 么 Nᴳᵒᵈ 亗","…3557",26,3,-8.95,-3.93,-5.02,-4.46,-3.64,-1.81,-1.82,0.815,0.212,33,20.0,20.0,0.0,4.75,0.67,4.86,-0.023,31.0,124,101,1551.9,1520.2,1,1,0,1,0.869,4.76,2.95],["ᏫᏟ ×͜× prize","…1183",348,3,-9.07,-4.71,-4.37,-3.36,-2.16,-1.49,-0.67,0.643,0.161,31,6.7,6.7,0.0,-10.42,-10.14,-1.68,-0.028,35.0,140,90,1438.9,1473.7,2,0,2,1,1.04,-10.89,2.47],["cretinpl","…4261",357,3,-9.22,-1.06,-8.16,-4.11,-2.34,-0.11,-2.24,0.57,0.2,5,15.4,0.0,0.0,-11.13,-9.38,-4.37,-0.026,30.25,121,69,1425.0,1467.2,2,0,2,2,0.871,-24.29,-7.13],["Tovay","…0977",325,3,-9.96,-4.9,-5.06,-6.64,-3.22,-1.46,-1.76,0.485,-0.077,13,12.5,0.0,21.7,-8.37,-4.56,-6.86,-0.03,25.25,101,49,1455.3,1476.8,2,0,2,2,0.623,-37.7,-5.18],["sterlowhite","…4684",159,3,-10.26,-5.88,-4.38,-7.35,-3.39,-2.03,-1.35,0.46,0.091,11,15.0,20.0,0.0,-0.58,-2.21,-0.11,-0.045,34.75,139,64,1502.8,1499.7,2,1,1,2,0.67,-1.0,-4.04],["0hjjjiiiiiiii优雅","unlinked",347,3,-10.3,-7.88,-2.42,-5.31,-3.38,-2.56,-0.82,0.637,-0.053,19,0.0,0.0,0.0,-7.91,-2.79,-7.51,-0.034,25.5,102,65,1439.3,1467.1,2,0,2,0,null,null,null],["mash2311","…7001",189,3,-10.7,-0.88,-9.82,-5.37,-2.88,0.14,-3.03,0.537,0.429,21,8.3,8.3,0.0,-0.53,5.41,-5.37,-0.076,50.75,203,109,1478.7,1484.5,3,1,2,1,0.869,-2.8,-6.91],["fredlee583","…5076",167,3,-11.04,-7.59,-3.45,-4.51,-2.75,-1.53,-1.23,0.611,-0.071,14,23.1,15.4,0.0,-9.92,1.69,-11.16,-0.061,37.25,149,91,1495.3,1500.0,4,2,2,4,0.755,-15.65,-7.43],["pNg","…6693",68,3,-12.33,-1.88,-10.45,-4.47,-3.73,-1.16,-2.57,0.834,-0.333,12,20.8,0.0,0.0,1.39,-7.29,7.72,-0.095,43.75,175,146,1534.0,1511.1,4,2,2,2,1.469,-11.72,-7.67],["Valid","unlinked",-1,3,-13.41,-6.01,-7.4,-6.91,-5.12,-2.64,-2.48,0.74,0.077,13,15.0,5.0,0.0,-3.96,-5.93,1.16,-0.088,33.33,100,74,null,null,0,0,0,0,null,null,null],["Rajehh","…1130",344,3,-15.62,-7.14,-8.47,-7.75,-5.11,-2.39,-2.72,0.659,0.037,27,11.1,0.0,14.7,-4.99,-4.06,-2.48,-0.113,31.5,126,83,1447.8,1472.1,2,0,2,2,0.73,-22.63,-1.86],["SylverByrd","unlinked",349,3,-16.71,-8.64,-8.06,-6.98,-3.98,-2.03,-1.95,0.57,0.154,13,25.0,0.0,0.0,-8.87,-5.3,-6.51,-0.202,50.0,200,114,1435.2,1469.1,4,1,3,0,null,null,null],["GiottoArts","…6191",263,3,-17.03,-10.36,-6.67,-6.82,-4.51,-2.68,-1.83,0.661,0.067,15,10.5,10.5,7.5,-7.0,-2.95,-6.08,-0.182,43.5,174,115,1473.6,1485.9,3,1,2,3,0.995,-11.11,-5.27],["Fae","…7892",324,3,-17.36,-7.26,-10.09,-7.81,-5.47,-2.19,-3.28,0.701,0.222,18,11.1,44.4,7.8,-10.6,-6.93,-7.41,-0.126,29.25,117,82,1455.3,1476.8,2,0,2,2,1.189,-37.7,-3.91],["Le Dam'S","…5950",354,3,-17.41,-9.26,-8.15,-6.82,-3.6,-1.79,-1.81,0.527,0.088,34,6.7,6.7,0.0,-16.85,-8.72,-13.49,-0.22,50.75,203,107,1429.5,1465.7,3,0,3,2,0.644,-32.2,-2.44],["†  Koya  †","unlinked",227,3,-18.28,-10.38,-7.9,-10.2,-6.2,-3.37,-2.84,0.608,0.0,11,0.0,12.5,0.0,-12.11,-4.87,-9.59,-0.12,25.5,102,62,1474.8,1483.6,1,0,1,0,null,null,null],["Clynix","…6054",298,4,-3.31,-2.41,-0.9,-2.56,-1.7,-0.7,-1.0,0.667,0.083,12,15.0,0.0,0.0,2.5,5.88,-2.98,0.038,23.25,93,62,1469.9,1487.1,3,1,2,3,1.018,6.19,2.68],["bahay62","…3480",350,4,-12.33,-2.17,-10.15,-6.1,-4.65,-0.23,-4.42,0.762,0.167,6,25.0,0.0,0.0,-9.27,-3.72,-7.95,-0.046,21.0,84,64,1433.6,1464.7,3,0,3,3,1.094,-41.18,-7.69]],"markov_kinds":[["block",1179,17.52,0.697,0.553],["dump",262,9.4,0.626,0.569],["attack",4747,3.55,0.595,0.479],["receive",787,0.91,0.475,0.497],["set",5842,0.19,0.514,0.564],["serve",5190,0.04,0.568,0.535],["bump",8039,-2.72,0.47,0.502],["shank",423,-4.64,0.449,0.513],["tip",819,-5.64,0.471,0.456],["dig",608,-7.03,0.449,0.49],["carom",688,-26.54,0.237,0.459]],"markov_states":[["attack",1,"high",49,0.184,25,0.36,0.49],["attack",1,"low",63,0.635,35,0.514,0.444],["attack",2,"low",346,0.581,232,0.457,0.329],["attack",2,"mid",103,0.709,59,0.576,0.427],["attack",3,"high",1433,0.626,895,0.493,0.375],["attack",3,"low",1541,0.567,1107,0.467,0.282],["attack",3,"mid",1197,0.606,811,0.481,0.322],["block",0,"base",1160,0.702,624,0.554,0.462],["block",0,"high",19,0.421,16,0.5,0.158],["bump",1,"high",2048,0.521,1957,0.534,0.044],["bump",1,"low",3272,0.463,2876,0.503,0.121],["bump",1,"mid",1273,0.506,1200,0.517,0.057],["bump",2,"high",333,0.45,302,0.487,0.093],["bump",2,"low",368,0.386,322,0.41,0.125],["bump",2,"mid",56,0.411,51,0.451,0.089],["bump",3,"high",185,0.297,133,0.406,0.281],["bump",3,"low",448,0.364,357,0.403,0.203],["bump",3,"mid",56,0.375,39,0.513,0.304],["carom",1,"low",196,0.347,117,0.453,0.403],["carom",1,"mid",458,0.203,180,0.467,0.607],["carom",2,"low",21,0.095,5,0.4,0.762],["dig",1,"base",400,0.465,369,0.493,0.077],["dig",1,"high",97,0.577,91,0.604,0.062],["dig",2,"base",77,0.351,70,0.371,0.091],["dig",3,"base",33,0.121,12,0.25,0.636],["dump",2,"high",75,0.627,60,0.55,0.2],["dump",2,"low",75,0.573,63,0.54,0.16],["dump",2,"mid",87,0.632,65,0.554,0.253],["receive",1,"high",243,0.453,236,0.466,0.029],["receive",1,"low",300,0.483,263,0.529,0.123],["receive",1,"mid",244,0.488,228,0.491,0.066],["serve",1,"float",1032,0.631,880,0.607,0.147],["serve",1,"high",573,0.558,454,0.511,0.208],["serve",1,"low",1450,0.521,1243,0.517,0.143],["serve",1,"mid",2135,0.572,1726,0.517,0.192],["set",1,"high",57,0.474,48,0.562,0.158],["set",1,"low",304,0.461,273,0.513,0.102],["set",1,"mid",72,0.514,69,0.536,0.042],["set",2,"high",1811,0.484,1594,0.549,0.12],["set",2,"low",2553,0.537,2378,0.577,0.069],["set",2,"mid",980,0.532,902,0.578,0.08],["set",3,"low",40,0.475,33,0.576,0.175],["shank",1,"base",384,0.443,314,0.513,0.182],["shank",3,"base",34,0.529,28,0.536,0.176],["tip",1,"low",35,0.286,24,0.375,0.314],["tip",1,"mid",21,0.524,15,0.6,0.286],["tip",2,"high",62,0.516,49,0.51,0.21],["tip",2,"low",104,0.519,64,0.406,0.385],["tip",2,"mid",99,0.646,63,0.571,0.364],["tip",3,"high",196,0.444,149,0.436,0.24],["tip",3,"low",143,0.42,98,0.449,0.315],["tip",3,"mid",145,0.448,111,0.45,0.234]],"cv_bench":[["Serve Baseline",0.24551,0.68415,0.5678,0.5572],["In-fold BT MMR",0.24997,0.69407,0.548,0.5727],["Rally RAPM (α=40)",0.24533,0.68392,0.5671,0.5882],["PBP Markov EPA",0.24342,0.68004,0.5709,0.5956],["Blended VPM (0.25/0.75)",0.24337,0.67989,0.5644,0.5952]],"bpm_weights":[["pts",3.0,3.0],["spk",0.0,0.64],["ast",2.0,0.67],["ace",2.0,0.74],["blk",2.0,0.45],["dig",2.0,-0.28],["set",1.0,-0.8],["rcv",1.0,-0.37]],"reliability":[["Usage (Touches/Rally)",0.761,0.865],["Rally RAPM",0.568,0.725],["PBP EPA / 100 Rallies",0.456,0.626],["Serve RAPM",0.473,0.642],["V-Eff (EPA / 100 Touches)",0.412,0.584],["O-EPA / 100 Rallies",0.398,0.569],["Sideout RAPM",0.456,0.627],["D-EPA / 100 Rallies",0.156,0.271]],"roles":{"meta":{"total_rallies":5204,"setter_events_human":5872,"libero_events_human":9043,"spiker_events_human":5777,"spiker_qualified_n":57,"spiker_primary_qualified_n":35,"setter_qualified_n":28,"setter_primary_qualified_n":20,"libero_qualified_n":42,"libero_primary_qualified_n":28,"mean_human_lib_delta_100":-0.025,"mean_human_set_delta_100":-0.107,"dvpm_vs_serve_rapm":0.604,"dvpm_vs_block_epa_100r":0.567,"dvpm_vs_fc_std_epa_100r":0.613,"block_vs_fc_std_epa_100r":-0.013,"dvpm_vs_l_eff":0.382,"dvpm_vs_sr_eff":0.515,"dvpm_vs_dig_eff":0.108,"l_eff_vs_sideout_rapm":0.309},"pass_ladder":[["G3_insys_att",4305,60.4],["G_overpass_nt",974,49.1],["G2_insys_tip",596,49.8],["G1_shank_alive",608,49.0],["G1_oos",1126,38.8],["G2_set_neutral",464,3.4],["G0_err",996,0.0]],"set_ladder":[["D_win",42,100.0],["S_overpass",27,63.0],["S_att",4103,60.0],["D_alive",188,54.8],["S_reset",215,50.7],["S_tip",414,45.9],["S_oos",505,38.0],["S_err",511,0.0],["D_err",7,0.0]],"rel":[["Spiker Attack EPA (A-Eff)",0.193,0.324,31,"spk"],["Spiker TrueHit%",0.37,0.54,31,"spk"],["Pass-Grade L-Eff (New)",0.459,0.63,63,"lib"],["1-Step Markov FC (Old)",0.201,0.334,63,"old"],["Serve-Receive SR-Eff",0.509,0.675,37,"lib"],["Floor Dig Dig-Eff",0.218,0.359,24,"lib"],["Shank + Carom %",0.63,0.773,63,"lib"],["Set Delivery S-Eff (New)",0.447,0.617,39,"set"],["1-Step Markov Set (Old)",0.325,0.49,39,"old"],["Attackable Set %",0.555,0.714,39,"set"],["Hitter-Adj Ridge (Rej.)",-0.116,-0.263,25,"rej"]],"top10_d":[["Snow",93,8.8,7.35,2.53,30,0.62,59],["Jöremy",9,7.4,19.61,0.68,9,3.4,54],["OrangeW",0,6.76,34.83,0.38,80,2.89,1393],["Saitaike",154,6.13,9.41,1.74,39,-4.23,66],["BN | Isaac Foster_fr",24,5.22,6.19,1.54,12,1.12,16],["pepesda841",78,4.51,0.59,1.91,11,0.39,4],["KayzzeR",4,4.34,2.89,1.29,48,-0.17,81],["Iamnotdeadd",53,4.24,3.89,1.49,13,-2.25,17],["greenYolong",173,4.06,6.19,0.58,7,1.59,32],["OS | P1",5,3.9,10.81,0.56,3,2.33,53]],"spikers":[["OrangeW","…0317",0,0,1,4925,827,710,99,86.1685,10.42,1.7,21.9,0.168,0.399,44.7,4.8,12.0,0.38,80,22.25,29.01],["Hoshiumi","…7409",17,1,1,543,110,105,4,11.9922,10.9,1.73,28.4,0.203,0.436,44.5,0.9,3.6,-0.08,3,20.87,17.06],["Cinshay","…9447",21,1,1,120,27,27,0,3.9248,14.54,1.45,31.8,0.225,0.444,51.9,7.4,0.0,1.18,6,9.03,8.57],["suna","unlinked",12,1,1,196,42,39,3,4.4696,10.64,1.29,33.9,0.214,0.381,45.2,7.1,7.1,0.0,1,10.35,9.01],["Iamnotdeadd","…5049",53,0,1,208,26,6,2,3.4852,13.4,0.97,15.5,0.125,0.269,34.6,7.7,7.7,1.49,13,1.76,6.01],["victortaku","…3633",74,1,1,171,43,36,5,4.3378,10.09,1.35,35.8,0.251,0.419,48.8,7.0,11.6,0.1,7,10.37,9.62],["lil scoobert","…8895",346,0,1,488,61,60,1,5.1969,8.52,0.81,19.7,0.125,0.328,36.1,3.3,1.6,0.18,6,6.95,5.55],["PcSuchi","…6291",66,1,1,260,68,66,1,5.297,7.79,1.29,29.8,0.262,0.353,44.1,8.8,1.5,0.78,7,11.36,11.92],["Andros","…7691",7,1,1,352,97,85,9,6.08,6.27,1.21,31.9,0.276,0.34,36.1,2.1,9.3,0.38,14,7.85,9.84],["LaughingStock","…2353",142,1,1,123,30,13,4,2.9387,9.8,1.08,28.3,0.244,0.267,26.7,0.0,13.3,0.69,4,3.86,3.44],["L","…4414",337,0,1,151,27,22,5,2.5897,9.59,0.86,22.5,0.179,0.37,48.1,11.1,18.5,0.0,0,9.28,3.89],["finn","…8329",16,1,1,214,46,41,3,3.255,7.08,0.89,36.2,0.215,0.435,43.5,0.0,6.5,0.73,4,11.13,12.35],["AxMikeas","…3912",165,1,1,142,39,22,6,2.8888,7.41,0.99,27.5,0.275,0.256,33.3,7.7,15.4,0.83,8,7.28,5.13],["mash2311","…7001",189,0,1,203,21,19,2,2.1396,10.19,0.61,19.3,0.103,0.429,42.9,0.0,9.5,0.47,2,-0.88,-10.7],["KayzzeR","…5201",4,0,1,578,90,43,17,4.3614,4.85,0.6,17.6,0.156,0.2,27.8,7.8,18.9,1.29,48,8.06,12.4],["Amro Abdo","unlinked",-1,1,1,100,29,18,11,2.2631,7.8,0.91,29.6,0.29,0.31,41.4,10.3,37.9,0.62,4,6.49,-1.57],["OS | P1","…8764",5,1,1,170,54,53,1,3.0184,5.59,0.94,39.1,0.318,0.315,33.3,1.9,1.9,0.56,3,7.47,11.37],["Oni","…8900",152,1,1,250,74,65,7,3.2655,4.41,0.82,43.0,0.296,0.284,31.1,2.7,9.5,0.02,2,7.71,9.78],["koel","…0871",22,1,1,386,71,63,8,2.8998,4.08,0.54,31.6,0.184,0.38,39.4,1.4,11.3,0.28,5,5.7,2.47],["twelve","…4764",183,1,1,123,33,16,11,1.8989,5.75,0.7,26.2,0.268,0.212,21.2,0.0,33.3,0.21,8,10.69,9.06],["Cozza Pelosa","…0688",156,0,1,173,41,1,20,2.0643,5.03,0.64,21.9,0.237,0.122,14.6,2.4,48.8,1.38,16,7.72,10.33],["Un Gatto Arancione","unlinked",355,0,1,188,23,21,2,1.5649,6.8,0.46,20.4,0.122,0.348,34.8,0.0,8.7,0.0,0,0.27,-4.62],["Levine","unlinked",194,1,1,102,20,19,1,1.425,7.13,0.57,30.8,0.196,0.3,30.0,0.0,5.0,-0.51,1,2.34,0.19],["femilambda203","…7595",29,1,1,108,21,18,3,1.4113,6.72,0.55,28.8,0.194,0.286,28.6,0.0,14.3,0.0,0,4.14,-4.07],["greenYolong","unlinked",173,1,1,179,45,41,3,1.7744,3.94,0.54,38.8,0.251,0.267,31.1,4.4,6.7,0.58,7,3.52,7.58],["Don Pitas Pollos","…2800",19,0,1,211,26,25,1,1.3395,5.15,0.37,18.2,0.123,0.308,34.6,3.8,3.8,0.12,5,4.03,1.63],["sznorbert glejczak","…0263",82,0,1,315,46,43,2,1.6582,3.6,0.36,21.5,0.146,0.283,32.6,4.3,4.3,0.8,10,2.06,-2.09],["Saitaike","…3130",154,0,1,405,58,37,11,1.8843,3.25,0.34,14.6,0.143,0.138,29.3,15.5,19.0,1.74,39,1.91,8.04],["Quack","…3800",1,1,1,547,99,96,3,2.5153,2.54,0.36,29.5,0.181,0.313,39.4,8.1,3.0,0.43,13,4.06,4.21],["TRABISCOTT","…6341",200,0,1,168,24,23,0,0.986,4.11,0.31,19.2,0.143,0.333,33.3,0.0,0.0,0.4,6,2.69,0.88],["Pells","…3598",56,0,1,383,41,32,7,1.1939,2.91,0.22,13.2,0.107,0.22,29.3,7.3,17.1,0.93,16,10.78,12.22],["Necoli","…7215",30,1,1,111,25,21,4,0.829,3.32,0.32,28.7,0.225,0.28,36.0,8.0,16.0,0.83,5,0.97,-2.21],["HARVZ4","unlinked",164,1,1,179,38,30,2,0.8787,2.31,0.27,26.6,0.212,0.184,18.4,0.0,5.3,0.0,0,3.98,5.97],["Averanite","unlinked",345,1,1,179,41,40,0,0.9014,2.2,0.27,27.2,0.229,0.171,26.8,9.8,0.0,0.61,6,3.38,0.9],["Jaco","unlinked",3,0,1,195,24,16,8,0.6886,2.87,0.2,16.6,0.123,0.208,33.3,12.5,33.3,0.81,8,3.64,4.3],["Nacho","…5541",140,0,1,1019,79,52,18,0.5192,0.66,0.04,9.2,0.078,0.165,22.8,6.3,22.8,1.05,74,5.29,8.07],["Caillou","…3327",171,1,1,218,42,37,4,0.2994,0.71,0.08,26.8,0.193,0.262,35.7,9.5,9.5,0.96,18,0.99,2.28],["Jöremy","…7590",9,0,1,299,22,20,2,0.0466,0.21,0.01,15.7,0.074,0.182,22.7,4.5,9.1,0.68,9,3.29,10.68],["d1monchill","…0316",37,1,1,148,25,23,2,0.0404,0.16,0.01,26.3,0.169,0.28,32.0,4.0,8.0,0.32,1,-1.53,-0.47],["petronavt","…5208",166,0,1,186,22,15,4,0.0171,0.08,0.01,15.6,0.118,0.182,18.2,0.0,18.2,0.47,10,3.47,1.56],["亗 F R 么 Nᴳᵒᵈ 亗","…3557",26,1,1,124,33,28,4,-0.1843,-0.56,-0.07,32.7,0.266,0.212,33.3,12.1,12.1,0.46,4,-3.93,-8.95],["MrMandau","…6807",168,0,1,219,31,30,1,-0.2149,-0.69,-0.06,13.9,0.142,0.194,29.0,9.7,3.2,1.46,12,4.07,-0.18],["omermorag10","…2598",35,1,1,163,27,18,9,-0.3662,-1.36,-0.12,26.7,0.166,0.259,37.0,11.1,33.3,0.06,3,2.85,-2.53],["Snow","…0172",93,0,1,278,39,28,5,-0.4504,-1.15,-0.11,16.5,0.14,0.077,15.4,7.7,12.8,2.53,30,1.91,10.7],["HZ | Reptil","…2622",57,1,1,174,45,42,3,-0.5064,-1.13,-0.16,32.6,0.259,0.289,37.8,8.9,6.7,0.27,1,-0.78,0.39],["Raccooon0","…4561",40,0,1,242,36,20,16,-0.5199,-1.44,-0.13,23.7,0.149,0.167,25.0,8.3,44.4,0.0,0,-0.79,-4.91],["TomLTT","…8897",58,1,1,632,109,102,7,-1.4272,-1.31,-0.18,29.7,0.172,0.174,22.9,5.5,6.4,0.08,2,-4.87,-8.71],["Bomby","…4623",2,1,1,1012,203,165,34,-2.371,-1.17,-0.2,25.9,0.201,0.217,31.0,9.4,16.7,0.39,31,-2.12,-3.96],["ᏫᏟ ×͜× prize","…1183",348,1,1,140,31,25,6,-0.7007,-2.26,-0.24,34.4,0.221,0.161,29.0,12.9,19.4,0.0,0,-4.71,-9.07],["Wis","…2870",184,0,1,268,26,13,12,-0.827,-3.18,-0.2,10.2,0.097,0.115,15.4,3.8,46.2,0.9,12,4.23,6.55],["YTRAM","…2657",274,1,1,117,39,30,8,-1.1609,-2.98,-0.43,36.4,0.333,0.154,20.5,5.1,20.5,0.84,3,-1.32,-1.51],["bmw enjoyer","…1741",6,1,1,912,176,159,14,-3.8707,-2.2,-0.36,26.6,0.193,0.273,33.5,6.2,8.0,0.23,17,1.31,-2.12],["iamhassangohar","…0169",180,1,1,123,37,36,1,-1.5249,-4.12,-0.56,51.4,0.301,0.135,29.7,16.2,2.7,1.11,5,-8.35,-4.6],["Lord Tarascoun","…0448",169,1,1,137,27,25,2,-1.6436,-6.09,-0.57,38.0,0.197,0.074,22.2,14.8,7.4,0.0,0,-4.48,-6.24],["KxmiDH","…5286",202,0,1,126,24,23,1,-1.8908,-7.88,-0.69,21.1,0.19,0.042,12.5,8.3,4.2,-0.32,6,-4.36,-8.94],["Le Dam'S","…5950",354,1,1,203,34,30,4,-2.3481,-6.91,-0.67,31.8,0.167,0.088,17.6,8.8,11.8,0.23,1,-9.26,-17.41],["Rajehh","…1130",344,1,1,126,27,17,9,-2.2252,-8.24,-0.81,32.5,0.214,0.037,11.1,7.4,33.3,0.0,1,-7.14,-15.62],["Gizmro","unlinked",-1,1,0,98,24,22,2,2.8418,11.84,1.15,34.3,0.245,0.417,41.7,0.0,8.3,0.0,1,null,null],["Sergi","unlinked",146,1,0,92,28,28,0,1.5012,5.36,0.62,37.3,0.304,0.286,35.7,7.1,0.0,0.04,1,null,null],["Zero Kara","unlinked",15,1,0,92,20,20,0,1.1867,5.93,0.49,28.2,0.217,0.4,40.0,0.0,0.0,0.0,0,null,null],["Hayashi","…1166",215,1,0,79,25,25,0,0.046,0.18,0.02,46.3,0.316,0.24,24.0,0.0,0.0,0.06,1,null,null],["Viyer","…5292",270,1,0,72,21,18,3,-0.8013,-3.82,-0.36,38.2,0.292,0.19,23.8,4.8,14.3,0.0,0,null,null],["✦","unlinked",-1,1,0,98,21,16,4,-0.9688,-4.61,-0.39,28.4,0.214,0.095,19.0,9.5,19.0,2.01,6,null,null]],"setters":[["KayzzeR","…5201",4,1,1,578,235,29,6.7042,2.85,0.92,46.1,0.407,83.4,8.1,0.368,174,41.4,29,70,12.4,19.17],["twelve","…4764",183,1,1,123,64,6,2.3403,3.66,0.86,50.8,0.52,85.9,3.1,0.1,50,17.2,5,29,9.06,1.04],["Cozza Pelosa","…0688",156,1,1,173,104,17,3.0786,2.96,0.95,55.6,0.601,76.9,3.8,0.318,66,17.6,12,68,10.33,4.85],["AxMikeas","…3912",165,0,1,142,48,10,1.7333,3.61,0.59,33.8,0.338,75.0,6.2,0.207,29,16.7,5,30,5.13,13.66],["Shmingus McDingus","…4955",11,1,1,161,39,0,1.5128,3.88,0.49,35.8,0.242,84.6,2.6,0.361,36,35.9,14,39,10.81,null],["Averanite","unlinked",345,0,1,179,39,1,1.4884,3.82,0.45,25.8,0.218,66.7,2.6,0.269,26,null,0,0,0.9,8.54],["Jaco","unlinked",3,1,1,195,65,0,1.5684,2.41,0.45,44.8,0.333,80.0,4.6,0.281,57,null,0,0,4.3,null],["lil scoobert","…8895",346,0,1,488,56,0,1.2363,2.21,0.19,18.1,0.115,75.0,5.4,0.479,48,null,2,3,5.55,null],["MrMandau","…6807",168,0,1,219,72,0,1.3549,1.88,0.37,32.3,0.329,76.4,6.9,0.281,57,20.0,4,20,-0.18,null],["OrangeW","…0317",0,0,1,4925,493,17,6.1367,1.24,0.12,13.0,0.1,76.5,5.9,0.286,409,28.8,80,278,29.01,3.2],["bmw enjoyer","…1741",6,0,1,912,95,3,1.4696,1.55,0.14,14.4,0.104,73.7,3.2,0.338,74,54.3,25,46,-2.12,0.96],["Snow","…0172",93,0,1,278,73,6,0.6142,0.84,0.14,30.9,0.263,82.2,6.8,0.276,58,13.3,6,45,10.7,6.06],["Wis","…2870",184,1,1,268,140,0,0.7974,0.57,0.19,55.1,0.522,79.3,9.3,0.242,120,8.8,5,57,6.55,null],["Pells","…3598",56,1,1,383,134,2,0.2833,0.21,0.05,43.1,0.35,70.1,9.0,0.374,99,23.4,11,47,12.22,2.52],["Saitaike","…3130",154,1,1,405,211,7,0.3717,0.18,0.07,53.3,0.521,73.5,9.5,0.226,159,27.6,16,58,8.04,-4.43],["Nacho","…5541",140,1,1,1019,409,9,0.1873,0.05,0.02,47.8,0.401,74.6,7.8,0.289,318,27.1,48,177,8.07,-0.54],["LaughingStock","…2353",142,1,1,123,62,12,0.0249,0.04,0.01,58.5,0.504,75.8,11.3,0.342,38,30.0,6,20,3.44,12.44],["Grat (999)","…1278",362,1,1,142,80,0,-0.0037,-0.0,-0.0,62.5,0.563,81.2,10.0,0.209,67,27.3,24,88,-2.52,null],["Lukeviral","…0366",153,1,1,232,147,8,-0.1529,-0.1,-0.04,63.6,0.634,78.9,10.2,0.281,114,29.8,34,114,-6.43,-4.75],["GoofChilean","…0475",38,1,1,148,83,1,-0.2349,-0.28,-0.08,65.4,0.561,80.7,8.4,0.324,68,29.6,21,71,-3.41,0.48],["andreaghini","…0877",175,1,1,211,73,0,-0.4901,-0.67,-0.14,60.8,0.346,72.6,8.2,0.22,59,24.4,11,45,0.68,null],["Iamnotdeadd","…5049",53,1,1,208,106,17,-1.3223,-1.25,-0.37,63.1,0.51,67.0,10.4,0.328,64,28.2,11,39,6.01,16.31],["pepesda841","unlinked",78,1,1,105,36,0,-0.8772,-2.44,-0.34,46.8,0.343,66.7,11.1,0.429,28,null,0,0,15.32,null],["BN | Isaac Foster_fr","unlinked",24,1,1,179,105,4,-1.7469,-1.66,-0.53,55.9,0.587,72.4,9.5,0.293,75,null,0,0,7.84,0.19],["Aetos","…5114",185,1,1,106,41,0,-1.3194,-3.22,-0.52,57.7,0.387,53.7,7.3,0.179,28,21.4,3,14,-7.06,null],["Bomby","…4623",2,0,1,1012,154,3,-3.2238,-2.09,-0.28,19.6,0.152,67.5,11.0,0.381,118,30.9,25,81,-3.96,16.76],["SylverByrd","unlinked",349,1,1,200,48,2,-2.7782,-5.79,-0.79,42.1,0.24,62.5,18.8,0.206,34,null,0,0,-16.71,24.96],["YNSC","unlinked",170,1,1,174,48,1,-5.186,-10.8,-1.6,50.0,0.276,50.0,22.9,0.37,27,null,0,0,-8.02,4.21],["Omex PatXD","unlinked",14,1,0,92,60,0,3.3898,5.65,1.4,51.3,0.652,91.7,1.7,0.411,56,null,0,0,null,null],["Nandete","…1645",109,1,0,86,46,0,1.4132,3.07,0.6,68.7,0.535,89.1,6.5,0.476,42,66.7,8,12,null,null],["LongLostBruddah","unlinked",334,1,0,82,47,3,0.8803,1.87,0.38,56.0,0.573,72.3,6.4,0.273,33,null,0,0,null,34.28],["Wyjin","…8102",271,1,0,72,35,0,0.5949,1.7,0.27,52.2,0.486,80.0,5.7,0.258,31,25.8,8,31,null,null],["erik_.","unlinked",-1,1,0,69,37,3,0.5084,1.37,0.23,54.4,0.536,81.1,5.4,0.259,27,null,0,0,null,0.99],["Søuma","unlinked",264,1,0,92,54,1,0.084,0.16,0.03,65.9,0.587,74.1,11.1,0.19,42,null,0,0,null,3.74],["entri","…0700",172,1,0,70,62,2,-0.5319,-0.86,-0.24,62.0,0.886,59.7,6.5,0.256,43,22.0,9,41,null,1.33],["Shurek","…9377",321,1,0,82,42,0,-0.7741,-1.84,-0.33,58.3,0.512,71.4,9.5,0.367,30,23.8,5,21,null,null],["AKmaster09","unlinked",-1,1,0,55,35,0,-0.7339,-2.1,-0.36,71.4,0.636,68.6,11.4,0.296,27,null,0,0,null,null]],"liberos":[["suna","unlinked",12,1,1,196,56,25,21,3.8565,6.89,1.11,4.61,2.02,45.2,0.286,69.6,96.4,3.6,1.8,0.0,1,-1.34],["L","…4414",337,1,1,151,60,20,33,3.5516,5.92,1.18,2.99,2.93,50.0,0.397,61.7,96.7,3.3,0.0,0.0,0,-5.39],["HZ | Reptil","…2622",57,1,1,174,64,27,27,3.6631,5.72,1.13,5.86,-0.36,46.4,0.368,65.6,93.8,6.2,0.0,0.27,1,1.17],["Jöremy","…7590",9,1,1,299,54,26,18,3.1927,5.91,0.71,1.25,4.01,38.6,0.181,64.8,96.3,3.7,0.0,0.68,9,7.4],["Hoshiumi","…7409",17,0,1,543,121,56,46,5.4251,4.48,0.78,1.47,4.95,31.2,0.223,62.0,91.7,6.6,3.3,-0.08,3,-3.81],["OrangeW","…0317",0,1,1,4925,1393,621,504,41.4081,2.97,0.82,4.2,2.93,36.9,0.283,47.7,88.7,5.3,7.4,0.38,80,6.76],["TomLTT","…8897",58,1,1,632,156,74,68,4.9585,3.18,0.63,1.96,2.71,42.5,0.247,60.9,87.2,8.3,7.7,0.08,2,-3.84],["lil scoobert","…8895",346,1,1,488,122,34,66,3.8939,3.19,0.61,2.96,0.83,39.5,0.25,50.0,92.6,6.6,2.5,0.18,6,-1.4],["PcSuchi","…6291",66,1,1,260,85,30,42,2.9295,3.45,0.71,3.21,1.11,37.3,0.327,62.4,89.4,8.2,5.9,0.78,7,0.55],["OS | P1","…8764",5,1,1,170,53,24,15,2.1656,4.09,0.68,1.81,1.71,38.4,0.312,56.6,92.5,3.8,3.8,0.56,3,3.9],["Inferno","…0150",157,1,1,170,45,35,9,1.9664,4.37,0.61,3.17,0.11,42.9,0.265,64.4,88.9,6.7,6.7,1.47,10,0.21],["HARVZ4","unlinked",164,0,1,179,45,19,18,1.9115,4.25,0.58,2.47,2.03,31.5,0.251,55.6,95.6,4.4,0.0,0.0,0,1.99],["Bomby","…4623",2,0,1,1012,263,115,96,5.023,1.91,0.43,2.5,1.11,33.5,0.26,46.4,85.2,7.6,9.9,0.39,31,-1.84],["Oni","…8900",152,0,1,250,60,29,22,1.6556,2.76,0.41,2.05,0.36,34.9,0.24,50.0,88.3,8.3,6.7,0.02,2,2.07],["Andros","…7691",7,0,1,352,89,51,25,1.8914,2.13,0.38,1.19,1.15,29.3,0.253,46.1,79.8,7.9,15.7,0.38,14,2.0],["koel","…0871",22,1,1,386,89,42,36,1.8789,2.11,0.35,1.42,0.71,39.6,0.231,38.2,74.2,5.6,23.6,0.28,5,-3.23],["Pells","…3598",56,0,1,383,77,27,27,1.5484,2.01,0.29,-0.48,2.38,24.8,0.201,49.4,79.2,10.4,13.0,0.93,16,1.44],["iD_Galaxy","…5757",155,1,1,163,54,18,28,1.2307,2.28,0.39,-0.53,1.54,44.3,0.331,51.9,75.9,9.3,20.4,0.6,10,-3.95],["Averanite","unlinked",345,1,1,179,56,27,20,1.1649,2.08,0.35,0.74,0.48,37.1,0.313,46.4,82.1,8.9,12.5,0.61,6,-2.48],["Exsavitator","…7602",351,1,1,177,65,32,27,1.26,1.94,0.39,-0.13,2.38,60.2,0.367,41.5,93.8,4.6,1.5,0.0,0,-1.69],["Raccooon0","…4561",40,1,1,242,63,23,24,1.2166,1.93,0.31,0.49,0.76,41.4,0.26,54.0,93.7,6.3,1.6,0.0,0,-4.11],["Don Pitas Pollos","…2800",19,0,1,211,46,22,21,0.9751,2.12,0.27,2.47,-0.7,32.2,0.218,47.8,78.3,6.5,19.6,0.12,5,-2.4],["Un Gatto Arancione","unlinked",355,1,1,188,47,32,13,0.9425,2.01,0.28,1.63,-0.48,41.6,0.25,57.4,91.5,8.5,2.1,0.0,0,-4.89],["Caillou","…3327",171,0,1,218,44,24,15,0.8524,1.94,0.23,3.67,-2.59,28.0,0.202,50.0,81.8,9.1,13.6,0.96,18,1.3],["TRABISCOTT","…6341",200,1,1,168,56,34,20,0.9099,1.62,0.29,-1.13,3.54,44.8,0.333,58.9,85.7,10.7,7.1,0.4,6,-1.81],["Yktrasdi","…1523",73,1,1,196,49,21,22,0.6234,1.27,0.18,2.59,-0.46,41.9,0.25,51.0,67.3,8.2,30.6,0.24,1,-1.08],["bmw enjoyer","…1741",6,1,1,912,250,106,91,1.8753,0.75,0.18,-1.31,2.84,37.8,0.274,42.4,82.0,10.8,10.4,0.23,17,-3.43],["Snow","…0172",93,0,1,278,59,22,18,0.6137,1.04,0.14,1.47,0.45,25.0,0.212,50.8,79.7,8.5,13.6,2.53,30,8.8],["Quack","…3800",1,1,1,547,123,60,41,0.961,0.78,0.14,0.17,0.37,36.6,0.225,50.4,88.6,8.9,3.3,0.43,13,0.15],["KxmiDH","…5286",202,1,1,126,46,24,18,0.0317,0.07,0.01,0.77,-1.23,40.4,0.365,50.0,84.8,8.7,6.5,-0.32,6,-4.58],["KayzzeR","…5201",4,0,1,578,81,23,37,-0.2103,-0.26,-0.03,3.44,-3.19,15.9,0.14,43.2,79.0,11.1,11.1,1.29,48,4.34],["AxMikeas","…3912",165,1,1,142,53,20,18,-0.2883,-0.54,-0.1,-0.31,0.32,37.3,0.373,45.3,83.0,13.2,9.4,0.83,8,-2.16],["yoyoman69","unlinked",297,1,1,115,40,20,15,-0.3681,-0.92,-0.14,1.48,-0.53,58.0,0.348,50.0,87.5,12.5,0.0,0.0,0,-5.64],["sznorbert glejczak","…0263",82,1,1,315,83,55,21,-1.3993,-1.69,-0.3,-0.54,-1.28,38.8,0.263,57.8,79.5,18.1,9.6,0.8,10,-4.15],["pNg","…6693",68,1,1,175,73,25,22,-1.6413,-2.25,-0.51,-2.56,-0.12,50.0,0.417,30.1,87.7,11.0,1.4,-0.03,1,-10.45],["Nacho","…5541",140,0,1,1019,155,51,59,-3.8912,-2.51,-0.33,1.06,-5.36,18.1,0.152,38.1,69.0,12.3,25.2,1.05,74,2.78],["petronavt","…5208",166,1,1,186,53,32,18,-1.9216,-3.63,-0.57,-1.65,-1.64,37.6,0.285,37.7,66.0,15.1,26.4,0.47,10,-1.91],["GiottoArts","…6191",263,0,1,174,40,25,10,-1.7437,-4.36,-0.54,-0.85,-3.01,34.8,0.23,37.5,77.5,15.0,17.5,0.31,2,-6.67],["MrMandau","…6807",168,0,1,219,78,24,29,-3.2661,-4.19,-0.89,-0.37,-4.37,35.0,0.356,44.9,80.8,16.7,10.3,1.46,12,-4.25],["Saitaike","…3130",154,0,1,405,66,9,33,-4.4879,-6.8,-0.81,-2.04,-5.74,16.7,0.163,31.8,60.6,22.7,24.2,1.74,39,6.13],["Fae","…7892",324,1,1,117,40,24,14,-3.5109,-8.78,-1.31,-5.87,-1.96,48.8,0.342,25.0,72.5,20.0,20.0,0.05,2,-10.09],["mash2311","…7001",189,1,1,203,48,35,10,-6.589,-13.73,-1.87,-8.4,-4.04,44.0,0.236,18.8,64.6,31.2,16.7,0.47,2,-9.82]]}};
   // Theme initialization & toggle
   const savedTheme = localStorage.getItem("jv_theme") || "dark";
   document.documentElement.setAttribute("data-theme", savedTheme);
@@ -689,7 +887,12 @@
     { key: "bt_mmr", label: "BT MMR", zero: false },
     { key: "v_war", label: "V-WAR (Match Wins)", zero: true },
     { key: "box_mvp_r", label: "Box Naive MVP / Rally", zero: false },
-    { key: "box_margin", label: "Box Team Margin / 100R", zero: true }
+    { key: "box_margin", label: "Box Team Margin / 100R", zero: true },
+    { key: "a_eff", label: "A-Eff (Spiker EPA / 100 Att)", zero: true },
+    { key: "s_eff", label: "S-Eff (Setter Delivery / 100 Acts)", zero: true },
+    { key: "l_eff", label: "L-Eff (Libero Pass-Grade / 100 FC)", zero: true },
+    { key: "sr_eff", label: "SR-Eff (Serve-Receive / 100 SR)", zero: true },
+    { key: "dig_eff", label: "Dig-Eff (Floor Hard-Dig / 100 Digs)", zero: true }
   ];
   const AXIS_MAP = Object.fromEntries(AXES.map(a => [a.key, a]));
 
@@ -1250,6 +1453,566 @@
   document.getElementById("tbl-search").addEventListener("input", e => { state.tblSearch = e.target.value; renderMainTable(); });
 
 
+  // ROLE METRICS (SPIKER, SETTER, LIBERO)
+  const ROLES = SITE_DATA.roles || null;
+  const roleSpikers = ROLES ? ROLES.spikers.map((r, i) => ({
+    idx: i, name: r[0], id: r[1], mmr_idx: r[2], is_primary: r[3] === 1, qualified: r[4] === 1,
+    rallies: r[5], att: r[6], spk: r[7], tip: r[8], sum_epa: r[9], a_eff_raw: r[10],
+    a_eff: (100 * r[9]) / (r[6] + 40), a_vpm: r[11], att_share: r[12], att_per_r: r[13],
+    true_hit: r[14], kill_pct: r[15], err_pct: r[16], tip_pct: r[17],
+    blk_epa: r[18], blk_n: r[19], o_vpm: r[20], vpm: r[21]
+  })) : [];
+
+  const roleSetters = ROLES ? ROLES.setters.map((r, i) => ({
+    idx: i, name: r[0], id: r[1], mmr_idx: r[2], is_primary: r[3] === 1, qualified: r[4] === 1,
+    rallies: r[5], act: r[6], dumps: r[7], sum_delta: r[8], s_eff_raw: r[9],
+    s_eff: (100 * r[8]) / (r[6] + 40), s_vpm: r[10], set_share: r[11], sets_per_r: r[12],
+    att_pct: r[13], err_pct: r[14], tm_hit: r[15], tm_att: r[16],
+    box_ast_pct: r[17], box_ast: r[18], box_sets: r[19], vpm: r[20], dump_epa: r[21]
+  })) : [];
+
+  const roleLiberos = ROLES ? ROLES.liberos.map((r, i) => ({
+    idx: i, name: r[0], id: r[1], mmr_idx: r[2], is_primary: r[3] === 1, qualified: r[4] === 1,
+    rallies: r[5], fc_n: r[6], sr_n: r[7], dig_n: r[8], sum_delta: r[9], l_eff_raw: r[10],
+    l_eff: (100 * r[9]) / (r[6] + 40), l_vpm: r[11], sr_eff: r[12], dig_eff: r[13],
+    fc_share: r[14], fc_per_r: r[15], in_sys: r[16], clean: r[17], err_pct: r[18], sc_pct: r[19],
+    blk_epa: r[20], blk_n: r[21], d_vpm: r[22]
+  })) : [];
+
+  // Attach qualified role efficiency metrics onto main scatter player objects
+  const spkMap = new Map(roleSpikers.filter(r => r.qualified).map(r => [r.name + "::" + r.id, r]));
+  const setMap = new Map(roleSetters.filter(r => r.qualified).map(r => [r.name + "::" + r.id, r]));
+  const libMap = new Map(roleLiberos.filter(r => r.qualified).map(r => [r.name + "::" + r.id, r]));
+  players.forEach(p => {
+    const key = p.name + "::" + p.id;
+    const kr = spkMap.get(key), sr = setMap.get(key), lr = libMap.get(key);
+    p.a_eff = kr ? kr.a_eff : null;
+    p.s_eff = sr ? sr.s_eff : null;
+    p.l_eff = lr ? lr.l_eff : null;
+    p.sr_eff = lr ? lr.sr_eff : null;
+    p.dig_eff = lr ? lr.dig_eff : null;
+  });
+
+  Object.assign(state, {
+    rKM: 40, rKPrimary: false, rKUnqual: true, rKMode: "load", rKSearch: "", rKSel: 0, rKSort: { key: "a_eff", dir: -1 },
+    rSM: 40, rSPrimary: false, rSUnqual: true, rSSearch: "", rSSel: 0, rSSort: { key: "s_eff", dir: -1 },
+    rLM: 40, rLPrimary: false, rLUnqual: true, rLMode: "sr_dig", rLSearch: "", rLSel: 0, rLSort: { key: "l_eff", dir: -1 }
+  });
+
+  function valCls(v) {
+    if (v === null || v === undefined || Number.isNaN(v)) return "";
+    return v > 0 ? "pos" : (v < 0 ? "neg" : "");
+  }
+
+  function renderRoleKpis(elId, cards, onPickIdx) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.innerHTML = cards.map((c, ci) => `
+      <div class="subcard kpi" data-rkpi="${ci}" title="${esc(c.tip || "")}">
+        <div class="muted">${esc(c.lbl)}</div>
+        <div class="kpi-val tabnum">${esc(c.val)}</div>
+        <div class="muted tabnum">${esc(c.sub)}</div>
+      </div>`).join("");
+    if (onPickIdx) {
+      el.querySelectorAll(".kpi").forEach(node => {
+        const c = cards[Number(node.dataset.rkpi)];
+        if (c.pickIdx !== undefined && c.pickIdx !== null) {
+          node.addEventListener("click", () => onPickIdx(c.pickIdx));
+        }
+      });
+    }
+  }
+
+  function renderRoleScatter(svgId, tipId, rows, cfg) {
+    const svg = document.getElementById(svgId);
+    const tip = document.getElementById(tipId);
+    if (!svg) return;
+    svg.innerHTML = "";
+    const W = 640, H = 340, pad = { l: 58, r: 24, t: 20, b: 44 };
+    const iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
+
+    const valid = rows.filter(p => {
+      const xv = cfg.xFn(p), yv = cfg.yFn(p);
+      return xv !== null && xv !== undefined && Number.isFinite(xv) && yv !== null && yv !== undefined && Number.isFinite(yv);
+    });
+    if (!valid.length) {
+      svg.appendChild(svgEl("text", { x: W / 2, y: H / 2, "text-anchor": "middle", fill: "var(--muted-foreground)", "font-size": 13 }, "No players match the current filter."));
+      return;
+    }
+
+    const xs = valid.map(cfg.xFn), ys = valid.map(cfg.yFn);
+    let xMin = Math.min(...xs), xMax = Math.max(...xs);
+    let yMin = Math.min(...ys), yMax = Math.max(...ys);
+    const xPad = (xMax - xMin || 1) * 0.1, yPad = (yMax - yMin || 1) * 0.12;
+    xMin -= xPad; xMax += xPad; yMin -= yPad; yMax += yPad;
+
+    const sx = x => pad.l + ((x - xMin) / (xMax - xMin)) * iw;
+    const sy = y => pad.t + ih - ((y - yMin) / (yMax - yMin)) * ih;
+
+    for (let i = 0; i <= 4; i++) {
+      const yv = yMin + (i / 4) * (yMax - yMin), yy = sy(yv);
+      svg.appendChild(svgEl("line", { x1: pad.l, y1: yy, x2: W - pad.r, y2: yy, stroke: "var(--border)", "stroke-opacity": 0.45, "stroke-dasharray": "2,3" }));
+      svg.appendChild(svgEl("text", { x: pad.l - 7, y: yy + 4, "text-anchor": "end", fill: "var(--muted-foreground)", "font-size": 11 }, yv.toFixed(1)));
+      const xv = xMin + (i / 4) * (xMax - xMin), xx = sx(xv);
+      svg.appendChild(svgEl("line", { x1: xx, y1: pad.t, x2: xx, y2: H - pad.b, stroke: "var(--border)", "stroke-opacity": 0.45, "stroke-dasharray": "2,3" }));
+      svg.appendChild(svgEl("text", { x: xx, y: H - pad.b + 15, "text-anchor": "middle", fill: "var(--muted-foreground)", "font-size": 11 }, xv.toFixed(cfg.xDec)));
+    }
+    if (xMin < 0 && xMax > 0) {
+      svg.appendChild(svgEl("line", { x1: sx(0), y1: pad.t, x2: sx(0), y2: H - pad.b, stroke: "var(--muted-foreground)", "stroke-dasharray": "4,3", "stroke-opacity": 0.65 }));
+    }
+    if (yMin < 0 && yMax > 0) {
+      svg.appendChild(svgEl("line", { x1: pad.l, y1: sy(0), x2: W - pad.r, y2: sy(0), stroke: "var(--muted-foreground)", "stroke-dasharray": "4,3", "stroke-opacity": 0.65 }));
+    }
+
+    svg.appendChild(svgEl("text", { x: pad.l + iw / 2, y: H - 6, "text-anchor": "middle", fill: "var(--foreground)", "font-size": 12, "font-weight": 600 }, cfg.xLabel));
+    svg.appendChild(svgEl("text", { x: 14, y: pad.t + ih / 2, "text-anchor": "middle", fill: "var(--foreground)", "font-size": 12, "font-weight": 600, transform: `rotate(-90 14 ${pad.t + ih / 2})` }, cfg.yLabel));
+
+    const labelIdxs = new Set(valid.slice(0, 6).map(p => p.idx));
+    labelIdxs.add(cfg.selIdx);
+    const placedBoxes = [];
+    const canPlace = (lx, ly, txt) => {
+      const bw = txt.length * 6.2 + 6, bh = 13;
+      if (lx < pad.l || lx + bw > W - pad.r || ly - bh < pad.t || ly > H - pad.b) return false;
+      for (const b of placedBoxes) {
+        if (!(lx + bw < b.x || lx > b.x + b.w || ly < b.y - b.h || ly - bh > b.y)) return false;
+      }
+      placedBoxes.push({ x: lx, y: ly, w: bw, h: bh });
+      return true;
+    };
+
+    const drawOrder = [...valid].sort((a, b) => (a.idx === cfg.selIdx ? 1 : 0) - (b.idx === cfg.selIdx ? 1 : 0));
+    drawOrder.forEach(p => {
+      const cx = sx(cfg.xFn(p)), cy = sy(cfg.yFn(p)), r = cfg.rFn(p);
+      const col = p.is_primary ? "var(--chart-1)" : "var(--chart-2)";
+      const isSel = p.idx === cfg.selIdx;
+      const dot = svgEl("circle", {
+        cx, cy, r, fill: col, "fill-opacity": p.qualified ? 0.84 : 0.45,
+        stroke: isSel ? "var(--foreground)" : "var(--background)", "stroke-width": isSel ? 2.2 : 1, style: "cursor:pointer;"
+      });
+      dot.addEventListener("mouseenter", e => {
+        tip.innerHTML = cfg.tipHtml(p);
+        tip.classList.remove("hidden");
+        tip.style.left = Math.min(window.innerWidth - 250, e.clientX + 14) + "px";
+        tip.style.top = Math.max(8, e.clientY - 20) + "px";
+      });
+      dot.addEventListener("mousemove", e => {
+        tip.style.left = Math.min(window.innerWidth - 250, e.clientX + 14) + "px";
+        tip.style.top = Math.max(8, e.clientY - 20) + "px";
+      });
+      dot.addEventListener("mouseleave", () => tip.classList.add("hidden"));
+      dot.addEventListener("click", () => cfg.onSelect(p.idx));
+      svg.appendChild(dot);
+
+      if (labelIdxs.has(p.idx)) {
+        const lbl = p.name + (p.qualified ? "" : " *");
+        const lx = cx + r + 4, ly = cy + 4;
+        if (isSel || canPlace(lx, ly, lbl)) {
+          svg.appendChild(svgEl("text", {
+            x: lx, y: ly, fill: isSel ? "var(--foreground)" : "var(--muted-foreground)",
+            "font-size": 11, "font-weight": isSel ? 700 : 500
+          }, lbl));
+        }
+      }
+    });
+  }
+
+  function renderRoleHBar(svgId, rows, maxVal, colorFn, labelFn) {
+    const svg = document.getElementById(svgId);
+    if (!svg) return;
+    svg.innerHTML = "";
+    if (!rows.length) {
+      svg.appendChild(svgEl("text", { x: 270, y: 100, "text-anchor": "middle", fill: "var(--muted-foreground)", "font-size": 12 }, "Insufficient data."));
+      return;
+    }
+    const parts = svg.getAttribute("viewBox").split(" ");
+    const W = Number(parts[2]), H = Number(parts[3]);
+    const padL = 165, padR = 95, padT = 12, rowH = (H - padT - 10) / rows.length;
+    const iw = W - padL - padR;
+    rows.forEach((row, i) => {
+      const y = padT + i * rowH, v = Math.max(0, row[2]);
+      const barW = Math.max(2, (v / maxVal) * iw);
+      svg.appendChild(svgEl("text", { x: padL - 8, y: y + rowH * 0.62, "text-anchor": "end", fill: "var(--foreground)", "font-size": 11 }, row[0]));
+      svg.appendChild(svgEl("rect", { x: padL, y: y + 4, width: iw, height: Math.max(8, rowH - 8), rx: 3, fill: "var(--border)", "fill-opacity": 0.3 }));
+      svg.appendChild(svgEl("rect", { x: padL, y: y + 4, width: barW, height: Math.max(8, rowH - 8), rx: 3, fill: colorFn(row), "fill-opacity": 0.85 }));
+      svg.appendChild(svgEl("text", { x: padL + barW + 6, y: y + rowH * 0.62, fill: "var(--muted-foreground)", "font-size": 11 }, labelFn(row)));
+    });
+  }
+
+  function renderRoleTable(headId, bodyId, rows, cols, sortState, selIdx, onSort, onSelect, rowCellsFn) {
+    const head = document.getElementById(headId), body = document.getElementById(bodyId);
+    head.innerHTML = `<tr><th class="left">#</th>` + cols.map(c =>
+      `<th class="sort ${c.left ? "left" : ""}" data-sort="${c.k}" title="${esc(c.tip)}">${c.lbl}${sortState.key === c.k ? (sortState.dir < 0 ? " ▼" : " ▲") : ""}</th>`
+    ).join("") + `</tr>`;
+    const sk = sortState.key, sd = sortState.dir;
+    const sorted = [...rows].sort((a, b) => sk === "name"
+      ? sd * a.name.localeCompare(b.name)
+      : sd * (((a[sk] === true ? 1 : a[sk] === false ? 0 : a[sk]) ?? -1e9) - ((b[sk] === true ? 1 : b[sk] === false ? 0 : b[sk]) ?? -1e9)));
+    body.innerHTML = sorted.map((r, i) => `
+      <tr class="clickable" data-idx="${r.idx}" style="${r.idx === selIdx ? "background:var(--card-alt);font-weight:600;" : ""}">
+        <td class="left muted">${i + 1}</td>
+        ${rowCellsFn(r)}
+      </tr>`).join("");
+    head.querySelectorAll("th[data-sort]").forEach(th => th.addEventListener("click", () => onSort(th.dataset.sort)));
+    body.querySelectorAll("tr").forEach(tr => tr.addEventListener("click", () => onSelect(Number(tr.dataset.idx))));
+  }
+
+  function detailGridHtml(items) {
+    return `<div class="grid-2" style="gap:8px;">` + items.map(([lbl, val, cls]) => `
+      <div class="subcard">
+        <div class="muted">${esc(lbl)}</div>
+        <div class="tabnum ${cls || ""}" style="font-weight:600;margin-top:2px;">${esc(val)}</div>
+      </div>`).join("") + `</div>`;
+  }
+
+  // SPIKER TAB
+  function renderSpikerTab() {
+    if (!hasPbp || !roleSpikers.length) return;
+    roleSpikers.forEach(p => { p.a_eff = (100 * p.sum_epa) / (p.att + state.rKM); });
+    const qList = roleSpikers.filter(p => p.qualified);
+    const byEff = [...qList].sort((a, b) => b.a_eff - a.a_eff);
+    const byAvpm = [...qList].sort((a, b) => b.a_vpm - a.a_vpm);
+    const byHit = [...qList].sort((a, b) => (b.true_hit ?? -9) - (a.true_hit ?? -9));
+    const primCnt = qList.filter(p => p.is_primary).length;
+    renderRoleKpis("spiker-kpis", [
+      byEff[0] ? { lbl: `Top Spiker (A-Eff, m=${state.rKM})`, val: byEff[0].name, sub: `${fmt(byEff[0].a_eff, 2, true)} (${byEff[0].att} att)`, tip: "Highest Bayesian-shrunk Attack EPA per 100 attempts", pickIdx: byEff[0].idx } : { lbl: "Top Spiker", val: "—", sub: "" },
+      byAvpm[0] ? { lbl: "Top Volume Attack (A-VPM)", val: byAvpm[0].name, sub: `${fmt(byAvpm[0].a_vpm, 2, true)} (${fmt(byAvpm[0].att_per_r, 2)}/R)`, tip: "Highest cumulative attack impact per 100 rallies", pickIdx: byAvpm[0].idx } : { lbl: "Top A-VPM", val: "—", sub: "" },
+      byHit[0] ? { lbl: "Top TrueHit%", val: byHit[0].name, sub: `${fmt(byHit[0].true_hit, 3)} (${fmt(byHit[0].kill_pct, 1)}% kill)`, tip: "Highest (True Kills - Direct Attack Errors) / Attempts", pickIdx: byHit[0].idx } : { lbl: "Top TrueHit%", val: "—", sub: "" },
+      { lbl: "Qualified Spikers", val: `${qList.length} players`, sub: `${primCnt} primary (>=25%T) · ${ROLES.meta.spiker_events_human.toLocaleString()} att`, tip: "Qualified players with >=100 rallies and >=20 attacks" }
+    ], idx => { state.rKSel = idx; renderSpikerTab(); });
+
+    const q = state.rKSearch.trim().toLowerCase();
+    const list = roleSpikers.filter(p => (state.rKUnqual || p.qualified) && (!state.rKPrimary || p.is_primary) && (!q || p.name.toLowerCase().includes(q)));
+    const isLoad = state.rKMode === "load";
+    renderRoleScatter("r-spiker-svg", "r-spiker-tip", list, {
+      xFn: isLoad ? p => p.att_per_r : p => p.true_hit,
+      yFn: p => p.a_eff,
+      rFn: p => Math.max(4.5, Math.min(13, Math.sqrt(p.att) * 0.5)),
+      xDec: isLoad ? 2 : 3,
+      xLabel: isLoad ? "Attack Workload (Attempts / Rally)" : "True Hitting % ((Kills - Err) / Att)",
+      yLabel: `A-Eff (Attack EPA / 100 Att, m=${state.rKM})`,
+      selIdx: state.rKSel,
+      tipHtml: p => `<b>${esc(p.name)}</b><br/>A-Eff: <b>${fmt(p.a_eff, 2, true)}</b> · A-VPM: ${fmt(p.a_vpm, 2, true)}<br/>Att: ${p.att} (${p.spk} spk, ${p.tip} tip) · TrueHit%: ${fmt(p.true_hit, 3)}`,
+      onSelect: idx => { state.rKSel = idx; renderSpikerTab(); }
+    });
+
+    const p = roleSpikers[state.rKSel] || roleSpikers[0];
+    const det = document.getElementById("r-spiker-detail");
+    det.innerHTML = `
+      <div class="between" style="border-bottom:1px solid var(--border);padding-bottom:8px;">
+        <div>
+          <div style="font-size:15px;font-weight:700;">${esc(p.name)} ${p.qualified ? "" : '<span class="muted">(&lt;100R)</span>'}</div>
+          <div class="muted">${p.is_primary ? "Primary Spiker" : "Secondary / Hybrid"} · ${p.rallies}R</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="muted">A-Eff (m=${state.rKM})</div>
+          <div class="tabnum ${valCls(p.a_eff)}" style="font-size:16px;font-weight:700;">${fmt(p.a_eff, 2, true)}</div>
+        </div>
+      </div>
+      ${detailGridHtml([
+        ["A-Eff Raw (m=0)", fmt(p.a_eff_raw, 2, true), valCls(p.a_eff_raw)],
+        ["A-VPM (/100R)", fmt(p.a_vpm, 2, true), valCls(p.a_vpm)],
+        ["Attacks (Spk / Tip)", `${p.att} (${p.spk} / ${p.tip})`, ""],
+        ["Att Share / Att/R", `${fmt(p.att_share, 1)}% / ${fmt(p.att_per_r, 2)}`, ""],
+        ["TrueHit%", fmt(p.true_hit, 3), valCls(p.true_hit)],
+        ["Kill% / Err% / Tip%", `${fmt(p.kill_pct, 1)}% / ${fmt(p.err_pct, 1)}% / ${fmt(p.tip_pct, 1)}%`, ""],
+        ["Block EPA/100R (Blk)", `${fmt(p.blk_epa, 2, true)} (${p.blk_n})`, valCls(p.blk_epa)],
+        ["O-VPM / Overall VPM", `${fmt(p.o_vpm, 2, true)} / ${fmt(p.vpm, 2, true)}`, ""]
+      ])}
+      ${p.mmr_idx >= 0 ? `<button id="r-k-open-prof" type="button" class="btn btn-sm">Open Full Player Profile</button>` : ""}`;
+    const btn = document.getElementById("r-k-open-prof");
+    if (btn) btn.onclick = () => openPlayerProfile(p.mmr_idx);
+
+    const cols = [
+      { k: "name", lbl: "Player", left: true, tip: "Player display name" },
+      { k: "is_primary", lbl: "Role", left: true, tip: "Primary Spiker (>=25% of touches) vs Secondary" },
+      { k: "a_eff", lbl: "A-Eff", tip: "Attack Markov EPA per 100 attempts at shrinkage m" },
+      { k: "a_vpm", lbl: "A-VPM", tip: "Attack value per 100 rallies (m=150)" },
+      { k: "att", lbl: "Att", tip: "Total attack attempts (spikes + tips + dumps)" },
+      { k: "att_share", lbl: "Att%T", tip: "Share of touches that are attacks" },
+      { k: "true_hit", lbl: "TrueHit%", tip: "(True Kills - Direct Attack Errors) / Attempts" },
+      { k: "kill_pct", lbl: "Kill%", tip: "True Kills per attack attempt" },
+      { k: "err_pct", lbl: "Err%", tip: "Direct attack error rate" },
+      { k: "tip_pct", lbl: "Tip%", tip: "Share of attacks that are tips" },
+      { k: "o_vpm", lbl: "O-VPM", tip: "Overall Offensive VPM" },
+      { k: "vpm", lbl: "VPM", tip: "Overall Volleyball Plus-Minus" }
+    ];
+    renderRoleTable("r-spiker-tbl-head", "r-spiker-tbl-body", list, cols, state.rKSort, state.rKSel,
+      k => { state.rKSort = { key: k, dir: state.rKSort.key === k ? -state.rKSort.dir : (k === "name" ? 1 : -1) }; renderSpikerTab(); },
+      idx => { state.rKSel = idx; renderSpikerTab(); },
+      r => `
+        <td class="left"><b>${esc(r.name)}</b>${r.qualified ? "" : ' <span class="muted">(unq)</span>'}</td>
+        <td class="left">${r.is_primary ? "Primary" : "Hybrid"}</td>
+        <td class="right ${valCls(r.a_eff)}"><b>${fmt(r.a_eff, 2, true)}</b></td>
+        <td class="right">${fmt(r.a_vpm, 2, true)}</td>
+        <td class="right">${r.att}</td>
+        <td class="right">${fmt(r.att_share, 1)}%</td>
+        <td class="right">${fmt(r.true_hit, 3)}</td>
+        <td class="right">${fmt(r.kill_pct, 1)}%</td>
+        <td class="right">${fmt(r.err_pct, 1)}%</td>
+        <td class="right">${fmt(r.tip_pct, 1)}%</td>
+        <td class="right">${fmt(r.o_vpm, 2, true)}</td>
+        <td class="right">${fmt(r.vpm, 2, true)}</td>`);
+  }
+
+  // SETTER TAB
+  function renderSetterTab() {
+    if (!hasPbp || !roleSetters.length) return;
+    const rm = ROLES.meta;
+    document.getElementById("setter-sub").textContent =
+      `5-fold out-of-fold set-delivery model across ${rm.setter_events_human.toLocaleString()} human setting actions in ${rm.total_rallies.toLocaleString()} rallies (human mean drift ${fmt(rm.mean_human_set_delta_100, 2, true)} pts/100).`;
+
+    roleSetters.forEach(p => { p.s_eff = (100 * p.sum_delta) / (p.act + state.rSM); });
+    const qList = roleSetters.filter(p => p.qualified);
+    const byEff = [...qList].sort((a, b) => b.s_eff - a.s_eff);
+    const bySvpm = [...qList].sort((a, b) => b.s_vpm - a.s_vpm);
+    const byAtt = [...qList].sort((a, b) => b.att_pct - a.att_pct);
+    const primCnt = qList.filter(p => p.is_primary).length;
+    renderRoleKpis("setter-kpis", [
+      byEff[0] ? { lbl: `Top Setter (S-Eff, m=${state.rSM})`, val: byEff[0].name, sub: `${fmt(byEff[0].s_eff, 2, true)} (${byEff[0].act} acts / ${byEff[0].dumps} dmp)`, tip: "Top qualified setter by context-adjusted delivery efficiency", pickIdx: byEff[0].idx } : { lbl: "Top S-Eff", val: "—", sub: "" },
+      bySvpm[0] ? { lbl: "Top Setter (S-VPM)", val: bySvpm[0].name, sub: `${fmt(bySvpm[0].s_vpm, 2, true)} (${fmt(bySvpm[0].sets_per_r, 2)}/R)`, tip: "Top qualified setter by cumulative setting value per 100 rallies", pickIdx: bySvpm[0].idx } : { lbl: "Top S-VPM", val: "—", sub: "" },
+      byAtt[0] ? { lbl: "Top Attackable %", val: byAtt[0].name, sub: `${fmt(byAtt[0].att_pct, 1)}% (${fmt(byAtt[0].err_pct, 1)}% err)`, tip: "Highest share of sets creating a 3rd-touch attack or active dump", pickIdx: byAtt[0].idx } : { lbl: "Top Att%", val: "—", sub: "" },
+      { lbl: "Qualified Setters", val: `${qList.length} players`, sub: `${primCnt} primary (>=35%T)`, tip: "Qualified setters (>=100R and >=35 set actions)" }
+    ], idx => { state.rSSel = idx; renderSetterTab(); });
+
+    const q = state.rSSearch.trim().toLowerCase();
+    const list = roleSetters.filter(p => (state.rSUnqual || p.qualified) && (!state.rSPrimary || p.is_primary) && (!q || p.name.toLowerCase().includes(q)));
+    renderRoleScatter("r-setter-svg", "r-setter-tip", list, {
+      xFn: p => p.sets_per_r, yFn: p => p.s_eff,
+      rFn: p => Math.max(4.5, Math.min(12.5, Math.sqrt(p.act) * 0.65)), xDec: 2,
+      xLabel: "Setting Workload (Set+Dump Actions / Rally)",
+      yLabel: `S-Eff (pts/100 Set Acts, m=${state.rSM})`,
+      selIdx: state.rSSel,
+      tipHtml: p => `<b>${esc(p.name)}</b><br/>S-Eff: <b>${fmt(p.s_eff, 2, true)}</b> · S-VPM: ${fmt(p.s_vpm, 2, true)}<br/>Acts: ${p.act} (${p.dumps} dmp) · Att%: ${fmt(p.att_pct, 1)}%`,
+      onSelect: idx => { state.rSSel = idx; renderSetterTab(); }
+    });
+
+    const p = roleSetters[state.rSSel] || roleSetters[0];
+    const det = document.getElementById("r-setter-detail");
+    det.innerHTML = `
+      <div class="between" style="border-bottom:1px solid var(--border);padding-bottom:8px;">
+        <div>
+          <div style="font-size:15px;font-weight:700;">${esc(p.name)} ${p.qualified ? "" : '<span class="muted">(&lt;100R)</span>'}</div>
+          <div class="muted">${p.is_primary ? "Primary Setter" : "Secondary / Spot"} · ${p.rallies}R</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="muted">S-Eff (m=${state.rSM})</div>
+          <div class="tabnum ${valCls(p.s_eff)}" style="font-size:16px;font-weight:700;">${fmt(p.s_eff, 2, true)}</div>
+        </div>
+      </div>
+      ${detailGridHtml([
+        ["S-Eff Raw (m=0)", fmt(p.s_eff_raw, 2, true), valCls(p.s_eff_raw)],
+        ["S-VPM (/100R)", fmt(p.s_vpm, 2, true), valCls(p.s_vpm)],
+        ["Actions (Dumps)", `${p.act} (${p.dumps})`, ""],
+        ["Set Share / Sets/R", `${fmt(p.set_share, 1)}% / ${fmt(p.sets_per_r, 2)}`, ""],
+        ["Attackable% / Err%", `${fmt(p.att_pct, 1)}% / ${fmt(p.err_pct, 1)}%`, ""],
+        ["Box Ast/Set", p.box_ast_pct !== null ? `${fmt(p.box_ast_pct, 1)}% (${p.box_ast}/${p.box_sets})` : "—", ""],
+        ["Teammate TrueHit%", `${fmt(p.tm_hit, 3)} (${p.tm_att})`, ""],
+        ["Dump EPA / VPM", `${fmt(p.dump_epa, 1, true)} / ${fmt(p.vpm, 1, true)}`, ""]
+      ])}
+      ${p.mmr_idx >= 0 ? `<button id="r-s-open-prof" type="button" class="btn btn-sm">Open Full Player Profile</button>` : ""}`;
+    const btn = document.getElementById("r-s-open-prof");
+    if (btn) btn.onclick = () => openPlayerProfile(p.mmr_idx);
+
+    const cols = [
+      { k: "name", lbl: "Player", left: true, tip: "Player display name" },
+      { k: "is_primary", lbl: "Role", left: true, tip: "Primary Setter (>=35% of touches) vs Spot" },
+      { k: "s_eff", lbl: "S-Eff", tip: "Set Delivery + Dump pts/100 actions at shrinkage m" },
+      { k: "s_vpm", lbl: "S-VPM", tip: "Setting impact per 100 rallies played (m=150)" },
+      { k: "act", lbl: "Act", tip: "Total set (touch 1-2) + dump (touch 2) actions" },
+      { k: "dumps", lbl: "Dmp", tip: "2nd-touch setter dumps" },
+      { k: "set_share", lbl: "Set%T", tip: "Share of touches that are sets or dumps" },
+      { k: "att_pct", lbl: "Att%", tip: "Share of sets yielding 3rd-touch attack or active dump" },
+      { k: "err_pct", lbl: "Err%", tip: "Direct terminal set or dump error rate" },
+      { k: "tm_hit", lbl: "TmHit%", tip: "Teammate TrueHit% immediately after player's set" },
+      { k: "box_ast_pct", lbl: "Ast/Set", tip: "Box-score assist conversion % (>=10 box sets)" },
+      { k: "vpm", lbl: "VPM", tip: "Overall Volleyball Plus-Minus" }
+    ];
+    renderRoleTable("r-setter-tbl-head", "r-setter-tbl-body", list, cols, state.rSSort, state.rSSel,
+      k => { state.rSSort = { key: k, dir: state.rSSort.key === k ? -state.rSSort.dir : (k === "name" ? 1 : -1) }; renderSetterTab(); },
+      idx => { state.rSSel = idx; renderSetterTab(); },
+      r => `
+        <td class="left"><b>${esc(r.name)}</b>${r.qualified ? "" : ' <span class="muted">(unq)</span>'}</td>
+        <td class="left">${r.is_primary ? "Primary" : "Spot"}</td>
+        <td class="right ${valCls(r.s_eff)}"><b>${fmt(r.s_eff, 2, true)}</b></td>
+        <td class="right">${fmt(r.s_vpm, 2, true)}</td>
+        <td class="right">${r.act}</td>
+        <td class="right">${r.dumps}</td>
+        <td class="right">${fmt(r.set_share, 1)}%</td>
+        <td class="right">${fmt(r.att_pct, 1)}%</td>
+        <td class="right">${fmt(r.err_pct, 1)}%</td>
+        <td class="right">${fmt(r.tm_hit, 3)}</td>
+        <td class="right">${r.box_ast_pct !== null ? fmt(r.box_ast_pct, 1) + "%" : "—"}</td>
+        <td class="right">${fmt(r.vpm, 2, true)}</td>`);
+
+    renderRoleHBar("r-set-ladder-svg", ROLES.set_ladder, 100,
+      r => r[2] >= 56 ? "var(--success)" : (r[2] >= 45 ? "var(--chart-2)" : (r[2] > 0 ? "var(--warning)" : "var(--error)")),
+      r => `${r[2].toFixed(1)}% (${r[1]})`);
+    const setRel = ROLES.rel.filter(r => r[4] === "set" || r[4] === "rej" || r[0].includes("Set"));
+    renderRoleHBar("r-set-rel-svg", setRel, 0.9,
+      r => r[4] === "set" ? "var(--chart-2)" : (r[4] === "old" ? "var(--muted-foreground)" : "var(--error)"),
+      r => `SB ${r[2].toFixed(3)} (n=${r[3]})`);
+  }
+
+  // LIBERO TAB
+  function renderLiberoTab() {
+    if (!hasPbp || !roleLiberos.length) return;
+    const rm = ROLES.meta;
+    document.getElementById("libero-sub").textContent =
+      `5-fold DataVolley pass-grade model across ${rm.libero_events_human.toLocaleString()} human cross-net first contacts (human mean drift ${fmt(rm.mean_human_lib_delta_100, 2, true)} pts/100).`;
+
+    roleLiberos.forEach(p => { p.l_eff = (100 * p.sum_delta) / (p.fc_n + state.rLM); });
+    const qList = roleLiberos.filter(p => p.qualified);
+    const byLeff = [...qList].sort((a, b) => b.l_eff - a.l_eff);
+    const bySr = [...qList].filter(p => p.sr_eff !== null).sort((a, b) => b.sr_eff - a.sr_eff);
+    const byDig = [...qList].filter(p => p.dig_eff !== null).sort((a, b) => b.dig_eff - a.dig_eff);
+    renderRoleKpis("libero-kpis", [
+      byLeff[0] ? { lbl: `Top Libero (L-Eff, m=${state.rLM})`, val: byLeff[0].name, sub: `${fmt(byLeff[0].l_eff, 2, true)} (${fmt(byLeff[0].in_sys, 1)}% InSys)`, tip: "Top qualified player by DataVolley pass-grade L-Eff", pickIdx: byLeff[0].idx } : { lbl: "Top L-Eff", val: "—", sub: "" },
+      bySr[0] ? { lbl: "Top Serve-Receive (SR-Eff)", val: bySr[0].name, sub: `${fmt(bySr[0].sr_eff, 2, true)} (${bySr[0].sr_n} SR)`, tip: "Top serve-receive efficiency (m=25)", pickIdx: bySr[0].idx } : { lbl: "Top SR-Eff", val: "—", sub: "" },
+      byDig[0] ? { lbl: "Top Floor Dig (Dig-Eff)", val: byDig[0].name, sub: `${fmt(byDig[0].dig_eff, 2, true)} (${byDig[0].dig_n} digs)`, tip: "Top hard-dig efficiency off attacks/tips/blocks (m=25)", pickIdx: byDig[0].idx } : { lbl: "Top Dig-Eff", val: "—", sub: "" },
+      { lbl: "D-VPM != Libero", val: `r(Blk, FC) = ${fmt(rm.block_vs_fc_std_epa_100r, 3)}`, sub: `r(D-VPM, Dig) = ${fmt(rm.dvpm_vs_dig_eff, 3)}`, tip: "Front-row blocking drives D-VPM orthogonally to backcourt passing" }
+    ], idx => { state.rLSel = idx; renderLiberoTab(); });
+
+    const q = state.rLSearch.trim().toLowerCase();
+    const list = roleLiberos.filter(p => (state.rLUnqual || p.qualified) && (!state.rLPrimary || p.is_primary) && (!q || p.name.toLowerCase().includes(q)));
+    const isSrDig = state.rLMode === "sr_dig";
+    renderRoleScatter("r-libero-svg", "r-libero-tip", list, {
+      xFn: isSrDig ? p => p.sr_eff : p => p.d_vpm,
+      yFn: isSrDig ? p => p.dig_eff : p => p.l_eff,
+      rFn: p => Math.max(4.5, Math.min(12.5, Math.sqrt(p.fc_n) * 0.55)), xDec: 1,
+      xLabel: isSrDig ? "Serve-Receive SR-Eff (pts/100 SR, m=25)" : "Overall Defense D-VPM (Serve RAPM + Block + Def EPA)",
+      yLabel: isSrDig ? "Floor Hard-Dig Dig-Eff (pts/100 Digs, m=25)" : `True First-Contact L-Eff (pts/100 FC, m=${state.rLM})`,
+      selIdx: state.rLSel,
+      tipHtml: p => `<b>${esc(p.name)}</b><br/>L-Eff: <b>${fmt(p.l_eff, 2, true)}</b> · D-VPM: ${fmt(p.d_vpm, 2, true)}<br/>SR-Eff: ${fmt(p.sr_eff, 2, true)} · Dig-Eff: ${fmt(p.dig_eff, 2, true)}<br/>FC: ${p.fc_n} · InSys: ${fmt(p.in_sys, 1)}%`,
+      onSelect: idx => { state.rLSel = idx; renderLiberoTab(); }
+    });
+
+    const p = roleLiberos[state.rLSel] || roleLiberos[0];
+    const det = document.getElementById("r-libero-detail");
+    det.innerHTML = `
+      <div class="between" style="border-bottom:1px solid var(--border);padding-bottom:8px;">
+        <div>
+          <div style="font-size:15px;font-weight:700;">${esc(p.name)} ${p.qualified ? "" : '<span class="muted">(&lt;100R)</span>'}</div>
+          <div class="muted">${p.is_primary ? "Primary Libero" : "Two-Way / Hybrid"} · ${p.rallies}R</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="muted">L-Eff (m=${state.rLM})</div>
+          <div class="tabnum ${valCls(p.l_eff)}" style="font-size:16px;font-weight:700;">${fmt(p.l_eff, 2, true)}</div>
+        </div>
+      </div>
+      ${detailGridHtml([
+        [`SR-Eff (${p.sr_n} SR)`, fmt(p.sr_eff, 2, true), valCls(p.sr_eff)],
+        [`Dig-Eff (${p.dig_n} Digs)`, fmt(p.dig_eff, 2, true), valCls(p.dig_eff)],
+        ["L-Eff Raw / L-VPM", `${fmt(p.l_eff_raw, 2, true)} / ${fmt(p.l_vpm, 2, true)}`, ""],
+        [`FC (${p.fc_n}) / FC%T`, `${fmt(p.fc_share, 1)}% (${fmt(p.fc_per_r, 2)}/R)`, ""],
+        ["In-System% / Clean%", `${fmt(p.in_sys, 1)}% / ${fmt(p.clean, 1)}%`, ""],
+        ["Err% / Shank+Carom%", `${fmt(p.err_pct, 1)}% / ${fmt(p.sc_pct, 1)}%`, ""],
+        ["D-VPM (All Defense)", fmt(p.d_vpm, 2, true), valCls(p.d_vpm)],
+        ["Block EPA/100R (Blk)", `${fmt(p.blk_epa, 2, true)} (${p.blk_n})`, valCls(p.blk_epa)]
+      ])}
+      ${p.mmr_idx >= 0 ? `<button id="r-l-open-prof" type="button" class="btn btn-sm">Open Full Player Profile</button>` : ""}`;
+    const btn = document.getElementById("r-l-open-prof");
+    if (btn) btn.onclick = () => openPlayerProfile(p.mmr_idx);
+
+    const cols = [
+      { k: "name", lbl: "Player", left: true, tip: "Player display name" },
+      { k: "is_primary", lbl: "Role", left: true, tip: "Primary Libero (>=35% FC touch share) vs Hybrid" },
+      { k: "l_eff", lbl: "L-Eff", tip: "Pass-grade pts/100 cross-net first contacts at shrinkage m" },
+      { k: "l_vpm", lbl: "L-VPM", tip: "First-contact value per 100 rallies (m=150)" },
+      { k: "sr_eff", lbl: "SR-Eff", tip: "Serve-Receive quality vs human baseline (m=25)" },
+      { k: "dig_eff", lbl: "Dig-Eff", tip: "Floor Hard-Dig quality off attacks/tips/blocks (m=25)" },
+      { k: "fc_n", lbl: "FC", tip: "Total cross-net non-block first contacts" },
+      { k: "fc_share", lbl: "FC%T", tip: "Share of touches that are first contacts" },
+      { k: "in_sys", lbl: "InSys%", tip: "Share of passes leading to clean attack/dump (G3)" },
+      { k: "clean", lbl: "Clean%", tip: "Passes avoiding terminal error, shank, or carom" },
+      { k: "sc_pct", lbl: "SC%", tip: "Shank + Carom rate on first contacts" },
+      { k: "d_vpm", lbl: "D-VPM", tip: "Overall Defensive VPM (Serve RAPM + Blocking)" },
+      { k: "blk_epa", lbl: "BlkEPA", tip: "Front-row block Markov EPA per 100 rallies" }
+    ];
+    renderRoleTable("r-libero-tbl-head", "r-libero-tbl-body", list, cols, state.rLSort, state.rLSel,
+      k => { state.rLSort = { key: k, dir: state.rLSort.key === k ? -state.rLSort.dir : (k === "name" ? 1 : -1) }; renderLiberoTab(); },
+      idx => { state.rLSel = idx; renderLiberoTab(); },
+      r => `
+        <td class="left"><b>${esc(r.name)}</b>${r.qualified ? "" : ' <span class="muted">(unq)</span>'}</td>
+        <td class="left">${r.is_primary ? "Primary" : "Hybrid"}</td>
+        <td class="right ${valCls(r.l_eff)}"><b>${fmt(r.l_eff, 2, true)}</b></td>
+        <td class="right">${fmt(r.l_vpm, 2, true)}</td>
+        <td class="right">${fmt(r.sr_eff, 2, true)}</td>
+        <td class="right">${fmt(r.dig_eff, 2, true)}</td>
+        <td class="right">${r.fc_n}</td>
+        <td class="right">${fmt(r.fc_share, 1)}%</td>
+        <td class="right">${fmt(r.in_sys, 1)}%</td>
+        <td class="right">${fmt(r.clean, 1)}%</td>
+        <td class="right">${fmt(r.sc_pct, 1)}%</td>
+        <td class="right">${fmt(r.d_vpm, 2, true)}</td>
+        <td class="right">${fmt(r.blk_epa, 2, true)}</td>`);
+
+    renderRoleHBar("r-pass-ladder-svg", ROLES.pass_ladder, 100,
+      r => r[2] >= 55 ? "var(--success)" : (r[2] >= 45 ? "var(--chart-1)" : (r[2] > 5 ? "var(--warning)" : "var(--error)")),
+      r => `${r[2].toFixed(1)}% (${r[1]})`);
+    const libRel = ROLES.rel.filter(r => r[4] === "lib" || r[0].includes("FC"));
+    renderRoleHBar("r-lib-rel-svg", libRel, 0.9,
+      r => r[4] === "lib" ? "var(--chart-1)" : "var(--muted-foreground)",
+      r => `SB ${r[2].toFixed(3)} (n=${r[3]})`);
+
+    document.getElementById("r-dvpm-proof-sub").textContent =
+      `D-VPM correlates with Serve RAPM (r=${fmt(rm.dvpm_vs_serve_rapm, 3, true)}) and Block EPA (r=${fmt(rm.dvpm_vs_block_epa_100r, 3, true)}), ` +
+      `while blocking and first-contact passing are orthogonal (r=${fmt(rm.block_vs_fc_std_epa_100r, 3, true)}; D-VPM vs L-Eff r=${fmt(rm.dvpm_vs_l_eff, 3, true)}).`;
+
+    const dBody = document.getElementById("r-top10-d-body");
+    dBody.innerHTML = ROLES.top10_d.map(r => `
+      <tr class="${r[1] >= 0 ? "clickable" : ""}" data-midx="${r[1]}">
+        <td class="left"><b>${esc(r[0])}</b></td>
+        <td class="right ${valCls(r[2])}"><b>${fmt(r[2], 2, true)}</b></td>
+        <td class="right">${fmt(r[3], 2, true)}</td>
+        <td class="right ${valCls(r[4])}">${fmt(r[4], 2, true)} (${r[5]})</td>
+        <td class="right ${valCls(r[6])}"><b>${fmt(r[6], 2, true)}</b> (${r[7]})</td>
+      </tr>`).join("");
+    dBody.querySelectorAll("tr[data-midx]").forEach(tr => {
+      const midx = Number(tr.dataset.midx);
+      if (midx >= 0) tr.addEventListener("click", () => openPlayerProfile(midx));
+    });
+  }
+
+  // Event wiring for Spiker / Setter / Libero tabs
+  document.getElementById("r-k-m-slider").addEventListener("input", e => { state.rKM = Number(e.target.value); document.getElementById("r-k-m-val").textContent = state.rKM; renderSpikerTab(); });
+  document.getElementById("r-k-primary-only").addEventListener("change", e => { state.rKPrimary = e.target.checked; renderSpikerTab(); });
+  document.getElementById("r-k-show-unqual").addEventListener("change", e => { state.rKUnqual = e.target.checked; renderSpikerTab(); });
+  document.getElementById("r-k-search").addEventListener("input", e => { state.rKSearch = e.target.value; renderSpikerTab(); });
+  document.getElementById("r-spk-mode-load").addEventListener("click", () => {
+    state.rKMode = "load";
+    document.getElementById("r-spk-mode-load").className = "btn btn-sm btn-active";
+    document.getElementById("r-spk-mode-hit").className = "btn btn-sm";
+    renderSpikerTab();
+  });
+  document.getElementById("r-spk-mode-hit").addEventListener("click", () => {
+    state.rKMode = "hit";
+    document.getElementById("r-spk-mode-load").className = "btn btn-sm";
+    document.getElementById("r-spk-mode-hit").className = "btn btn-sm btn-active";
+    renderSpikerTab();
+  });
+
+  document.getElementById("r-s-m-slider").addEventListener("input", e => { state.rSM = Number(e.target.value); document.getElementById("r-s-m-val").textContent = state.rSM; renderSetterTab(); });
+  document.getElementById("r-s-primary-only").addEventListener("change", e => { state.rSPrimary = e.target.checked; renderSetterTab(); });
+  document.getElementById("r-s-show-unqual").addEventListener("change", e => { state.rSUnqual = e.target.checked; renderSetterTab(); });
+  document.getElementById("r-s-search").addEventListener("input", e => { state.rSSearch = e.target.value; renderSetterTab(); });
+
+  document.getElementById("r-l-m-slider").addEventListener("input", e => { state.rLM = Number(e.target.value); document.getElementById("r-l-m-val").textContent = state.rLM; renderLiberoTab(); });
+  document.getElementById("r-l-primary-only").addEventListener("change", e => { state.rLPrimary = e.target.checked; renderLiberoTab(); });
+  document.getElementById("r-l-show-unqual").addEventListener("change", e => { state.rLUnqual = e.target.checked; renderLiberoTab(); });
+  document.getElementById("r-l-search").addEventListener("input", e => { state.rLSearch = e.target.value; renderLiberoTab(); });
+  document.getElementById("r-lib-mode-sr").addEventListener("click", () => {
+    state.rLMode = "sr_dig";
+    document.getElementById("r-lib-mode-sr").className = "btn btn-sm btn-active";
+    document.getElementById("r-lib-mode-dvpm").className = "btn btn-sm";
+    renderLiberoTab();
+  });
+  document.getElementById("r-lib-mode-dvpm").addEventListener("click", () => {
+    state.rLMode = "l_dvpm";
+    document.getElementById("r-lib-mode-sr").className = "btn btn-sm";
+    document.getElementById("r-lib-mode-dvpm").className = "btn btn-sm btn-active";
+    renderLiberoTab();
+  });
+
   // TAB 3: UNIVERSAL PLAYER PROFILE & MATCHUPS
   const profSelect = document.getElementById("prof-select");
   const profFilter = document.getElementById("prof-filter");
@@ -1600,6 +2363,17 @@
         ["V_all / V_nt", "Markov State Values", "V_all = overall empirical win probability after a state; V_nt = win probability conditioned on the rally continuing (used in EPA to prevent mixture bias)."],
         ["SB", "Spearman-Brown Reliability", "Full-sample reliability estimate 2r / (1 + r) from odd/even rally split-half correlation r."]
       ]
+    },
+    {
+      title: "Role Metrics (Spiker, Setter, Libero)",
+      items: [
+        ["A-Eff / A-VPM", "Spiker Attack Efficiency & Impact", "Non-terminal Markov attack EPA per 100 attempts (spikes, tips, dumps) shrunk by m=40 (A-Eff), or per 100 rallies at m=150 (A-VPM)."],
+        ["S-Eff / S-VPM", "Setter Delivery Efficiency & Impact", "Expected win-probability points per 100 setting actions (sets touch 1-2 + 2nd-touch dumps) above context-matched human baselines, shrunk by m=40 (S-Eff) or per 100 rallies at m=150 (S-VPM)."],
+        ["Att% (Setter)", "Attackable Set Rate", "Share of setting actions producing a 3rd-touch teammate attack or an active 2nd-touch dump."],
+        ["L-Eff / L-VPM", "Libero First-Contact Efficiency & Impact", "DataVolley pass-grade points per 100 cross-net non-block first contacts above the human incoming-ball baseline, shrunk by m=40 (L-Eff) or per 100 rallies at m=150 (L-VPM)."],
+        ["SR-Eff / Dig-Eff", "Serve-Receive vs. Floor-Dig Efficiency", "Sub-skill splits of L-Eff (m=25) separating incoming serves (SR-Eff) from incoming attacks, tips, and blocks (Dig-Eff)."],
+        ["G3 / G2 / G1 / G0", "DataVolley Pass-Grade Ladder", "G3_insys_att leads to attack/dump; G_overpass_nt caps lucky bounce overpasses; G2_insys_tip; G1_shank_alive; G1_oos; G2_set_neutral neutralizes setter errors; G0_err is a terminal error."]
+      ]
     }
   ];
 
@@ -1625,6 +2399,9 @@
 
   function renderActiveTab() {
     if (state.tab === "scatter") { renderScatter(); renderSandboxTable(); }
+    else if (state.tab === "spiker") { renderSpikerTab(); }
+    else if (state.tab === "setter") { renderSetterTab(); }
+    else if (state.tab === "libero") { renderLiberoTab(); }
     else if (state.tab === "compare") { renderCompare(); renderMainTable(); }
     else if (state.tab === "profile") { renderProfile(); }
     else if (state.tab === "engine") { renderEngine(); }
@@ -1632,8 +2409,9 @@
 
   // Graceful MMR-only mode if dataset has no PBP telemetry
   if (!hasPbp) {
-    document.querySelector('[data-tab="scatter"]').classList.add("hidden");
-    document.querySelector('[data-tab="engine"]').classList.add("hidden");
+    ["scatter", "spiker", "setter", "libero", "engine"].forEach(t => {
+      document.querySelector(`[data-tab="${t}"]`).classList.add("hidden");
+    });
   }
 
   initHeader();
