@@ -3,265 +3,421 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Just Volleyball — Efficiency &amp; MMR Lab</title>
+  <title>Just Volleyball Stats</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
   <style>
-    :root {
-      --background: #0b0f17;
-      --card: #121826;
-      --card-alt: #0f1522;
-      --foreground: #e6edf7;
-      --muted-foreground: #94a3b8;
-      --border: #253047;
-      --primary: #38bdf8;
-      --primary-foreground: #07131d;
-      --success: #34d399;
-      --error: #f87171;
-      --warning: #fbbf24;
-      --chart-1: #38bdf8;
-      --chart-2: #a78bfa;
-      --chart-3: #fbbf24;
-      --chart-5: #fb7185;
-      --link: #60a5fa;
-      --placeholder: #64748b;
+    :root, [data-theme="light"] {
+      --bg: #f3f6fa; --surface: #ffffff; --surface-subtle: #edf2f7; --surface-hover: #e5ecf4;
+      --ink: #0c1b2e; --ink-muted: #4b5e75; --line: #d4dde8; --line-subtle: #e5ebf2;
+      --accent: #0f5bd8; --accent-hover: #0b49b0; --accent-soft: rgba(15, 91, 216, 0.10); --accent-ink: #ffffff;
+      --pos: #0d8a5f; --neg: #cf3737; --warn: #b4690e;
+      --chart-1: #0f5bd8; --chart-2: #d96b1f; --chart-3: #0d8a5f; --chart-4: #64748b; --chart-5: #be123c;
+      --link: #0f5bd8; --placeholder: #6b7f96; --header-bg: rgba(255, 255, 255, 0.92);
+      --shadow-float: 0 12px 32px rgba(12, 27, 46, 0.12);
+      --font-display: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+      --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      --text-heading: 1.125rem; --text-body: 0.9375rem; --text-sm: 0.8125rem;
+      --radius: 10px; --radius-sm: 7px; --ease: cubic-bezier(0.22, 1, 0.36, 1);
     }
-    [data-theme="light"] {
-      --background: #f4f7fb;
-      --card: #ffffff;
-      --card-alt: #f8fafc;
-      --foreground: #0f172a;
-      --muted-foreground: #475569;
-      --border: #cbd5e1;
-      --primary: #0284c7;
-      --primary-foreground: #ffffff;
-      --success: #059669;
-      --error: #dc2626;
-      --warning: #d97706;
-      --chart-1: #0284c7;
-      --chart-2: #7c3aed;
-      --chart-3: #d97706;
-      --chart-5: #e11d48;
-      --link: #0369a1;
-      --placeholder: #94a3b8;
+    [data-theme="dark"] {
+      --bg: #0a121f; --surface: #111c2d; --surface-subtle: #16243a; --surface-hover: #1c2d47;
+      --ink: #eef3fa; --ink-muted: #93a7bf; --line: #23344d; --line-subtle: #1a283d;
+      --accent: #4d9aff; --accent-hover: #6aadff; --accent-soft: rgba(77, 154, 255, 0.14); --accent-ink: #061224;
+      --pos: #34d399; --neg: #f87171; --warn: #fbbf24;
+      --chart-1: #4d9aff; --chart-2: #f59e3d; --chart-3: #34d399; --chart-4: #8fa3bc; --chart-5: #fb7185;
+      --link: #6aadff; --placeholder: #6c829e; --header-bg: rgba(17, 28, 45, 0.92);
+      --shadow-float: 0 14px 36px rgba(2, 6, 14, 0.55);
     }
     *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
     body {
-      margin: 0;
-      padding: 16px;
-      background: var(--background);
-      color: var(--foreground);
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-      font-size: 13px;
-      line-height: 1.45;
-      -webkit-font-smoothing: antialiased;
+      margin: 0; background: var(--bg); color: var(--ink);
+      font-family: var(--font-sans); font-size: var(--text-body); line-height: 1.5; -webkit-font-smoothing: antialiased;
     }
-    @media (min-width: 768px) { body { padding: 24px; } }
-    .wrap { max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
-    .subcard { background: var(--card-alt); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; letter-spacing: -0.025em; line-height: 1.2; white-space: nowrap; }
+    h2 { font-family: var(--font-display); font-size: var(--text-heading); font-weight: 700; letter-spacing: -0.02em; line-height: 1.25; }
+    h3 { font-family: var(--font-sans); font-size: var(--text-body); font-weight: 600; letter-spacing: -0.01em; line-height: 1.35; }
+    p.prose, .muted-prose { max-width: 65ch; }
+    .muted { color: var(--ink-muted); font-size: var(--text-sm); }
+    .tabnum { font-variant-numeric: tabular-nums; }
+    .pos { color: var(--pos); }
+    .neg { color: var(--neg); }
+    .pri { color: var(--accent); }
+    .hidden { display: none !important; }
+    .rel { position: relative; }
+
+    /* Sticky Masthead */
+    .topbar {
+      position: sticky; top: 0; z-index: 50; background: var(--header-bg);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--line);
+    }
+    .topbar-inner {
+      max-width: 1320px; margin: 0 auto; padding: 0 16px;
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; min-height: 56px;
+    }
+    .brand { display: inline-flex; align-items: center; gap: 10px; padding: 10px 0; flex-shrink: 0; }
+    .brand-mark { color: var(--accent); flex-shrink: 0; display: block; }
+    .nav-tabs {
+      display: flex; align-items: center; gap: 2px; overflow-x: auto; scrollbar-width: none;
+      max-width: 100%; order: 3; width: 100%; border-top: 1px solid var(--line-subtle); margin: 0 -16px; padding: 0 16px;
+    }
+    .nav-tabs::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      position: relative; appearance: none; background: transparent; border: none; border-bottom: 2px solid transparent;
+      color: var(--ink-muted); font-family: var(--font-sans); font-size: var(--text-sm); font-weight: 500;
+      padding: 12px 11px 10px; cursor: pointer; white-space: nowrap; flex-shrink: 0;
+      transition: color 160ms var(--ease), border-color 160ms var(--ease);
+    }
+    .tab-btn:hover { color: var(--ink); }
+    .tab-btn[aria-selected="true"] { color: var(--accent); font-weight: 600; border-bottom-color: var(--accent); }
+    .nav-utils { display: flex; align-items: center; gap: 6px; flex-shrink: 0; padding: 8px 0; }
+    @media (max-width: 639px) {
+      h1 { font-size: 1.0625rem; }
+      .brand { gap: 7px; }
+      .nav-utils { gap: 4px; }
+      .nav-utils .btn-sm { padding: 5px 8px; }
+      .search-meta-hide-sm { display: none !important; }
+    }
+    @media (min-width: 1024px) {
+      .topbar-inner { padding: 0 24px; flex-wrap: nowrap; min-height: 58px; }
+      .nav-tabs { order: 0; width: auto; border-top: none; margin: 0; padding: 0; flex: 1; justify-content: center; }
+      .tab-btn { padding: 18px 12px 16px; }
+    }
+
+    /* Main Workspace & Search */
+    .wrap { max-width: 1320px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+    @media (min-width: 768px) { .wrap { padding: 20px 24px 28px; gap: 20px; } }
+    .workspace-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+    .search-shell { position: relative; flex: 1 1 320px; min-width: 240px; }
+    .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--ink-muted); pointer-events: none; }
+    input[type="text"].search-input {
+      width: 100%; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius);
+      padding: 9px 150px 9px 38px; font-family: var(--font-sans); font-size: var(--text-sm); outline: none;
+      transition: border-color 160ms var(--ease), box-shadow 160ms var(--ease);
+    }
+    @media (max-width: 639px) { input[type="text"].search-input { padding: 9px 72px 9px 38px; } }
+    input[type="text"].search-input::placeholder { color: var(--placeholder); }
+    input[type="text"].search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .search-meta { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: inline-flex; align-items: center; gap: 8px; pointer-events: none; }
+    .search-meta .clear-btn { pointer-events: auto; }
+    .clear-btn {
+      background: var(--surface-subtle); border: 1px solid var(--line); border-radius: 5px; color: var(--ink-muted);
+      font-family: var(--font-sans); font-size: var(--text-sm); font-weight: 500; padding: 2px 8px; cursor: pointer;
+      transition: color 140ms var(--ease), border-color 140ms var(--ease);
+    }
+    .clear-btn:hover { color: var(--ink); border-color: var(--accent); }
+    .kbd-hint {
+      border: 1px solid var(--line); background: var(--surface-subtle); color: var(--ink-muted);
+      border-radius: 4px; padding: 1px 6px; font-size: var(--text-sm); font-weight: 600; line-height: 1.3;
+    }
+
+    /* Layout Grids & Surfaces */
+    .panel {
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+      padding: 16px 18px; display: flex; flex-direction: column; gap: 12px;
+    }
+    @media (min-width: 768px) { .panel { padding: 18px 20px; } }
+    .band { background: var(--surface-subtle); border-radius: var(--radius-sm); padding: 12px 14px; }
     .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
     .between { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
     .grid-2 { display: grid; grid-template-columns: 1fr; gap: 16px; }
-    .grid-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .grid-6 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
     .grid-12 { display: grid; grid-template-columns: 1fr; gap: 16px; }
-    @media (min-width: 640px) { .grid-4 { grid-template-columns: repeat(4, 1fr); } .grid-6 { grid-template-columns: repeat(3, 1fr); } }
+    @media (min-width: 640px) { .grid-4 { grid-template-columns: repeat(4, 1fr); } }
     @media (min-width: 1024px) {
       .grid-2 { grid-template-columns: 1fr 1fr; }
-      .grid-6 { grid-template-columns: repeat(6, 1fr); }
       .grid-12 { grid-template-columns: repeat(12, 1fr); }
-      .col-5 { grid-column: span 5; }
-      .col-7 { grid-column: span 7; }
-      .col-4 { grid-column: span 4; }
-      .col-8 { grid-column: span 8; }
+      .col-4 { grid-column: span 4; } .col-5 { grid-column: span 5; }
+      .col-7 { grid-column: span 7; } .col-8 { grid-column: span 8; }
     }
-    h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
-    h2 { margin: 0; font-size: 16px; font-weight: 600; }
-    h3 { margin: 0 0 8px 0; font-size: 14px; font-weight: 600; }
-    p { margin: 0; }
-    .muted { color: var(--muted-foreground); font-size: 12px; }
-    .tabnum { font-variant-numeric: tabular-nums; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+    /* Hairline-Divided Ledgers & Key-Value Dossier */
+    .ledger {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden;
+    }
+    .ledger-4 { grid-template-columns: repeat(2, 1fr); }
+    .ledger-6 { grid-template-columns: repeat(2, 1fr); border-radius: var(--radius-sm); }
+    @media (min-width: 640px) {
+      .ledger-4 { grid-template-columns: repeat(4, 1fr); }
+      .ledger-6 { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (min-width: 1024px) { .ledger-6 { grid-template-columns: repeat(6, 1fr); } }
+    .ledger-item {
+      padding: 12px 14px; border-right: 1px solid var(--line-subtle); border-bottom: 1px solid var(--line-subtle);
+      display: flex; flex-direction: column; gap: 2px; min-width: 0; transition: background-color 160ms var(--ease);
+    }
+    .ledger-item.is-clickable { cursor: pointer; }
+    .ledger-item.is-clickable:hover { background: var(--surface-subtle); }
+    .ledger-item.is-clickable:hover .kpi-val { color: var(--accent); }
+    .kpi-val {
+      font-family: var(--font-display); font-size: var(--text-heading); font-weight: 700; line-height: 1.25;
+      color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: color 160ms var(--ease);
+    }
+    .ledger-sub { color: var(--ink-muted); font-size: var(--text-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .kv-grid { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line-subtle); }
+    .kv-row { padding: 9px 8px 9px 0; border-bottom: 1px solid var(--line-subtle); display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .kv-row:nth-child(even) { padding-left: 12px; padding-right: 0; border-left: 1px solid var(--line-subtle); }
+    .kv-val { font-size: var(--text-body); font-weight: 600; color: var(--ink); }
+
+    /* Controls */
     .btn {
-      background: var(--background); color: var(--foreground); border: 1px solid var(--border);
-      border-radius: 8px; padding: 6px 11px; font-size: 12px; font-weight: 500; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius-sm);
+      padding: 6px 12px; font-family: var(--font-sans); font-size: var(--text-sm); font-weight: 500; line-height: 1.3;
+      cursor: pointer; white-space: nowrap;
+      transition: background-color 150ms var(--ease), border-color 150ms var(--ease), color 150ms var(--ease);
     }
-    .btn:hover { border-color: var(--primary); }
-    .btn-sm { padding: 4px 8px; border-radius: 6px; font-size: 12px; }
-    .btn-active, .tab-btn[aria-selected="true"] {
-      background: var(--primary); color: var(--primary-foreground); border-color: var(--primary);
+    .btn:hover { background: var(--surface-subtle); border-color: var(--accent); }
+    .btn-sm { padding: 5px 10px; }
+    .btn-primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+    .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: var(--accent-ink); }
+    .btn-ghost { background: transparent; border-color: transparent; color: var(--ink-muted); }
+    .btn-ghost:hover { background: var(--surface-subtle); border-color: transparent; color: var(--ink); }
+
+    .seg-control {
+      display: inline-flex; flex-wrap: wrap; background: var(--surface-subtle);
+      border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 2px; gap: 2px;
     }
-    .kpi { cursor: pointer; transition: border-color 0.15s; }
-    .kpi:hover { border-color: var(--primary); }
-    .kpi-val { font-size: 15px; font-weight: 700; margin-top: 2px; }
+    .seg-btn {
+      appearance: none; background: transparent; color: var(--ink-muted); border: none; border-radius: 5px;
+      padding: 5px 10px; font-family: var(--font-sans); font-size: var(--text-sm); font-weight: 500;
+      cursor: pointer; white-space: nowrap;
+      transition: background-color 150ms var(--ease), color 150ms var(--ease), box-shadow 150ms var(--ease);
+    }
+    .seg-btn:hover { color: var(--ink); }
+    .seg-btn.is-active { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(12, 27, 46, 0.08); }
+
     input[type="text"], select {
-      background: var(--background); color: var(--foreground); border: 1px solid var(--border);
-      border-radius: 6px; padding: 5px 9px; font-size: 12px; outline: none;
+      background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius-sm);
+      padding: 6px 10px; font-family: var(--font-sans); font-size: var(--text-sm); outline: none;
+      transition: border-color 150ms var(--ease);
     }
     input[type="text"]::placeholder { color: var(--placeholder); }
-    input[type="text"]:focus, select:focus { border-color: var(--primary); }
-    input[type="range"] { accent-color: var(--primary); cursor: pointer; }
-    .hidden { display: none !important; }
-    .rel { position: relative; }
+    input[type="text"]:focus, select:focus { border-color: var(--accent); }
+    input[type="range"] { accent-color: var(--accent); cursor: pointer; height: 5px; }
+
+    .switch { display: inline-flex; align-items: center; gap: 7px; font-size: var(--text-sm); color: var(--ink-muted); cursor: pointer; user-select: none; }
+    .switch input {
+      appearance: none; -webkit-appearance: none; width: 32px; height: 18px; border-radius: 999px;
+      background: var(--line); position: relative; cursor: pointer; margin: 0; flex-shrink: 0;
+      transition: background-color 160ms var(--ease);
+    }
+    .switch input::after {
+      content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%;
+      background: var(--surface); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25); transition: transform 160ms var(--ease);
+    }
+    .switch input:checked { background: var(--accent); }
+    .switch input:checked::after { transform: translateX(14px); }
+    .switch input:checked + span { color: var(--ink); font-weight: 500; }
+    button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .quick-links { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: var(--text-sm); }
+    .quick-link {
+      appearance: none; background: transparent; border: none; padding: 2px 0; color: var(--link);
+      font-family: var(--font-sans); font-size: var(--text-sm); font-weight: 500; cursor: pointer;
+      text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px;
+      transition: text-decoration-color 150ms var(--ease), color 150ms var(--ease);
+    }
+    .quick-link:hover { text-decoration-color: var(--link); }
+
+    /* Dropdown, Charts & Tables */
     .dropdown {
-      position: absolute; left: 0; right: 0; top: 100%; margin-top: 4px; z-index: 40;
-      background: var(--card); border: 1px solid var(--border); border-radius: 8px;
-      box-shadow: 0 10px 28px rgba(0,0,0,0.35); max-height: 290px; overflow-y: auto;
+      position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 45;
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+      box-shadow: var(--shadow-float); max-height: 320px; overflow-y: auto;
     }
     .dd-item {
-      width: 100%; text-align: left; background: transparent; color: var(--foreground);
-      border: none; border-bottom: 1px solid var(--border); padding: 8px 12px; font-size: 12px;
-      cursor: pointer; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px;
+      width: 100%; text-align: left; background: transparent; color: var(--ink); border: none;
+      border-bottom: 1px solid var(--line-subtle); padding: 10px 14px; font-family: var(--font-sans);
+      font-size: var(--text-sm); cursor: pointer; display: flex; flex-wrap: wrap;
+      justify-content: space-between; align-items: center; gap: 6px 12px; transition: background-color 140ms var(--ease);
     }
     .dd-item:last-child { border-bottom: none; }
-    .dd-item:hover { background: var(--card-alt); }
-    .clear-btn {
-      position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
-      background: transparent; border: none; color: var(--muted-foreground); font-size: 12px; cursor: pointer;
-    }
-    .clear-btn:hover { color: var(--foreground); }
-    svg.chart { width: 100%; height: auto; display: block; background: var(--card-alt); border: 1px solid var(--border); border-radius: 8px; }
-    svg text { user-select: none; }
-    .tbl-wrap { border: 1px solid var(--border); border-radius: 8px; overflow: auto; max-height: 480px; }
-    table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    th, td { padding: 7px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .dd-item:hover { background: var(--surface-subtle); }
+
+    svg.chart { width: 100%; height: auto; display: block; background: var(--surface-subtle); border: 1px solid var(--line-subtle); border-radius: var(--radius-sm); }
+    svg text { user-select: none; font-family: var(--font-sans); }
+    .tbl-wrap { border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: auto; max-height: 480px; }
+    table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+    th, td { padding: 8px 10px; border-bottom: 1px solid var(--line-subtle); white-space: nowrap; }
     thead th {
-      position: sticky; top: 0; background: var(--card); color: var(--muted-foreground);
-      font-weight: 600; text-align: right; z-index: 5;
+      position: sticky; top: 0; background: var(--surface-subtle); color: var(--ink-muted);
+      font-weight: 600; text-align: right; border-bottom: 1px solid var(--line); z-index: 5;
     }
     thead th.left, td.left { text-align: left; }
     td.right { text-align: right; }
-    th.sort { cursor: pointer; }
-    th.sort:hover { color: var(--primary); }
-    tbody tr.clickable { cursor: pointer; }
-    tbody tr.clickable:hover { background: var(--card-alt); }
+    th.sort { cursor: pointer; transition: color 140ms var(--ease); }
+    th.sort:hover { color: var(--accent); }
+    tbody tr.clickable { cursor: pointer; transition: background-color 120ms var(--ease); }
+    tbody tr.clickable:hover { background: var(--surface-subtle); }
+    tbody tr.is-selected { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+    tbody tr:last-child td { border-bottom: none; }
+
+    /* Tooltip, Modal, Legend & Footer */
     .tooltip {
-      position: fixed; z-index: 60; pointer-events: none; max-width: 260px; font-size: 12px;
-      background: var(--card); border: 1px solid var(--border); border-radius: 8px;
-      padding: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+      position: fixed; z-index: 60; pointer-events: none; max-width: 270px; font-size: var(--text-sm);
+      background: var(--surface); color: var(--ink); border: 1px solid var(--line);
+      border-radius: var(--radius-sm); padding: 10px 12px; box-shadow: var(--shadow-float);
     }
     .modal-bg {
-      position: fixed; inset: 0; z-index: 70; background: rgba(0,0,0,0.55);
-      display: flex; align-items: center; justify-content: center; padding: 16px;
+      position: fixed; inset: 0; z-index: 70; background: rgba(10, 18, 31, 0.55);
+      backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 16px;
     }
     .modal-box {
-      background: var(--card); border: 1px solid var(--border); border-radius: 12px;
-      max-width: 860px; width: 100%; max-height: 85vh; display: flex; flex-direction: column;
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+      max-width: 880px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; box-shadow: var(--shadow-float);
     }
-    .bar-track { background: var(--background); border-radius: 4px; height: 8px; overflow: hidden; }
-    .bar-fill { height: 100%; border-radius: 4px; }
-    .pill { display: inline-block; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--border); background: var(--background); font-size: 12px; color: var(--muted-foreground); }
-    .pos { color: var(--success); }
-    .neg { color: var(--error); }
-    .pri { color: var(--primary); }
-    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+    .glossary-grid { display: grid; grid-template-columns: 1fr; border-top: 1px solid var(--line-subtle); }
+    @media (min-width: 768px) { .glossary-grid { grid-template-columns: 1fr 1fr; } }
+    .glossary-item { padding: 12px 10px; border-bottom: 1px solid var(--line-subtle); display: flex; flex-direction: column; gap: 4px; }
+    @media (min-width: 768px) {
+      .glossary-item:nth-child(odd) { padding-right: 16px; }
+      .glossary-item:nth-child(even) { padding-left: 16px; border-left: 1px solid var(--line-subtle); }
+    }
+    .bar-track { background: var(--surface-subtle); border-radius: 4px; height: 8px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 4px; transition: width 180ms var(--ease); }
+    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; flex-shrink: 0; }
+    .legend-row { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font-size: var(--text-sm); color: var(--ink-muted); }
+    .legend-item { display: inline-flex; align-items: center; gap: 5px; }
+    .site-footer {
+      border-top: 1px solid var(--line); padding-top: 14px; margin-top: 4px;
+      display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 16px;
+      font-size: var(--text-sm); color: var(--ink-muted);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; animation: none !important; }
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header class="card" style="display:flex;flex-direction:column;gap:14px;">
-      <div class="between">
-        <div>
-          <h1>Just Volleyball — Efficiency &amp; MMR Lab</h1>
-          <p id="hdr-sub" class="muted" style="font-size:13px;margin-top:4px;"></p>
-        </div>
-        <nav class="row" role="tablist" aria-label="Dashboard sections">
-          <button class="btn tab-btn" role="tab" aria-selected="true" data-tab="scatter">Landscape &amp; Sandbox</button>
-          <button class="btn tab-btn" role="tab" aria-selected="false" data-tab="spiker">Spiker</button>
-          <button class="btn tab-btn" role="tab" aria-selected="false" data-tab="setter">Setter</button>
-          <button class="btn tab-btn" role="tab" aria-selected="false" data-tab="libero">Libero</button>
-          <button class="btn tab-btn" role="tab" aria-selected="false" data-tab="compare">Compare &amp; Leaderboards</button>
-          <button class="btn tab-btn" role="tab" aria-selected="false" data-tab="profile">Player Profile &amp; Matchups</button>
-          <button class="btn tab-btn" role="tab" aria-selected="false" data-tab="engine">Model &amp; Telemetry</button>
-          <button id="open-glossary" type="button" class="btn" style="color:var(--link);" title="Open searchable acronym and metric glossary">Glossary (?)</button>
-          <button id="theme-toggle" type="button" class="btn" title="Toggle light/dark theme">Light Theme</button>
-        </nav>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <svg class="brand-mark" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="9.5" stroke="currentColor" stroke-width="1.9" />
+          <path d="M4.2 8.8C8.4 7.3 13.6 8.3 18.2 12.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+          <path d="M5.6 16.9C8.2 12.7 13.2 10.6 19.6 11.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+          <path d="M12.1 2.7C11.1 7.3 11.8 13.3 15.2 19.9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+        <h1>Just Volleyball Stats</h1>
       </div>
-      <div id="kpi-strip" class="grid-6" style="padding-top:10px;border-top:1px solid var(--border);"></div>
-    </header>
 
-    <!-- TAB 1: LANDSCAPE & SANDBOX -->
-    <section id="tab-scatter" class="tab-panel" style="display:flex;flex-direction:column;gap:16px;">
-      <div class="card row">
-        <label for="main-player-search" style="font-size:12px;font-weight:600;white-space:nowrap;">Player Search</label>
-        <div id="main-search-wrap" class="rel" style="flex:1;min-width:220px;">
-          <input id="main-player-search" type="text" style="width:100%;padding:7px 60px 7px 10px;" placeholder="Search any player across PBP telemetry + global MMR (name or SteamID digits)..." autocomplete="off" />
-          <button id="main-search-clear" type="button" class="clear-btn hidden">Clear</button>
-          <div id="main-search-results" class="dropdown hidden"></div>
-        </div>
-        <span id="main-search-status" class="muted tabnum" style="white-space:nowrap;"></span>
+      <nav class="nav-tabs" role="tablist" aria-label="Dashboard sections">
+        <button class="tab-btn" role="tab" aria-selected="true" data-tab="scatter">Overview</button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="spiker">Spiker</button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="setter">Setter</button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="libero">Libero</button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="compare">Compare</button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="profile">Players</button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="engine">Methodology</button>
+      </nav>
+
+      <div class="nav-utils">
+        <button id="open-glossary" type="button" class="btn btn-sm btn-ghost" title="Open searchable metric glossary">Glossary</button>
+        <button id="theme-toggle" type="button" class="btn btn-sm" title="Switch color theme" aria-label="Switch color theme"></button>
       </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="workspace-bar">
+      <div id="main-search-wrap" class="search-shell">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.3-4.3"></path>
+        </svg>
+        <input id="main-player-search" class="search-input" type="text" aria-label="Search players" placeholder="Search any player by name or SteamID..." autocomplete="off" />
+        <div class="search-meta">
+          <span id="main-search-status" class="muted tabnum search-meta-hide-sm"></span>
+          <button id="main-search-clear" type="button" class="clear-btn hidden">Clear</button>
+          <kbd id="main-search-kbd" class="kbd-hint search-meta-hide-sm" aria-hidden="true">/</kbd>
+        </div>
+        <div id="main-search-results" class="dropdown hidden"></div>
+      </div>
+      <p id="hdr-sub" class="muted tabnum"></p>
+    </div>
+
+    <!-- TAB 1: OVERVIEW & FORMULA SANDBOX -->
+    <section id="tab-scatter" class="tab-panel" style="display:flex;flex-direction:column;gap:16px;">
+      <div id="kpi-strip" class="ledger ledger-4"></div>
 
       <div class="grid-12">
-        <div class="card col-8" style="display:flex;flex-direction:column;gap:12px;">
+        <div class="panel col-8">
           <div class="between">
-            <h2>Interactive Player Landscape</h2>
-            <div class="row" id="preset-btns">
-              <button data-preset="eff_vpm" class="btn btn-sm">Eff vs. VPM</button>
-              <button data-preset="use_eff" class="btn btn-sm">Usage vs. Eff</button>
-              <button data-preset="off_def" class="btn btn-sm">O-VPM vs. D-VPM</button>
-              <button data-preset="rapm_eff" class="btn btn-sm">Touch EPA vs. RAPM</button>
-              <button data-preset="mvp_margin" class="btn btn-sm">Naive MVP vs. Margin</button>
+            <h2>Player impact landscape</h2>
+            <div class="seg-control" id="preset-btns" role="group" aria-label="Chart axis presets">
+              <button type="button" data-preset="eff_vpm" class="seg-btn is-active" aria-pressed="true">Eff vs VPM</button>
+              <button type="button" data-preset="use_eff" class="seg-btn" aria-pressed="false">Usage vs Eff</button>
+              <button type="button" data-preset="off_def" class="seg-btn" aria-pressed="false">Off vs Def</button>
+              <button type="button" data-preset="rapm_eff" class="seg-btn" aria-pressed="false">EPA vs RAPM</button>
+              <button type="button" data-preset="mvp_margin" class="seg-btn" aria-pressed="false">MVP vs Margin</button>
             </div>
           </div>
 
-          <div class="grid-4">
-            <label><span class="muted" style="display:block;margin-bottom:3px;">X-Axis</span><select id="sel-x" style="width:100%;"></select></label>
-            <label><span class="muted" style="display:block;margin-bottom:3px;">Y-Axis</span><select id="sel-y" style="width:100%;"></select></label>
-            <label><span class="muted" style="display:block;margin-bottom:3px;">Bubble Size</span>
-              <select id="sel-size" style="width:100%;">
-                <option value="rallies">Rallies Played</option>
-                <option value="touches">Attributed Touches</option>
-                <option value="custom_war">Custom V-WAR</option>
-                <option value="uniform">Uniform</option>
-              </select>
-            </label>
-            <label><span class="muted" style="display:block;margin-bottom:3px;">Color By</span>
-              <select id="sel-color" style="width:100%;">
-                <option value="arch">Archetype</option>
-                <option value="veff">V-Eff Sign</option>
-                <option value="pinned">Pinned Player</option>
-              </select>
-            </label>
-          </div>
-
-          <div class="between">
-            <label class="row muted" style="gap:8px;">
-              Min Rallies: <span id="min-rallies-val" class="mono tabnum" style="color:var(--foreground);font-weight:600;">100</span>
-              <input id="min-rallies" type="range" min="100" max="600" step="25" value="100" />
-            </label>
-            <div class="row muted" id="scatter-legend"></div>
+          <div class="band" style="display:flex;flex-direction:column;gap:10px;">
+            <div class="grid-4">
+              <label><span class="muted" style="display:block;margin-bottom:4px;">X-Axis</span><select id="sel-x" style="width:100%;"></select></label>
+              <label><span class="muted" style="display:block;margin-bottom:4px;">Y-Axis</span><select id="sel-y" style="width:100%;"></select></label>
+              <label><span class="muted" style="display:block;margin-bottom:4px;">Bubble size</span>
+                <select id="sel-size" style="width:100%;">
+                  <option value="rallies">Rallies played</option>
+                  <option value="touches">Attributed touches</option>
+                  <option value="custom_war">Custom V-WAR</option>
+                  <option value="uniform">Uniform</option>
+                </select>
+              </label>
+              <label><span class="muted" style="display:block;margin-bottom:4px;">Color by</span>
+                <select id="sel-color" style="width:100%;">
+                  <option value="arch">Archetype</option>
+                  <option value="veff">V-Eff sign</option>
+                  <option value="pinned">Pinned player</option>
+                </select>
+              </label>
+            </div>
+            <div class="between" style="padding-top:2px;">
+              <label class="row muted" style="gap:8px;">
+                <span>Min rallies:</span>
+                <b id="min-rallies-val" class="tabnum" style="color:var(--ink);">100</b>
+                <input id="min-rallies" type="range" min="100" max="600" step="25" value="100" />
+              </label>
+              <div class="legend-row" id="scatter-legend"></div>
+            </div>
           </div>
 
           <div class="rel">
             <svg id="scatter-svg" viewBox="0 0 820 450" class="chart"></svg>
             <div id="scatter-tooltip" class="tooltip hidden"></div>
           </div>
-          <div id="scatter-inspector" class="subcard between"></div>
+          <div id="scatter-inspector" class="band" style="display:flex;flex-direction:column;gap:8px;"></div>
         </div>
 
-        <div class="card col-4" style="display:flex;flex-direction:column;gap:12px;">
+        <div class="panel col-4">
           <div class="between">
-            <h2>Custom Formula Sandbox</h2>
-            <button id="reset-sandbox" class="btn btn-sm">Reset CV Optimal</button>
+            <h2>Custom VPM formula</h2>
+            <button id="reset-sandbox" type="button" class="btn btn-sm">Reset CV</button>
           </div>
-          <p class="muted">Tune how <b>VPM</b> blends play-by-play EPA against Rally RAPM and sample shrinkage. Updates scatter and rankings live.</p>
-          <div class="subcard" style="display:flex;flex-direction:column;gap:10px;font-size:12px;">
+          <p class="muted prose">Blend play-by-play EPA against Rally RAPM and sample shrinkage. Updates the chart and top 12 live.</p>
+          <div class="band" style="display:flex;flex-direction:column;gap:12px;font-size:var(--text-sm);">
             <div>
-              <div class="between"><span>PBP EPA Weight (<code class="mono">w_epa</code>)</span><b id="lbl-wepa" class="mono tabnum">75% EPA / 25% RAPM</b></div>
+              <div class="between" style="margin-bottom:4px;"><span>EPA vs RAPM weight</span><b id="lbl-wepa" class="tabnum">75% EPA / 25% RAPM</b></div>
               <input id="sld-wepa" type="range" min="0" max="100" step="5" value="75" style="width:100%;" />
             </div>
             <div>
-              <div class="between"><span>Sample Shrinkage (<code class="mono">m</code> rallies)</span><b id="lbl-m" class="mono tabnum">200</b></div>
+              <div class="between" style="margin-bottom:4px;"><span>Sample shrinkage (m rallies)</span><b id="lbl-m" class="tabnum">200</b></div>
               <input id="sld-m" type="range" min="0" max="500" step="25" value="200" style="width:100%;" />
             </div>
             <div>
-              <div class="between"><span>Offense / Defense Tilt</span><b id="lbl-tilt" class="mono tabnum">Balanced (50/50)</b></div>
+              <div class="between" style="margin-bottom:4px;"><span>Offense / Defense tilt</span><b id="lbl-tilt" class="tabnum">Balanced (50/50)</b></div>
               <input id="sld-tilt" type="range" min="-50" max="50" step="5" value="0" style="width:100%;" />
             </div>
           </div>
-          <div style="flex:1;overflow:auto;">
-            <div id="sandbox-table-title" style="font-size:12px;font-weight:600;margin-bottom:6px;">Live Top 12 by Custom VPM (vs. Default Rank)</div>
-            <div class="tbl-wrap" style="max-height:360px;">
+          <div style="flex:1;display:flex;flex-direction:column;gap:8px;min-height:0;">
+            <div id="sandbox-table-title" style="font-size:var(--text-sm);font-weight:600;">Live Top 12 by Custom VPM</div>
+            <div class="tbl-wrap" style="max-height:380px;">
               <table class="tabnum">
                 <thead><tr><th class="left">#</th><th class="left">Player</th><th>Custom</th><th>WAR</th><th>Shift</th></tr></thead>
                 <tbody id="sandbox-top12"></tbody>
@@ -275,45 +431,45 @@
     <!-- TAB 2: COMPARE & LEADERBOARDS -->
     <section id="tab-compare" class="tab-panel hidden" style="display:flex;flex-direction:column;gap:16px;">
       <div id="compare-cards" class="grid-12">
-        <div class="card col-5" style="display:flex;flex-direction:column;gap:10px;">
+        <div class="panel col-5">
           <div class="between">
-            <h2>6-Axis Percentile Radar</h2>
+            <h2>Player percentile radar</h2>
             <span id="radar-qual-lbl" class="muted"></span>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;font-size:12px;">
-            <label><span class="muted" style="display:block;margin-bottom:3px;">Player A (Solid)</span><select id="cmp-a" style="width:100%;"></select></label>
-            <label><span class="muted" style="display:block;margin-bottom:3px;">Player B (Dashed)</span><select id="cmp-b" style="width:100%;"></select></label>
+          <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;">
+            <label><span class="muted" style="display:block;margin-bottom:4px;">Player A (Solid)</span><select id="cmp-a" style="width:100%;"></select></label>
+            <label><span class="muted" style="display:block;margin-bottom:4px;">Player B (Dashed)</span><select id="cmp-b" style="width:100%;"></select></label>
             <button id="cmp-swap" type="button" class="btn btn-sm" title="Swap Player A and Player B">Swap</button>
           </div>
-          <div class="row" id="quick-chips"></div>
+          <div class="quick-links" id="quick-chips"></div>
           <svg id="radar-svg" viewBox="0 0 420 340" class="chart"></svg>
         </div>
 
-        <div class="card col-7" style="display:flex;flex-direction:column;gap:10px;">
-          <h2>Head-to-Head Metric Breakdown</h2>
-          <div id="cmp-bars" style="display:flex;flex-direction:column;gap:9px;font-size:12px;"></div>
+        <div class="panel col-7">
+          <h2>Head-to-head comparison</h2>
+          <div id="cmp-bars" style="display:flex;flex-direction:column;gap:10px;font-size:var(--text-sm);"></div>
         </div>
       </div>
 
-      <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+      <div class="panel">
         <div class="between">
-          <div class="row">
-            <button id="tbl-mode-eff" class="btn btn-active"></button>
-            <button id="tbl-mode-mmr" class="btn"></button>
+          <div class="seg-control" role="tablist" aria-label="Leaderboard dataset">
+            <button id="tbl-mode-eff" type="button" class="seg-btn is-active" aria-selected="true"></button>
+            <button id="tbl-mode-mmr" type="button" class="seg-btn" aria-selected="false"></button>
           </div>
           <div class="row">
-            <select id="tbl-arch-filter">
-              <option value="all">All Archetypes</option>
+            <select id="tbl-arch-filter" aria-label="Filter by archetype">
+              <option value="all">All archetypes</option>
               <option value="0">Elite Both</option>
               <option value="1">Pure Efficiency</option>
               <option value="2">Effective Anchor</option>
               <option value="3">Developing</option>
               <option value="4">Box-Only (&lt;100R)</option>
             </select>
-            <input id="tbl-search" type="text" placeholder="Filter by name or ID..." />
+            <input id="tbl-search" type="text" placeholder="Filter by name or ID..." aria-label="Filter leaderboard table" />
           </div>
         </div>
-        <p id="tbl-hint" class="muted"></p>
+        <p id="tbl-hint" class="muted prose"></p>
         <div class="tbl-wrap">
           <table class="tabnum">
             <thead id="main-tbl-head"></thead>
@@ -325,49 +481,60 @@
 
     <!-- TAB 3: UNIVERSAL PLAYER PROFILE & MATCHUPS -->
     <section id="tab-profile" class="tab-panel hidden" style="display:flex;flex-direction:column;gap:16px;">
-      <div class="card" style="display:flex;flex-direction:column;gap:12px;">
+      <div class="panel">
         <div class="between">
-          <h2>Player Profile &amp; Elo Trajectory</h2>
+          <h2>Player profile and Elo history</h2>
           <div class="row">
-            <input id="prof-filter" type="text" placeholder="Quick filter players..." style="width:170px;" />
-            <select id="prof-select" style="min-width:230px;"></select>
-            <button id="prof-compare-btn" type="button" class="btn btn-sm hidden">Open in Comparator</button>
+            <input id="prof-filter" type="text" placeholder="Filter player list..." aria-label="Filter profile selector" style="width:170px;" />
+            <select id="prof-select" aria-label="Select player profile" style="min-width:230px;"></select>
+            <button id="prof-compare-btn" type="button" class="btn btn-sm btn-primary hidden">Open in Compare</button>
           </div>
         </div>
-        <div id="prof-summary" class="grid-6"></div>
+        <div id="prof-summary" class="ledger ledger-6"></div>
         <div class="between">
-          <p id="prof-traj-sub" class="muted"></p>
-          <label class="row" style="font-size:12px;cursor:pointer;">
-            <input id="chk-rolling" type="checkbox" checked />
-            <span>Show 10-Game Rolling Win %</span>
-          </label>
+          <p id="prof-traj-sub" class="muted prose"></p>
+          <div class="row" style="gap:16px;">
+            <span class="legend-row">
+              <span class="legend-item"><span class="dot" style="background:var(--pos)"></span>Win</span>
+              <span class="legend-item"><span class="dot" style="background:var(--neg)"></span>Loss</span>
+              <span class="legend-item"><span class="dot" style="background:var(--chart-2)"></span>10-game win %</span>
+            </span>
+            <label class="switch">
+              <input id="chk-rolling" type="checkbox" checked />
+              <span>Rolling win %</span>
+            </label>
+          </div>
         </div>
         <svg id="elo-svg" viewBox="0 0 960 320" class="chart"></svg>
-        <div id="match-inspector" class="subcard"></div>
+        <div id="match-inspector" class="band"></div>
       </div>
 
       <div class="grid-12">
-        <div class="card col-7" style="display:flex;flex-direction:column;gap:10px;">
+        <div class="panel col-7">
           <div class="between">
             <div>
-              <h2 id="matchups-title">Teammates &amp; Opponents Synergy</h2>
-              <p class="muted">Green = wins, Red = losses (With player vs. Across the net). Click any bar to inspect that player.</p>
+              <h2 id="matchups-title">Teammates and opponents</h2>
+              <p class="muted prose">Green shows wins and red shows losses, split by teammate vs opponent. Click any name to open their profile.</p>
             </div>
-            <div class="row" style="font-size:12px;">
-              <label class="row">Min Shared: <b id="min-shared-val" class="mono tabnum">2</b><input id="min-shared" type="range" min="1" max="8" step="1" value="2" /></label>
-              <select id="matchup-sort">
-                <option value="total">Sort by Shared Games</option>
-                <option value="with">Sort by With Player</option>
-                <option value="vs">Sort by Vs Player</option>
+            <div class="row">
+              <label class="row muted">
+                <span>Min shared:</span>
+                <b id="min-shared-val" class="tabnum" style="color:var(--ink);">2</b>
+                <input id="min-shared" type="range" min="1" max="8" step="1" value="2" />
+              </label>
+              <select id="matchup-sort" aria-label="Sort shared games">
+                <option value="total">Sort by shared games</option>
+                <option value="with">Sort by teammate games</option>
+                <option value="vs">Sort by opponent games</option>
               </select>
             </div>
           </div>
           <svg id="matchups-svg" viewBox="0 0 640 390" class="chart"></svg>
         </div>
 
-        <div class="card col-5" style="display:flex;flex-direction:column;gap:10px;">
-          <h2>Match Log</h2>
-          <p class="muted">Click any match row to highlight it on the Elo chart.</p>
+        <div class="panel col-5">
+          <h2>Match log</h2>
+          <p class="muted prose">Click any match to inspect lineups and highlight it on the Elo chart.</p>
           <div class="tbl-wrap" style="max-height:420px;">
             <table class="tabnum">
               <thead><tr><th class="left">#</th><th class="left">Date</th><th class="left">Mode</th><th>Res</th><th>Score</th><th>Elo</th></tr></thead>
@@ -378,29 +545,29 @@
       </div>
     </section>
 
-    <!-- TAB 4: MODEL & TELEMETRY -->
+    <!-- TAB 4: METHODOLOGY & VALIDATION -->
     <section id="tab-engine" class="tab-panel hidden" style="display:flex;flex-direction:column;gap:16px;">
       <div class="grid-12">
-        <div class="card col-7" style="display:flex;flex-direction:column;gap:10px;">
+        <div class="panel col-7">
           <div class="between">
-            <h2>Markov Contact Value &amp; EPA by Contact Kind</h2>
-            <select id="kind-metric">
-              <option value="epa">Mean EPA / 100 Touches</option>
-              <option value="v_all">Overall Rally Win Prob (V_all)</option>
-              <option value="v_nt">In-Play Win Prob (V_nonterm)</option>
-              <option value="count">Total Contacts</option>
+            <h2>Contact value by touch type</h2>
+            <select id="kind-metric" aria-label="Select contact metric">
+              <option value="epa">Mean EPA per 100 touches</option>
+              <option value="v_all">Overall rally win % (V_all)</option>
+              <option value="v_nt">In-play rally win % (V_nt)</option>
+              <option value="count">Total contacts</option>
             </select>
           </div>
-          <p class="muted">Click any bar to inspect touch-number and power-bin sub-states on the right.</p>
-          <svg id="kinds-svg" viewBox="0 0 560 340" class="chart"></svg>
+          <p class="muted prose">Click any contact type bar to inspect touch-number and power-bin sub-states.</p>
+          <svg id="kinds-svg" viewBox="0 0 580 340" class="chart"></svg>
         </div>
 
-        <div class="card col-5" style="display:flex;flex-direction:column;gap:10px;">
-          <h2 id="substate-title">Sub-States: attack</h2>
-          <p class="muted">Empirical rally win probabilities by side touch number and power tertile (or float serve).</p>
-          <div class="tbl-wrap" style="max-height:340px;">
+        <div class="panel col-5">
+          <h2 id="substate-title">Sub-states: attack</h2>
+          <p class="muted prose">Empirical rally win rates by side touch number and power tertile (or float serve).</p>
+          <div class="tbl-wrap" style="max-height:360px;">
             <table class="tabnum">
-              <thead><tr><th class="left">Touch#</th><th class="left">Power</th><th>n</th><th>V_all</th><th>V_nt</th><th>Term%</th></tr></thead>
+              <thead><tr><th class="left">Touch</th><th class="left">Power</th><th>n</th><th>V_all</th><th>V_nt</th><th>Term%</th></tr></thead>
               <tbody id="substate-body"></tbody>
             </table>
           </div>
@@ -408,62 +575,63 @@
       </div>
 
       <div class="grid-2">
-        <div class="card" style="display:flex;flex-direction:column;gap:10px;">
-          <h2>Official In-Game MVP Weights vs. Empirical LOO-CV BPM</h2>
-          <p id="bpm-sub" class="muted"></p>
-          <svg id="bpm-svg" viewBox="0 0 520 300" class="chart"></svg>
+        <div class="panel">
+          <h2>In-game MVP weights vs. empirical impact</h2>
+          <p id="bpm-sub" class="muted prose"></p>
+          <svg id="bpm-svg" viewBox="0 0 560 305" class="chart"></svg>
         </div>
-        <div class="card" style="display:flex;flex-direction:column;gap:10px;">
-          <h2>5-Fold Session-Grouped CV &amp; Split-Half Reliability</h2>
-          <p id="cv-sub" class="muted"></p>
-          <svg id="cv-svg" viewBox="0 0 520 155" class="chart"></svg>
-          <svg id="rel-svg" viewBox="0 0 520 190" class="chart"></svg>
+        <div class="panel">
+          <h2>Model accuracy and reliability</h2>
+          <p id="cv-sub" class="muted prose"></p>
+          <svg id="cv-svg" viewBox="0 0 560 165" class="chart"></svg>
+          <svg id="rel-svg" viewBox="0 0 560 205" class="chart"></svg>
         </div>
       </div>
     </section>
 
     <!-- TAB: SPIKER ROLE -->
     <section id="tab-spiker" class="tab-panel hidden" style="display:flex;flex-direction:column;gap:16px;">
-      <div class="card" style="display:flex;flex-direction:column;gap:12px;">
-        <div class="between">
-          <div>
-            <h2>Spiker Attack Efficiency &amp; Volume</h2>
-            <p class="muted">Attack, tip, and dump EPA per 100 attempts (A-Eff), shrunk toward zero with Bayesian pseudo-attempts m.</p>
-          </div>
-          <div class="row">
-            <button id="r-spk-mode-load" type="button" class="btn btn-sm btn-active">Att/R vs A-Eff</button>
-            <button id="r-spk-mode-hit" type="button" class="btn btn-sm">TrueHit% vs A-Eff</button>
-          </div>
+      <div class="between">
+        <div>
+          <h2>Spiker attack efficiency and volume</h2>
+          <p class="muted prose">Attack, tip, and dump EPA per 100 attempts (A-Eff), shrunk toward zero with Bayesian pseudo-attempts m.</p>
         </div>
-        <div id="spiker-kpis" class="grid-4"></div>
+        <div class="seg-control" role="group" aria-label="Spiker chart mode">
+          <button id="r-spk-mode-load" type="button" class="seg-btn is-active" aria-pressed="true">Att/R vs A-Eff</button>
+          <button id="r-spk-mode-hit" type="button" class="seg-btn" aria-pressed="false">TrueHit% vs A-Eff</button>
+        </div>
       </div>
 
+      <div id="spiker-kpis" class="ledger ledger-4"></div>
+
       <div class="grid-12">
-        <div class="card col-8" style="display:flex;flex-direction:column;gap:12px;">
+        <div class="panel col-8">
           <div class="between">
-            <h3>Spiker Explorer (Dot Size = Attack Attempts)</h3>
-            <div class="row" style="font-size:12px;">
+            <h3>Spiker explorer (dot size = attempts)</h3>
+            <div class="row" style="gap:12px;">
               <label class="row muted" title="Bayesian shrinkage pseudo-attempts pulling small samples toward 0">
-                Shrinkage m: <b id="r-k-m-val" class="mono tabnum" style="color:var(--foreground);">40</b>
+                <span>Shrinkage m:</span>
+                <b id="r-k-m-val" class="tabnum" style="color:var(--ink);">40</b>
                 <input id="r-k-m-slider" type="range" min="0" max="100" step="5" value="40" />
               </label>
-              <label class="row" style="cursor:pointer;"><input id="r-k-primary-only" type="checkbox" /><span>Primary Only (&gt;=25%T)</span></label>
-              <label class="row" style="cursor:pointer;"><input id="r-k-show-unqual" type="checkbox" checked /><span>Include &lt;100R</span></label>
-              <input id="r-k-search" type="text" placeholder="Filter player..." style="width:140px;" />
+              <label class="switch"><input id="r-k-primary-only" type="checkbox" /><span>Primary (&ge;25%T)</span></label>
+              <label class="switch"><input id="r-k-show-unqual" type="checkbox" checked /><span>Include &lt;100R</span></label>
+              <input id="r-k-search" type="text" placeholder="Filter player..." aria-label="Filter spikers" style="width:140px;" />
             </div>
           </div>
+          <div id="r-spiker-legend" class="legend-row"></div>
           <div class="rel">
             <svg id="r-spiker-svg" viewBox="0 0 640 340" class="chart"></svg>
             <div id="r-spiker-tip" class="tooltip hidden"></div>
           </div>
         </div>
-        <div id="r-spiker-detail" class="card col-4" style="display:flex;flex-direction:column;gap:10px;"></div>
+        <div id="r-spiker-detail" class="panel col-4"></div>
       </div>
 
-      <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+      <div class="panel">
         <div class="between">
-          <h3>Spiker Ratings Table (Click Any Row to Inspect)</h3>
-          <span class="muted">Eligibility: &gt;= 20 attack attempts (spikes, tips, dumps). Primary Spiker &gt;= 25% of touches.</span>
+          <h3>Spiker leaderboard</h3>
+          <span class="muted">Eligibility: &ge; 20 attack attempts (spikes, tips, dumps). Primary spiker &ge; 25% of touches.</span>
         </div>
         <div class="tbl-wrap">
           <table class="tabnum">
@@ -476,40 +644,41 @@
 
     <!-- TAB: SETTER ROLE -->
     <section id="tab-setter" class="tab-panel hidden" style="display:flex;flex-direction:column;gap:16px;">
-      <div class="card" style="display:flex;flex-direction:column;gap:12px;">
-        <div>
-          <h2>Setter Delivery &amp; Dump Efficiency</h2>
-          <p id="setter-sub" class="muted">5-fold out-of-fold set-delivery value above context-matched human baselines (sets touch 1-2 + 2nd-touch dumps).</p>
-        </div>
-        <div id="setter-kpis" class="grid-4"></div>
+      <div>
+        <h2>Setter delivery and dump efficiency</h2>
+        <p id="setter-sub" class="muted prose">5-fold out-of-fold set-delivery value above context-matched human baselines.</p>
       </div>
 
+      <div id="setter-kpis" class="ledger ledger-4"></div>
+
       <div class="grid-12">
-        <div class="card col-8" style="display:flex;flex-direction:column;gap:12px;">
+        <div class="panel col-8">
           <div class="between">
-            <h3>Setter Delivery Explorer (Dot Size = Set Actions)</h3>
-            <div class="row" style="font-size:12px;">
+            <h3>Setter explorer (dot size = set actions)</h3>
+            <div class="row" style="gap:12px;">
               <label class="row muted" title="Bayesian shrinkage pseudo-actions pulling small samples toward 0">
-                Shrinkage m: <b id="r-s-m-val" class="mono tabnum" style="color:var(--foreground);">40</b>
+                <span>Shrinkage m:</span>
+                <b id="r-s-m-val" class="tabnum" style="color:var(--ink);">40</b>
                 <input id="r-s-m-slider" type="range" min="0" max="100" step="5" value="40" />
               </label>
-              <label class="row" style="cursor:pointer;"><input id="r-s-primary-only" type="checkbox" /><span>Primary Only (&gt;=35%T)</span></label>
-              <label class="row" style="cursor:pointer;"><input id="r-s-show-unqual" type="checkbox" checked /><span>Include &lt;100R</span></label>
-              <input id="r-s-search" type="text" placeholder="Filter player..." style="width:140px;" />
+              <label class="switch"><input id="r-s-primary-only" type="checkbox" /><span>Primary (&ge;35%T)</span></label>
+              <label class="switch"><input id="r-s-show-unqual" type="checkbox" checked /><span>Include &lt;100R</span></label>
+              <input id="r-s-search" type="text" placeholder="Filter player..." aria-label="Filter setters" style="width:140px;" />
             </div>
           </div>
+          <div id="r-setter-legend" class="legend-row"></div>
           <div class="rel">
             <svg id="r-setter-svg" viewBox="0 0 640 340" class="chart"></svg>
             <div id="r-setter-tip" class="tooltip hidden"></div>
           </div>
         </div>
-        <div id="r-setter-detail" class="card col-4" style="display:flex;flex-direction:column;gap:10px;"></div>
+        <div id="r-setter-detail" class="panel col-4"></div>
       </div>
 
-      <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+      <div class="panel">
         <div class="between">
-          <h3>Setter Ratings Table (Click Any Row to Inspect)</h3>
-          <span class="muted">Eligibility: &gt;= 35 setting actions. Primary Setter &gt;= 35% of touches.</span>
+          <h3>Setter leaderboard</h3>
+          <span class="muted">Eligibility: &ge; 35 setting actions. Primary setter &ge; 35% of touches.</span>
         </div>
         <div class="tbl-wrap">
           <table class="tabnum">
@@ -520,61 +689,62 @@
       </div>
 
       <div class="grid-2">
-        <div class="card" style="display:flex;flex-direction:column;gap:10px;">
-          <h3>Set-Delivery &amp; Dump Ladder (Rally Win %)</h3>
-          <p class="muted">Empirical rally win rates by outcome following a set or 2nd-touch dump.</p>
-          <svg id="r-set-ladder-svg" viewBox="0 0 540 265" class="chart"></svg>
+        <div class="panel">
+          <h3>Set-delivery and dump outcome ladder (rally win %)</h3>
+          <p class="muted prose">Empirical rally win rates by outcome following a set or 2nd-touch dump.</p>
+          <svg id="r-set-ladder-svg" viewBox="0 0 580 280" class="chart"></svg>
         </div>
-        <div class="card" style="display:flex;flex-direction:column;gap:10px;">
-          <h3>Setter Split-Half Reliability (Spearman-Brown SB)</h3>
-          <p class="muted">Even vs. odd rally split-half reliability comparing S-Eff against 1-step Markov and Hitter-Adjusted Ridge.</p>
-          <svg id="r-set-rel-svg" viewBox="0 0 540 200" class="chart"></svg>
+        <div class="panel">
+          <h3>Setter split-half reliability (Spearman-Brown SB)</h3>
+          <p class="muted prose">Even vs. odd rally split-half reliability comparing S-Eff against 1-step Markov and Hitter-Adjusted Ridge.</p>
+          <svg id="r-set-rel-svg" viewBox="0 0 580 190" class="chart"></svg>
         </div>
       </div>
     </section>
 
     <!-- TAB: LIBERO ROLE -->
     <section id="tab-libero" class="tab-panel hidden" style="display:flex;flex-direction:column;gap:16px;">
-      <div class="card" style="display:flex;flex-direction:column;gap:12px;">
-        <div class="between">
-          <div>
-            <h2>Libero &amp; First-Contact Pass Ratings</h2>
-            <p id="libero-sub" class="muted">5-fold out-of-fold DataVolley pass-grade efficiency (L-Eff, SR-Eff, Dig-Eff) across cross-net non-block first contacts.</p>
-          </div>
-          <div class="row">
-            <button id="r-lib-mode-sr" type="button" class="btn btn-sm btn-active">SR-Eff vs Dig-Eff</button>
-            <button id="r-lib-mode-dvpm" type="button" class="btn btn-sm">L-Eff vs D-VPM</button>
-          </div>
+      <div class="between">
+        <div>
+          <h2>Libero and first-contact pass ratings</h2>
+          <p id="libero-sub" class="muted prose">5-fold out-of-fold DataVolley pass-grade efficiency across cross-net non-block first contacts.</p>
         </div>
-        <div id="libero-kpis" class="grid-4"></div>
+        <div class="seg-control" role="group" aria-label="Libero chart mode">
+          <button id="r-lib-mode-sr" type="button" class="seg-btn is-active" aria-pressed="true">SR-Eff vs Dig-Eff</button>
+          <button id="r-lib-mode-dvpm" type="button" class="seg-btn" aria-pressed="false">L-Eff vs D-VPM</button>
+        </div>
       </div>
 
+      <div id="libero-kpis" class="ledger ledger-4"></div>
+
       <div class="grid-12">
-        <div class="card col-8" style="display:flex;flex-direction:column;gap:12px;">
+        <div class="panel col-8">
           <div class="between">
-            <h3>Libero Explorer (Dot Size = First Contacts)</h3>
-            <div class="row" style="font-size:12px;">
+            <h3>Libero explorer (dot size = first contacts)</h3>
+            <div class="row" style="gap:12px;">
               <label class="row muted" title="Bayesian shrinkage pseudo-contacts for L-Eff">
-                Shrinkage m: <b id="r-l-m-val" class="mono tabnum" style="color:var(--foreground);">40</b>
+                <span>Shrinkage m:</span>
+                <b id="r-l-m-val" class="tabnum" style="color:var(--ink);">40</b>
                 <input id="r-l-m-slider" type="range" min="0" max="100" step="5" value="40" />
               </label>
-              <label class="row" style="cursor:pointer;"><input id="r-l-primary-only" type="checkbox" /><span>Primary Only (&gt;=35%T)</span></label>
-              <label class="row" style="cursor:pointer;"><input id="r-l-show-unqual" type="checkbox" checked /><span>Include &lt;100R</span></label>
-              <input id="r-l-search" type="text" placeholder="Filter player..." style="width:140px;" />
+              <label class="switch"><input id="r-l-primary-only" type="checkbox" /><span>Primary (&ge;35%T)</span></label>
+              <label class="switch"><input id="r-l-show-unqual" type="checkbox" checked /><span>Include &lt;100R</span></label>
+              <input id="r-l-search" type="text" placeholder="Filter player..." aria-label="Filter liberos" style="width:140px;" />
             </div>
           </div>
+          <div id="r-libero-legend" class="legend-row"></div>
           <div class="rel">
             <svg id="r-libero-svg" viewBox="0 0 640 340" class="chart"></svg>
             <div id="r-libero-tip" class="tooltip hidden"></div>
           </div>
         </div>
-        <div id="r-libero-detail" class="card col-4" style="display:flex;flex-direction:column;gap:10px;"></div>
+        <div id="r-libero-detail" class="panel col-4"></div>
       </div>
 
-      <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+      <div class="panel">
         <div class="between">
-          <h3>Libero &amp; First-Contact Table (Click Any Row to Inspect)</h3>
-          <span class="muted">Eligibility: &gt;= 40 cross-net non-block first contacts. Primary Libero &gt;= 35% of touches.</span>
+          <h3>Libero and first-contact leaderboard</h3>
+          <span class="muted">Eligibility: &ge; 40 cross-net non-block first contacts. Primary libero &ge; 35% of touches.</span>
         </div>
         <div class="tbl-wrap">
           <table class="tabnum">
@@ -585,20 +755,20 @@
       </div>
 
       <div class="grid-2">
-        <div class="card" style="display:flex;flex-direction:column;gap:12px;">
+        <div class="panel">
           <div>
-            <h3>DataVolley Pass-Grade Ladder</h3>
-            <p class="muted">Capping lucky bounce overpasses and neutralizing terminal setter errors isolates passing skill.</p>
+            <h3>DataVolley pass-grade ladder</h3>
+            <p class="muted prose">Capping lucky bounce overpasses and neutralizing terminal setter errors isolates passing skill.</p>
           </div>
-          <svg id="r-pass-ladder-svg" viewBox="0 0 540 245" class="chart"></svg>
+          <svg id="r-pass-ladder-svg" viewBox="0 0 580 250" class="chart"></svg>
           <div>
-            <h3>Libero Split-Half Reliability (Spearman-Brown SB)</h3>
-            <svg id="r-lib-rel-svg" viewBox="0 0 540 200" class="chart"></svg>
+            <h3>Libero split-half reliability (Spearman-Brown SB)</h3>
           </div>
+          <svg id="r-lib-rel-svg" viewBox="0 0 580 190" class="chart"></svg>
         </div>
-        <div class="card" style="display:flex;flex-direction:column;gap:10px;">
-          <h3>Why D-VPM != Libero (Top-10 D-VPM Decomposition)</h3>
-          <p id="r-dvpm-proof-sub" class="muted"></p>
+        <div class="panel">
+          <h3>Why D-VPM differs from Libero skill (Top 10 D-VPM)</h3>
+          <p id="r-dvpm-proof-sub" class="muted prose"></p>
           <div class="tbl-wrap" style="max-height:480px;">
             <table class="tabnum">
               <thead>
@@ -616,22 +786,27 @@
         </div>
       </div>
     </section>
+
+    <footer class="site-footer">
+      <span id="footer-meta" class="tabnum"></span>
+      <button id="footer-glossary" type="button" class="quick-link">Open metric glossary</button>
+    </footer>
   </div>
 
   <!-- Searchable Glossary Modal -->
   <div id="glossary-modal" class="modal-bg hidden" role="dialog" aria-modal="true" aria-labelledby="glossary-title">
     <div class="modal-box">
-      <div class="between" style="padding:14px 16px;border-bottom:1px solid var(--border);">
+      <div class="between" style="padding:16px 20px;border-bottom:1px solid var(--line);">
         <div>
-          <h2 id="glossary-title">Metrics &amp; Acronyms Glossary</h2>
-          <p class="muted">Reference for every volleyball, NBA-style impact, and validation term on this site.</p>
+          <h2 id="glossary-title">Metrics and acronyms glossary</h2>
+          <p class="muted prose">Reference for every volleyball, impact, and validation term on this site.</p>
         </div>
         <div class="row">
-          <input id="glossary-search" type="text" placeholder="Filter acronyms (e.g. RAPM, V_nt)..." />
+          <input id="glossary-search" type="text" placeholder="Filter terms (e.g. RAPM, V_nt)..." aria-label="Filter glossary entries" />
           <button id="close-glossary" type="button" class="btn btn-sm">Close (Esc)</button>
         </div>
       </div>
-      <div id="glossary-body" style="padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;font-size:12px;"></div>
+      <div id="glossary-body" style="padding:18px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:18px;"></div>
     </div>
   </div>
 

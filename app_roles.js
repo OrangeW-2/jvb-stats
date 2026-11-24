@@ -52,20 +52,29 @@
   function renderRoleKpis(elId, cards, onPickIdx) {
     const el = document.getElementById(elId);
     if (!el) return;
-    el.innerHTML = cards.map((c, ci) => `
-      <div class="subcard kpi" data-rkpi="${ci}" title="${esc(c.tip || "")}">
+    el.innerHTML = cards.map((c, ci) => {
+      const canClick = onPickIdx && c.pickIdx !== undefined && c.pickIdx !== null;
+      return `<div class="ledger-item ${canClick ? "is-clickable" : ""}" data-rkpi="${ci}" title="${esc(c.tip || "")}">
         <div class="muted">${esc(c.lbl)}</div>
         <div class="kpi-val tabnum">${esc(c.val)}</div>
-        <div class="muted tabnum">${esc(c.sub)}</div>
-      </div>`).join("");
+        <div class="ledger-sub tabnum">${esc(c.sub)}</div>
+      </div>`;
+    }).join("");
     if (onPickIdx) {
-      el.querySelectorAll(".kpi").forEach(node => {
+      el.querySelectorAll(".ledger-item.is-clickable").forEach(node => {
         const c = cards[Number(node.dataset.rkpi)];
-        if (c.pickIdx !== undefined && c.pickIdx !== null) {
-          node.addEventListener("click", () => onPickIdx(c.pickIdx));
-        }
+        node.addEventListener("click", () => onPickIdx(c.pickIdx));
       });
     }
+  }
+
+  function renderRoleLegend(elId, primaryLabel, secondaryLabel, showUnqual) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.innerHTML =
+      `<span class="legend-item"><span class="dot" style="background:var(--chart-1)"></span>${esc(primaryLabel)}</span>` +
+      `<span class="legend-item"><span class="dot" style="background:var(--chart-2)"></span>${esc(secondaryLabel)}</span>` +
+      (showUnqual ? `<span class="legend-item"><span class="dot" style="background:var(--chart-1);opacity:0.4;"></span>Faded: &lt;100 rallies</span>` : "");
   }
 
   function renderRoleScatter(svgId, tipId, rows, cfg) {
@@ -81,7 +90,7 @@
       return xv !== null && xv !== undefined && Number.isFinite(xv) && yv !== null && yv !== undefined && Number.isFinite(yv);
     });
     if (!valid.length) {
-      svg.appendChild(svgEl("text", { x: W / 2, y: H / 2, "text-anchor": "middle", fill: "var(--muted-foreground)", "font-size": 13 }, "No players match the current filter."));
+      svg.appendChild(svgEl("text", { x: W / 2, y: H / 2, "text-anchor": "middle", fill: "var(--ink-muted)", "font-size": 13 }, "No players match the current filter."));
       return;
     }
 
@@ -96,90 +105,142 @@
 
     for (let i = 0; i <= 4; i++) {
       const yv = yMin + (i / 4) * (yMax - yMin), yy = sy(yv);
-      svg.appendChild(svgEl("line", { x1: pad.l, y1: yy, x2: W - pad.r, y2: yy, stroke: "var(--border)", "stroke-opacity": 0.45, "stroke-dasharray": "2,3" }));
-      svg.appendChild(svgEl("text", { x: pad.l - 7, y: yy + 4, "text-anchor": "end", fill: "var(--muted-foreground)", "font-size": 11 }, yv.toFixed(1)));
+      svg.appendChild(svgEl("line", { x1: pad.l, y1: yy, x2: W - pad.r, y2: yy, stroke: "var(--line)", "stroke-opacity": 0.65, "stroke-dasharray": "2,3" }));
+      svg.appendChild(svgEl("text", { x: pad.l - 7, y: yy + 4, "text-anchor": "end", fill: "var(--ink-muted)", "font-size": 12 }, yv.toFixed(1)));
       const xv = xMin + (i / 4) * (xMax - xMin), xx = sx(xv);
-      svg.appendChild(svgEl("line", { x1: xx, y1: pad.t, x2: xx, y2: H - pad.b, stroke: "var(--border)", "stroke-opacity": 0.45, "stroke-dasharray": "2,3" }));
-      svg.appendChild(svgEl("text", { x: xx, y: H - pad.b + 15, "text-anchor": "middle", fill: "var(--muted-foreground)", "font-size": 11 }, xv.toFixed(cfg.xDec)));
+      svg.appendChild(svgEl("line", { x1: xx, y1: pad.t, x2: xx, y2: H - pad.b, stroke: "var(--line)", "stroke-opacity": 0.65, "stroke-dasharray": "2,3" }));
+      svg.appendChild(svgEl("text", { x: xx, y: H - pad.b + 16, "text-anchor": "middle", fill: "var(--ink-muted)", "font-size": 12 }, xv.toFixed(cfg.xDec)));
     }
     if (xMin < 0 && xMax > 0) {
-      svg.appendChild(svgEl("line", { x1: sx(0), y1: pad.t, x2: sx(0), y2: H - pad.b, stroke: "var(--muted-foreground)", "stroke-dasharray": "4,3", "stroke-opacity": 0.65 }));
+      svg.appendChild(svgEl("line", { x1: sx(0), y1: pad.t, x2: sx(0), y2: H - pad.b, stroke: "var(--ink-muted)", "stroke-dasharray": "4,3", "stroke-opacity": 0.55 }));
     }
     if (yMin < 0 && yMax > 0) {
-      svg.appendChild(svgEl("line", { x1: pad.l, y1: sy(0), x2: W - pad.r, y2: sy(0), stroke: "var(--muted-foreground)", "stroke-dasharray": "4,3", "stroke-opacity": 0.65 }));
+      svg.appendChild(svgEl("line", { x1: pad.l, y1: sy(0), x2: W - pad.r, y2: sy(0), stroke: "var(--ink-muted)", "stroke-dasharray": "4,3", "stroke-opacity": 0.55 }));
     }
 
-    svg.appendChild(svgEl("text", { x: pad.l + iw / 2, y: H - 6, "text-anchor": "middle", fill: "var(--foreground)", "font-size": 12, "font-weight": 600 }, cfg.xLabel));
-    svg.appendChild(svgEl("text", { x: 14, y: pad.t + ih / 2, "text-anchor": "middle", fill: "var(--foreground)", "font-size": 12, "font-weight": 600, transform: `rotate(-90 14 ${pad.t + ih / 2})` }, cfg.yLabel));
+    svg.appendChild(svgEl("text", { x: pad.l + iw / 2, y: H - 6, "text-anchor": "middle", fill: "var(--ink)", "font-size": 12, "font-weight": 600 }, cfg.xLabel));
+    svg.appendChild(svgEl("text", { x: 14, y: pad.t + ih / 2, "text-anchor": "middle", fill: "var(--ink)", "font-size": 12, "font-weight": 600, transform: `rotate(-90 14 ${pad.t + ih / 2})` }, cfg.yLabel));
 
     const labelIdxs = new Set(valid.slice(0, 6).map(p => p.idx));
     labelIdxs.add(cfg.selIdx);
     const placedBoxes = [];
-    const canPlace = (lx, ly, txt) => {
-      const bw = txt.length * 6.2 + 6, bh = 13;
-      if (lx < pad.l || lx + bw > W - pad.r || ly - bh < pad.t || ly > H - pad.b) return false;
-      for (const b of placedBoxes) {
-        if (!(lx + bw < b.x || lx > b.x + b.w || ly < b.y - b.h || ly - bh > b.y)) return false;
-      }
-      placedBoxes.push({ x: lx, y: ly, w: bw, h: bh });
-      return true;
-    };
 
     const drawOrder = [...valid].sort((a, b) => (a.idx === cfg.selIdx ? 1 : 0) - (b.idx === cfg.selIdx ? 1 : 0));
     drawOrder.forEach(p => {
       const cx = sx(cfg.xFn(p)), cy = sy(cfg.yFn(p)), r = cfg.rFn(p);
       const col = p.is_primary ? "var(--chart-1)" : "var(--chart-2)";
       const isSel = p.idx === cfg.selIdx;
+      const baseStroke = isSel ? "var(--ink)" : "var(--surface)";
+      const baseWidth = isSel ? 2.4 : 1.2;
       const dot = svgEl("circle", {
-        cx, cy, r, fill: col, "fill-opacity": p.qualified ? 0.84 : 0.45,
-        stroke: isSel ? "var(--foreground)" : "var(--background)", "stroke-width": isSel ? 2.2 : 1, style: "cursor:pointer;"
+        cx, cy, r, fill: col, "fill-opacity": p.qualified ? 0.85 : 0.42,
+        stroke: baseStroke, "stroke-width": baseWidth, style: "cursor:pointer;"
       });
       dot.addEventListener("mouseenter", e => {
+        dot.setAttribute("stroke", "var(--ink)");
+        dot.setAttribute("stroke-width", "2.4");
         tip.innerHTML = cfg.tipHtml(p);
         tip.classList.remove("hidden");
-        tip.style.left = Math.min(window.innerWidth - 250, e.clientX + 14) + "px";
-        tip.style.top = Math.max(8, e.clientY - 20) + "px";
+        placeTooltip(tip, e, 250, 120);
       });
-      dot.addEventListener("mousemove", e => {
-        tip.style.left = Math.min(window.innerWidth - 250, e.clientX + 14) + "px";
-        tip.style.top = Math.max(8, e.clientY - 20) + "px";
+      dot.addEventListener("mousemove", e => placeTooltip(tip, e, 250, 120));
+      dot.addEventListener("mouseleave", () => {
+        dot.setAttribute("stroke", baseStroke);
+        dot.setAttribute("stroke-width", baseWidth);
+        tip.classList.add("hidden");
       });
-      dot.addEventListener("mouseleave", () => tip.classList.add("hidden"));
       dot.addEventListener("click", () => cfg.onSelect(p.idx));
       svg.appendChild(dot);
+    });
 
-      if (labelIdxs.has(p.idx)) {
-        const lbl = p.name + (p.qualified ? "" : " *");
-        const lx = cx + r + 4, ly = cy + 4;
-        if (isSel || canPlace(lx, ly, lbl)) {
-          svg.appendChild(svgEl("text", {
-            x: lx, y: ly, fill: isSel ? "var(--foreground)" : "var(--muted-foreground)",
-            "font-size": 11, "font-weight": isSel ? 700 : 500
-          }, lbl));
+    // Place selected player's label first, then top labels without collisions
+    const labelOrder = valid.filter(p => labelIdxs.has(p.idx))
+      .sort((a, b) => (b.idx === cfg.selIdx ? 1 : 0) - (a.idx === cfg.selIdx ? 1 : 0));
+    labelOrder.forEach(p => {
+      const cx = sx(cfg.xFn(p)), cy = sy(cfg.yFn(p)), r = cfg.rFn(p);
+      const isSel = p.idx === cfg.selIdx;
+      const lbl = p.name + (p.qualified ? "" : " *");
+      const bw = lbl.length * 6.4 + 8, bh = 14;
+      const cands = [
+        { x: cx + r + 5, y: cy + 4, anchor: "start", boxX: cx + r + 5, boxY: cy + 4 },
+        { x: cx - r - 5, y: cy + 4, anchor: "end", boxX: cx - r - 5 - bw, boxY: cy + 4 },
+        { x: cx, y: cy - r - 5, anchor: "middle", boxX: cx - bw / 2, boxY: cy - r - 5 },
+        { x: cx, y: cy + r + 14, anchor: "middle", boxX: cx - bw / 2, boxY: cy + r + 14 }
+      ];
+      let chosen = null;
+      for (const c of cands) {
+        if (c.boxX < pad.l || c.boxX + bw > W - pad.r || c.boxY - bh < pad.t || c.boxY > H - pad.b) continue;
+        let hit = false;
+        for (const b of placedBoxes) {
+          if (!(c.boxX + bw < b.x || c.boxX > b.x + b.w || c.boxY < b.y - b.h || c.boxY - bh > b.y)) { hit = true; break; }
         }
+        if (!hit) { chosen = c; break; }
+      }
+      if (!chosen && isSel) chosen = cands[0];
+      if (chosen) {
+        placedBoxes.push({ x: chosen.boxX, y: chosen.boxY, w: bw, h: bh });
+        svg.appendChild(svgEl("text", {
+          x: chosen.x, y: chosen.y, "text-anchor": chosen.anchor,
+          fill: isSel ? "var(--ink)" : "var(--ink-muted)",
+          "font-size": 12, "font-weight": isSel ? 700 : 500
+        }, lbl));
       }
     });
   }
+
+  const LADDER_LABELS = {
+    D_win: "Dump kill",
+    S_overpass: "Set overpass",
+    S_att: "Attackable set",
+    D_alive: "Dump in play",
+    S_reset: "Reset pass",
+    S_tip: "Tipped attack",
+    S_oos: "Out of system",
+    S_err: "Set error",
+    D_err: "Dump error",
+    G3_insys_att: "G3: In-system attack",
+    G_overpass_nt: "Overpass (capped)",
+    G2_insys_tip: "G2: In-system tip",
+    G1_shank_alive: "G1: Shank alive",
+    G1_oos: "G1: Out of system",
+    G2_set_neutral: "G2: Neutral set error",
+    G0_err: "G0: Direct error"
+  };
 
   function renderRoleHBar(svgId, rows, maxVal, colorFn, labelFn) {
     const svg = document.getElementById(svgId);
     if (!svg) return;
     svg.innerHTML = "";
     if (!rows.length) {
-      svg.appendChild(svgEl("text", { x: 270, y: 100, "text-anchor": "middle", fill: "var(--muted-foreground)", "font-size": 12 }, "Insufficient data."));
+      svg.appendChild(svgEl("text", { x: 290, y: 100, "text-anchor": "middle", fill: "var(--ink-muted)", "font-size": 13 }, "Insufficient data."));
       return;
     }
     const parts = svg.getAttribute("viewBox").split(" ");
     const W = Number(parts[2]), H = Number(parts[3]);
-    const padL = 165, padR = 95, padT = 12, rowH = (H - padT - 10) / rows.length;
+    const minRaw = Math.min(0, ...rows.map(r => r[2]));
+    const maxRaw = Math.max(maxVal, ...rows.map(r => r[2]));
+    const span = (maxRaw - minRaw) || 1;
+    const padL = 190, padR = 126, padT = 10, rowH = (H - padT - 10) / rows.length;
     const iw = W - padL - padR;
+    const zeroX = padL + ((0 - minRaw) / span) * iw;
+    const sx = v => padL + ((v - minRaw) / span) * iw;
+
+    if (minRaw < 0) {
+      svg.appendChild(svgEl("line", { x1: zeroX, y1: padT, x2: zeroX, y2: H - 10, stroke: "var(--ink-muted)", "stroke-dasharray": "3,3", "stroke-opacity": 0.65 }));
+    }
     rows.forEach((row, i) => {
-      const y = padT + i * rowH, v = Math.max(0, row[2]);
-      const barW = Math.max(2, (v / maxVal) * iw);
-      svg.appendChild(svgEl("text", { x: padL - 8, y: y + rowH * 0.62, "text-anchor": "end", fill: "var(--foreground)", "font-size": 11 }, row[0]));
-      svg.appendChild(svgEl("rect", { x: padL, y: y + 4, width: iw, height: Math.max(8, rowH - 8), rx: 3, fill: "var(--border)", "fill-opacity": 0.3 }));
-      svg.appendChild(svgEl("rect", { x: padL, y: y + 4, width: barW, height: Math.max(8, rowH - 8), rx: 3, fill: colorFn(row), "fill-opacity": 0.85 }));
-      svg.appendChild(svgEl("text", { x: padL + barW + 6, y: y + rowH * 0.62, fill: "var(--muted-foreground)", "font-size": 11 }, labelFn(row)));
+      const y = padT + i * rowH, v = row[2];
+      const barH = Math.max(9, rowH - 8);
+      const xPos = sx(Math.min(0, v));
+      const barW = Math.max(2, Math.abs(sx(v) - zeroX));
+      const disp = LADDER_LABELS[row[0]] || row[0];
+      svg.appendChild(svgEl("text", { x: padL - 10, y: y + rowH * 0.63, "text-anchor": "end", fill: "var(--ink)", "font-size": 12 }, disp));
+      if (minRaw >= 0) {
+        svg.appendChild(svgEl("rect", { x: padL, y: y + 4, width: iw, height: barH, rx: 3, fill: "var(--line)", "fill-opacity": 0.45 }));
+      }
+      svg.appendChild(svgEl("rect", { x: xPos, y: y + 4, width: barW, height: barH, rx: 3, fill: colorFn(row), "fill-opacity": 0.88 }));
+      const valX = v >= 0 ? (xPos + barW + 8) : (zeroX + 8);
+      svg.appendChild(svgEl("text", { x: valX, y: y + rowH * 0.63, fill: "var(--ink-muted)", "font-size": 12 }, labelFn(row)));
     });
   }
 
@@ -193,7 +254,7 @@
       ? sd * a.name.localeCompare(b.name)
       : sd * (((a[sk] === true ? 1 : a[sk] === false ? 0 : a[sk]) ?? -1e9) - ((b[sk] === true ? 1 : b[sk] === false ? 0 : b[sk]) ?? -1e9)));
     body.innerHTML = sorted.map((r, i) => `
-      <tr class="clickable" data-idx="${r.idx}" style="${r.idx === selIdx ? "background:var(--card-alt);font-weight:600;" : ""}">
+      <tr class="clickable ${r.idx === selIdx ? "is-selected" : ""}" data-idx="${r.idx}">
         <td class="left muted">${i + 1}</td>
         ${rowCellsFn(r)}
       </tr>`).join("");
@@ -202,10 +263,10 @@
   }
 
   function detailGridHtml(items) {
-    return `<div class="grid-2" style="gap:8px;">` + items.map(([lbl, val, cls]) => `
-      <div class="subcard">
-        <div class="muted">${esc(lbl)}</div>
-        <div class="tabnum ${cls || ""}" style="font-weight:600;margin-top:2px;">${esc(val)}</div>
+    return `<div class="kv-grid">` + items.map(([lbl, val, cls]) => `
+      <div class="kv-row">
+        <span class="muted">${esc(lbl)}</span>
+        <span class="kv-val tabnum ${cls || ""}">${esc(val)}</span>
       </div>`).join("") + `</div>`;
   }
 
@@ -219,12 +280,13 @@
     const byHit = [...qList].sort((a, b) => (b.true_hit ?? -9) - (a.true_hit ?? -9));
     const primCnt = qList.filter(p => p.is_primary).length;
     renderRoleKpis("spiker-kpis", [
-      byEff[0] ? { lbl: `Top Spiker (A-Eff, m=${state.rKM})`, val: byEff[0].name, sub: `${fmt(byEff[0].a_eff, 2, true)} (${byEff[0].att} att)`, tip: "Highest Bayesian-shrunk Attack EPA per 100 attempts", pickIdx: byEff[0].idx } : { lbl: "Top Spiker", val: "—", sub: "" },
-      byAvpm[0] ? { lbl: "Top Volume Attack (A-VPM)", val: byAvpm[0].name, sub: `${fmt(byAvpm[0].a_vpm, 2, true)} (${fmt(byAvpm[0].att_per_r, 2)}/R)`, tip: "Highest cumulative attack impact per 100 rallies", pickIdx: byAvpm[0].idx } : { lbl: "Top A-VPM", val: "—", sub: "" },
-      byHit[0] ? { lbl: "Top TrueHit%", val: byHit[0].name, sub: `${fmt(byHit[0].true_hit, 3)} (${fmt(byHit[0].kill_pct, 1)}% kill)`, tip: "Highest (True Kills - Direct Attack Errors) / Attempts", pickIdx: byHit[0].idx } : { lbl: "Top TrueHit%", val: "—", sub: "" },
-      { lbl: "Qualified Spikers", val: `${qList.length} players`, sub: `${primCnt} primary (>=25%T) · ${ROLES.meta.spiker_events_human.toLocaleString()} att`, tip: "Qualified players with >=100 rallies and >=20 attacks" }
+      byEff[0] ? { lbl: `Top Spiker (A-Eff, m=${state.rKM})`, val: byEff[0].name, sub: `${fmt(byEff[0].a_eff, 2, true)} (${byEff[0].att} att)`, tip: "Highest Bayesian-shrunk Attack EPA per 100 attempts", pickIdx: byEff[0].idx } : { lbl: "Top Spiker", val: "-", sub: "" },
+      byAvpm[0] ? { lbl: "Top volume attack (A-VPM)", val: byAvpm[0].name, sub: `${fmt(byAvpm[0].a_vpm, 2, true)} (${fmt(byAvpm[0].att_per_r, 2)}/R)`, tip: "Highest cumulative attack impact per 100 rallies", pickIdx: byAvpm[0].idx } : { lbl: "Top A-VPM", val: "-", sub: "" },
+      byHit[0] ? { lbl: "Top TrueHit%", val: byHit[0].name, sub: `${fmt(byHit[0].true_hit, 3)} (${fmt(byHit[0].kill_pct, 1)}% kill)`, tip: "Highest (True Kills - Direct Attack Errors) / Attempts", pickIdx: byHit[0].idx } : { lbl: "Top TrueHit%", val: "-", sub: "" },
+      { lbl: "Qualified spikers", val: `${qList.length} players`, sub: `${primCnt} primary (>=25%T) · ${ROLES.meta.spiker_events_human.toLocaleString()} att`, tip: "Qualified players with >=100 rallies and >=20 attacks" }
     ], idx => { state.rKSel = idx; renderSpikerTab(); });
 
+    renderRoleLegend("r-spiker-legend", "Primary spiker (>=25%T)", "Secondary / hybrid", state.rKUnqual);
     const q = state.rKSearch.trim().toLowerCase();
     const list = roleSpikers.filter(p => (state.rKUnqual || p.qualified) && (!state.rKPrimary || p.is_primary) && (!q || p.name.toLowerCase().includes(q)));
     const isLoad = state.rKMode === "load";
@@ -233,8 +295,8 @@
       yFn: p => p.a_eff,
       rFn: p => Math.max(4.5, Math.min(13, Math.sqrt(p.att) * 0.5)),
       xDec: isLoad ? 2 : 3,
-      xLabel: isLoad ? "Attack Workload (Attempts / Rally)" : "True Hitting % ((Kills - Err) / Att)",
-      yLabel: `A-Eff (Attack EPA / 100 Att, m=${state.rKM})`,
+      xLabel: isLoad ? "Attack workload (attempts / rally)" : "True hitting % ((kills - err) / att)",
+      yLabel: `A-Eff (attack EPA / 100 att, m=${state.rKM})`,
       selIdx: state.rKSel,
       tipHtml: p => `<b>${esc(p.name)}</b><br/>A-Eff: <b>${fmt(p.a_eff, 2, true)}</b> · A-VPM: ${fmt(p.a_vpm, 2, true)}<br/>Att: ${p.att} (${p.spk} spk, ${p.tip} tip) · TrueHit%: ${fmt(p.true_hit, 3)}`,
       onSelect: idx => { state.rKSel = idx; renderSpikerTab(); }
@@ -243,39 +305,39 @@
     const p = roleSpikers[state.rKSel] || roleSpikers[0];
     const det = document.getElementById("r-spiker-detail");
     det.innerHTML = `
-      <div class="between" style="border-bottom:1px solid var(--border);padding-bottom:8px;">
+      <div class="between" style="padding-bottom:6px;">
         <div>
-          <div style="font-size:15px;font-weight:700;">${esc(p.name)} ${p.qualified ? "" : '<span class="muted">(&lt;100R)</span>'}</div>
-          <div class="muted">${p.is_primary ? "Primary Spiker" : "Secondary / Hybrid"} · ${p.rallies}R</div>
+          <h3 style="font-size:var(--text-heading);">${esc(p.name)} ${p.qualified ? "" : '<span class="muted">(&lt;100R)</span>'}</h3>
+          <div class="muted">${p.is_primary ? "Primary spiker" : "Secondary / hybrid"} · ${p.rallies}R</div>
         </div>
         <div style="text-align:right;">
           <div class="muted">A-Eff (m=${state.rKM})</div>
-          <div class="tabnum ${valCls(p.a_eff)}" style="font-size:16px;font-weight:700;">${fmt(p.a_eff, 2, true)}</div>
+          <div class="kpi-val tabnum ${valCls(p.a_eff)}">${fmt(p.a_eff, 2, true)}</div>
         </div>
       </div>
       ${detailGridHtml([
-        ["A-Eff Raw (m=0)", fmt(p.a_eff_raw, 2, true), valCls(p.a_eff_raw)],
+        ["A-Eff raw (m=0)", fmt(p.a_eff_raw, 2, true), valCls(p.a_eff_raw)],
         ["A-VPM (/100R)", fmt(p.a_vpm, 2, true), valCls(p.a_vpm)],
         ["Attacks (Spk / Tip)", `${p.att} (${p.spk} / ${p.tip})`, ""],
-        ["Att Share / Att/R", `${fmt(p.att_share, 1)}% / ${fmt(p.att_per_r, 2)}`, ""],
+        ["Att share / Att/R", `${fmt(p.att_share, 1)}% / ${fmt(p.att_per_r, 2)}`, ""],
         ["TrueHit%", fmt(p.true_hit, 3), valCls(p.true_hit)],
         ["Kill% / Err% / Tip%", `${fmt(p.kill_pct, 1)}% / ${fmt(p.err_pct, 1)}% / ${fmt(p.tip_pct, 1)}%`, ""],
         ["Block EPA/100R (Blk)", `${fmt(p.blk_epa, 2, true)} (${p.blk_n})`, valCls(p.blk_epa)],
         ["O-VPM / Overall VPM", `${fmt(p.o_vpm, 2, true)} / ${fmt(p.vpm, 2, true)}`, ""]
       ])}
-      ${p.mmr_idx >= 0 ? `<button id="r-k-open-prof" type="button" class="btn btn-sm">Open Full Player Profile</button>` : ""}`;
+      ${p.mmr_idx >= 0 ? `<button id="r-k-open-prof" type="button" class="btn btn-sm btn-primary" style="margin-top:auto;">Open full profile</button>` : ""}`;
     const btn = document.getElementById("r-k-open-prof");
     if (btn) btn.onclick = () => openPlayerProfile(p.mmr_idx);
 
     const cols = [
       { k: "name", lbl: "Player", left: true, tip: "Player display name" },
-      { k: "is_primary", lbl: "Role", left: true, tip: "Primary Spiker (>=25% of touches) vs Secondary" },
+      { k: "is_primary", lbl: "Role", left: true, tip: "Primary spiker (>=25% of touches) vs Hybrid" },
       { k: "a_eff", lbl: "A-Eff", tip: "Attack Markov EPA per 100 attempts at shrinkage m" },
       { k: "a_vpm", lbl: "A-VPM", tip: "Attack value per 100 rallies (m=150)" },
       { k: "att", lbl: "Att", tip: "Total attack attempts (spikes + tips + dumps)" },
       { k: "att_share", lbl: "Att%T", tip: "Share of touches that are attacks" },
       { k: "true_hit", lbl: "TrueHit%", tip: "(True Kills - Direct Attack Errors) / Attempts" },
-      { k: "kill_pct", lbl: "Kill%", tip: "True Kills per attack attempt" },
+      { k: "kill_pct", lbl: "Kill%", tip: "True kills per attack attempt" },
       { k: "err_pct", lbl: "Err%", tip: "Direct attack error rate" },
       { k: "tip_pct", lbl: "Tip%", tip: "Share of attacks that are tips" },
       { k: "o_vpm", lbl: "O-VPM", tip: "Overall Offensive VPM" },
@@ -304,7 +366,7 @@
     if (!hasPbp || !roleSetters.length) return;
     const rm = ROLES.meta;
     document.getElementById("setter-sub").textContent =
-      `5-fold out-of-fold set-delivery model across ${rm.setter_events_human.toLocaleString()} human setting actions in ${rm.total_rallies.toLocaleString()} rallies (human mean drift ${fmt(rm.mean_human_set_delta_100, 2, true)} pts/100).`;
+      `5-fold out-of-fold set-delivery model across ${rm.setter_events_human.toLocaleString()} human setting actions in ${rm.total_rallies.toLocaleString()} rallies (mean drift ${fmt(rm.mean_human_set_delta_100, 2, true)} pts/100).`;
 
     roleSetters.forEach(p => { p.s_eff = (100 * p.sum_delta) / (p.act + state.rSM); });
     const qList = roleSetters.filter(p => p.qualified);
@@ -313,19 +375,20 @@
     const byAtt = [...qList].sort((a, b) => b.att_pct - a.att_pct);
     const primCnt = qList.filter(p => p.is_primary).length;
     renderRoleKpis("setter-kpis", [
-      byEff[0] ? { lbl: `Top Setter (S-Eff, m=${state.rSM})`, val: byEff[0].name, sub: `${fmt(byEff[0].s_eff, 2, true)} (${byEff[0].act} acts / ${byEff[0].dumps} dmp)`, tip: "Top qualified setter by context-adjusted delivery efficiency", pickIdx: byEff[0].idx } : { lbl: "Top S-Eff", val: "—", sub: "" },
-      bySvpm[0] ? { lbl: "Top Setter (S-VPM)", val: bySvpm[0].name, sub: `${fmt(bySvpm[0].s_vpm, 2, true)} (${fmt(bySvpm[0].sets_per_r, 2)}/R)`, tip: "Top qualified setter by cumulative setting value per 100 rallies", pickIdx: bySvpm[0].idx } : { lbl: "Top S-VPM", val: "—", sub: "" },
-      byAtt[0] ? { lbl: "Top Attackable %", val: byAtt[0].name, sub: `${fmt(byAtt[0].att_pct, 1)}% (${fmt(byAtt[0].err_pct, 1)}% err)`, tip: "Highest share of sets creating a 3rd-touch attack or active dump", pickIdx: byAtt[0].idx } : { lbl: "Top Att%", val: "—", sub: "" },
-      { lbl: "Qualified Setters", val: `${qList.length} players`, sub: `${primCnt} primary (>=35%T)`, tip: "Qualified setters (>=100R and >=35 set actions)" }
+      byEff[0] ? { lbl: `Top Setter (S-Eff, m=${state.rSM})`, val: byEff[0].name, sub: `${fmt(byEff[0].s_eff, 2, true)} (${byEff[0].act} acts / ${byEff[0].dumps} dmp)`, tip: "Top qualified setter by context-adjusted delivery efficiency", pickIdx: byEff[0].idx } : { lbl: "Top S-Eff", val: "-", sub: "" },
+      bySvpm[0] ? { lbl: "Top Setter (S-VPM)", val: bySvpm[0].name, sub: `${fmt(bySvpm[0].s_vpm, 2, true)} (${fmt(bySvpm[0].sets_per_r, 2)}/R)`, tip: "Top qualified setter by cumulative setting value per 100 rallies", pickIdx: bySvpm[0].idx } : { lbl: "Top S-VPM", val: "-", sub: "" },
+      byAtt[0] ? { lbl: "Top attackable %", val: byAtt[0].name, sub: `${fmt(byAtt[0].att_pct, 1)}% (${fmt(byAtt[0].err_pct, 1)}% err)`, tip: "Highest share of sets creating a 3rd-touch attack or active dump", pickIdx: byAtt[0].idx } : { lbl: "Top Att%", val: "-", sub: "" },
+      { lbl: "Qualified setters", val: `${qList.length} players`, sub: `${primCnt} primary (>=35%T)`, tip: "Qualified setters (>=100R and >=35 set actions)" }
     ], idx => { state.rSSel = idx; renderSetterTab(); });
 
+    renderRoleLegend("r-setter-legend", "Primary setter (>=35%T)", "Secondary / spot", state.rSUnqual);
     const q = state.rSSearch.trim().toLowerCase();
     const list = roleSetters.filter(p => (state.rSUnqual || p.qualified) && (!state.rSPrimary || p.is_primary) && (!q || p.name.toLowerCase().includes(q)));
     renderRoleScatter("r-setter-svg", "r-setter-tip", list, {
       xFn: p => p.sets_per_r, yFn: p => p.s_eff,
       rFn: p => Math.max(4.5, Math.min(12.5, Math.sqrt(p.act) * 0.65)), xDec: 2,
-      xLabel: "Setting Workload (Set+Dump Actions / Rally)",
-      yLabel: `S-Eff (pts/100 Set Acts, m=${state.rSM})`,
+      xLabel: "Setting workload (set + dump actions / rally)",
+      yLabel: `S-Eff (pts / 100 set acts, m=${state.rSM})`,
       selIdx: state.rSSel,
       tipHtml: p => `<b>${esc(p.name)}</b><br/>S-Eff: <b>${fmt(p.s_eff, 2, true)}</b> · S-VPM: ${fmt(p.s_vpm, 2, true)}<br/>Acts: ${p.act} (${p.dumps} dmp) · Att%: ${fmt(p.att_pct, 1)}%`,
       onSelect: idx => { state.rSSel = idx; renderSetterTab(); }
@@ -334,33 +397,33 @@
     const p = roleSetters[state.rSSel] || roleSetters[0];
     const det = document.getElementById("r-setter-detail");
     det.innerHTML = `
-      <div class="between" style="border-bottom:1px solid var(--border);padding-bottom:8px;">
+      <div class="between" style="padding-bottom:6px;">
         <div>
-          <div style="font-size:15px;font-weight:700;">${esc(p.name)} ${p.qualified ? "" : '<span class="muted">(&lt;100R)</span>'}</div>
-          <div class="muted">${p.is_primary ? "Primary Setter" : "Secondary / Spot"} · ${p.rallies}R</div>
+          <h3 style="font-size:var(--text-heading);">${esc(p.name)} ${p.qualified ? "" : '<span class="muted">(&lt;100R)</span>'}</h3>
+          <div class="muted">${p.is_primary ? "Primary setter" : "Secondary / spot"} · ${p.rallies}R</div>
         </div>
         <div style="text-align:right;">
           <div class="muted">S-Eff (m=${state.rSM})</div>
-          <div class="tabnum ${valCls(p.s_eff)}" style="font-size:16px;font-weight:700;">${fmt(p.s_eff, 2, true)}</div>
+          <div class="kpi-val tabnum ${valCls(p.s_eff)}">${fmt(p.s_eff, 2, true)}</div>
         </div>
       </div>
       ${detailGridHtml([
-        ["S-Eff Raw (m=0)", fmt(p.s_eff_raw, 2, true), valCls(p.s_eff_raw)],
+        ["S-Eff raw (m=0)", fmt(p.s_eff_raw, 2, true), valCls(p.s_eff_raw)],
         ["S-VPM (/100R)", fmt(p.s_vpm, 2, true), valCls(p.s_vpm)],
         ["Actions (Dumps)", `${p.act} (${p.dumps})`, ""],
-        ["Set Share / Sets/R", `${fmt(p.set_share, 1)}% / ${fmt(p.sets_per_r, 2)}`, ""],
+        ["Set share / Sets/R", `${fmt(p.set_share, 1)}% / ${fmt(p.sets_per_r, 2)}`, ""],
         ["Attackable% / Err%", `${fmt(p.att_pct, 1)}% / ${fmt(p.err_pct, 1)}%`, ""],
-        ["Box Ast/Set", p.box_ast_pct !== null ? `${fmt(p.box_ast_pct, 1)}% (${p.box_ast}/${p.box_sets})` : "—", ""],
+        ["Box Ast/Set", p.box_ast_pct !== null ? `${fmt(p.box_ast_pct, 1)}% (${p.box_ast}/${p.box_sets})` : "-", ""],
         ["Teammate TrueHit%", `${fmt(p.tm_hit, 3)} (${p.tm_att})`, ""],
         ["Dump EPA / VPM", `${fmt(p.dump_epa, 1, true)} / ${fmt(p.vpm, 1, true)}`, ""]
       ])}
-      ${p.mmr_idx >= 0 ? `<button id="r-s-open-prof" type="button" class="btn btn-sm">Open Full Player Profile</button>` : ""}`;
+      ${p.mmr_idx >= 0 ? `<button id="r-s-open-prof" type="button" class="btn btn-sm btn-primary" style="margin-top:auto;">Open full profile</button>` : ""}`;
     const btn = document.getElementById("r-s-open-prof");
     if (btn) btn.onclick = () => openPlayerProfile(p.mmr_idx);
 
     const cols = [
       { k: "name", lbl: "Player", left: true, tip: "Player display name" },
-      { k: "is_primary", lbl: "Role", left: true, tip: "Primary Setter (>=35% of touches) vs Spot" },
+      { k: "is_primary", lbl: "Role", left: true, tip: "Primary setter (>=35% of touches) vs Spot" },
       { k: "s_eff", lbl: "S-Eff", tip: "Set Delivery + Dump pts/100 actions at shrinkage m" },
       { k: "s_vpm", lbl: "S-VPM", tip: "Setting impact per 100 rallies played (m=150)" },
       { k: "act", lbl: "Act", tip: "Total set (touch 1-2) + dump (touch 2) actions" },
@@ -386,15 +449,15 @@
         <td class="right">${fmt(r.att_pct, 1)}%</td>
         <td class="right">${fmt(r.err_pct, 1)}%</td>
         <td class="right">${fmt(r.tm_hit, 3)}</td>
-        <td class="right">${r.box_ast_pct !== null ? fmt(r.box_ast_pct, 1) + "%" : "—"}</td>
+        <td class="right">${r.box_ast_pct !== null ? fmt(r.box_ast_pct, 1) + "%" : "-"}</td>
         <td class="right">${fmt(r.vpm, 2, true)}</td>`);
 
     renderRoleHBar("r-set-ladder-svg", ROLES.set_ladder, 100,
-      r => r[2] >= 56 ? "var(--success)" : (r[2] >= 45 ? "var(--chart-2)" : (r[2] > 0 ? "var(--warning)" : "var(--error)")),
+      r => r[2] >= 56 ? "var(--pos)" : (r[2] >= 45 ? "var(--chart-1)" : (r[2] > 0 ? "var(--warn)" : "var(--neg)")),
       r => `${r[2].toFixed(1)}% (${r[1]})`);
     const setRel = ROLES.rel.filter(r => r[4] === "set" || r[4] === "rej" || r[0].includes("Set"));
     renderRoleHBar("r-set-rel-svg", setRel, 0.9,
-      r => r[4] === "set" ? "var(--chart-2)" : (r[4] === "old" ? "var(--muted-foreground)" : "var(--error)"),
+      r => r[4] === "set" ? "var(--chart-1)" : (r[4] === "old" ? "var(--chart-4)" : "var(--neg)"),
       r => `SB ${r[2].toFixed(3)} (n=${r[3]})`);
   }
 
@@ -403,7 +466,7 @@
     if (!hasPbp || !roleLiberos.length) return;
     const rm = ROLES.meta;
     document.getElementById("libero-sub").textContent =
-      `5-fold DataVolley pass-grade model across ${rm.libero_events_human.toLocaleString()} human cross-net first contacts (human mean drift ${fmt(rm.mean_human_lib_delta_100, 2, true)} pts/100).`;
+      `5-fold DataVolley pass-grade model across ${rm.libero_events_human.toLocaleString()} human cross-net first contacts (mean drift ${fmt(rm.mean_human_lib_delta_100, 2, true)} pts/100).`;
 
     roleLiberos.forEach(p => { p.l_eff = (100 * p.sum_delta) / (p.fc_n + state.rLM); });
     const qList = roleLiberos.filter(p => p.qualified);
@@ -411,12 +474,13 @@
     const bySr = [...qList].filter(p => p.sr_eff !== null).sort((a, b) => b.sr_eff - a.sr_eff);
     const byDig = [...qList].filter(p => p.dig_eff !== null).sort((a, b) => b.dig_eff - a.dig_eff);
     renderRoleKpis("libero-kpis", [
-      byLeff[0] ? { lbl: `Top Libero (L-Eff, m=${state.rLM})`, val: byLeff[0].name, sub: `${fmt(byLeff[0].l_eff, 2, true)} (${fmt(byLeff[0].in_sys, 1)}% InSys)`, tip: "Top qualified player by DataVolley pass-grade L-Eff", pickIdx: byLeff[0].idx } : { lbl: "Top L-Eff", val: "—", sub: "" },
-      bySr[0] ? { lbl: "Top Serve-Receive (SR-Eff)", val: bySr[0].name, sub: `${fmt(bySr[0].sr_eff, 2, true)} (${bySr[0].sr_n} SR)`, tip: "Top serve-receive efficiency (m=25)", pickIdx: bySr[0].idx } : { lbl: "Top SR-Eff", val: "—", sub: "" },
-      byDig[0] ? { lbl: "Top Floor Dig (Dig-Eff)", val: byDig[0].name, sub: `${fmt(byDig[0].dig_eff, 2, true)} (${byDig[0].dig_n} digs)`, tip: "Top hard-dig efficiency off attacks/tips/blocks (m=25)", pickIdx: byDig[0].idx } : { lbl: "Top Dig-Eff", val: "—", sub: "" },
+      byLeff[0] ? { lbl: `Top Libero (L-Eff, m=${state.rLM})`, val: byLeff[0].name, sub: `${fmt(byLeff[0].l_eff, 2, true)} (${fmt(byLeff[0].in_sys, 1)}% InSys)`, tip: "Top qualified player by DataVolley pass-grade L-Eff", pickIdx: byLeff[0].idx } : { lbl: "Top L-Eff", val: "-", sub: "" },
+      bySr[0] ? { lbl: "Top serve-receive (SR-Eff)", val: bySr[0].name, sub: `${fmt(bySr[0].sr_eff, 2, true)} (${bySr[0].sr_n} SR)`, tip: "Top serve-receive efficiency (m=25)", pickIdx: bySr[0].idx } : { lbl: "Top SR-Eff", val: "-", sub: "" },
+      byDig[0] ? { lbl: "Top floor dig (Dig-Eff)", val: byDig[0].name, sub: `${fmt(byDig[0].dig_eff, 2, true)} (${byDig[0].dig_n} digs)`, tip: "Top hard-dig efficiency off attacks/tips/blocks (m=25)", pickIdx: byDig[0].idx } : { lbl: "Top Dig-Eff", val: "-", sub: "" },
       { lbl: "D-VPM != Libero", val: `r(Blk, FC) = ${fmt(rm.block_vs_fc_std_epa_100r, 3)}`, sub: `r(D-VPM, Dig) = ${fmt(rm.dvpm_vs_dig_eff, 3)}`, tip: "Front-row blocking drives D-VPM orthogonally to backcourt passing" }
     ], idx => { state.rLSel = idx; renderLiberoTab(); });
 
+    renderRoleLegend("r-libero-legend", "Primary libero (>=35%T)", "Two-way / hybrid", state.rLUnqual);
     const q = state.rLSearch.trim().toLowerCase();
     const list = roleLiberos.filter(p => (state.rLUnqual || p.qualified) && (!state.rLPrimary || p.is_primary) && (!q || p.name.toLowerCase().includes(q)));
     const isSrDig = state.rLMode === "sr_dig";
@@ -424,8 +488,8 @@
       xFn: isSrDig ? p => p.sr_eff : p => p.d_vpm,
       yFn: isSrDig ? p => p.dig_eff : p => p.l_eff,
       rFn: p => Math.max(4.5, Math.min(12.5, Math.sqrt(p.fc_n) * 0.55)), xDec: 1,
-      xLabel: isSrDig ? "Serve-Receive SR-Eff (pts/100 SR, m=25)" : "Overall Defense D-VPM (Serve RAPM + Block + Def EPA)",
-      yLabel: isSrDig ? "Floor Hard-Dig Dig-Eff (pts/100 Digs, m=25)" : `True First-Contact L-Eff (pts/100 FC, m=${state.rLM})`,
+      xLabel: isSrDig ? "Serve-receive SR-Eff (pts / 100 SR, m=25)" : "Overall defense D-VPM (Serve RAPM + Block + Def EPA)",
+      yLabel: isSrDig ? "Floor hard-dig Dig-Eff (pts / 100 digs, m=25)" : `True first-contact L-Eff (pts / 100 FC, m=${state.rLM})`,
       selIdx: state.rLSel,
       tipHtml: p => `<b>${esc(p.name)}</b><br/>L-Eff: <b>${fmt(p.l_eff, 2, true)}</b> · D-VPM: ${fmt(p.d_vpm, 2, true)}<br/>SR-Eff: ${fmt(p.sr_eff, 2, true)} · Dig-Eff: ${fmt(p.dig_eff, 2, true)}<br/>FC: ${p.fc_n} · InSys: ${fmt(p.in_sys, 1)}%`,
       onSelect: idx => { state.rLSel = idx; renderLiberoTab(); }
@@ -434,33 +498,33 @@
     const p = roleLiberos[state.rLSel] || roleLiberos[0];
     const det = document.getElementById("r-libero-detail");
     det.innerHTML = `
-      <div class="between" style="border-bottom:1px solid var(--border);padding-bottom:8px;">
+      <div class="between" style="padding-bottom:6px;">
         <div>
-          <div style="font-size:15px;font-weight:700;">${esc(p.name)} ${p.qualified ? "" : '<span class="muted">(&lt;100R)</span>'}</div>
-          <div class="muted">${p.is_primary ? "Primary Libero" : "Two-Way / Hybrid"} · ${p.rallies}R</div>
+          <h3 style="font-size:var(--text-heading);">${esc(p.name)} ${p.qualified ? "" : '<span class="muted">(&lt;100R)</span>'}</h3>
+          <div class="muted">${p.is_primary ? "Primary libero" : "Two-way / hybrid"} · ${p.rallies}R</div>
         </div>
         <div style="text-align:right;">
           <div class="muted">L-Eff (m=${state.rLM})</div>
-          <div class="tabnum ${valCls(p.l_eff)}" style="font-size:16px;font-weight:700;">${fmt(p.l_eff, 2, true)}</div>
+          <div class="kpi-val tabnum ${valCls(p.l_eff)}">${fmt(p.l_eff, 2, true)}</div>
         </div>
       </div>
       ${detailGridHtml([
         [`SR-Eff (${p.sr_n} SR)`, fmt(p.sr_eff, 2, true), valCls(p.sr_eff)],
         [`Dig-Eff (${p.dig_n} Digs)`, fmt(p.dig_eff, 2, true), valCls(p.dig_eff)],
-        ["L-Eff Raw / L-VPM", `${fmt(p.l_eff_raw, 2, true)} / ${fmt(p.l_vpm, 2, true)}`, ""],
+        ["L-Eff raw / L-VPM", `${fmt(p.l_eff_raw, 2, true)} / ${fmt(p.l_vpm, 2, true)}`, ""],
         [`FC (${p.fc_n}) / FC%T`, `${fmt(p.fc_share, 1)}% (${fmt(p.fc_per_r, 2)}/R)`, ""],
         ["In-System% / Clean%", `${fmt(p.in_sys, 1)}% / ${fmt(p.clean, 1)}%`, ""],
         ["Err% / Shank+Carom%", `${fmt(p.err_pct, 1)}% / ${fmt(p.sc_pct, 1)}%`, ""],
-        ["D-VPM (All Defense)", fmt(p.d_vpm, 2, true), valCls(p.d_vpm)],
+        ["D-VPM (All defense)", fmt(p.d_vpm, 2, true), valCls(p.d_vpm)],
         ["Block EPA/100R (Blk)", `${fmt(p.blk_epa, 2, true)} (${p.blk_n})`, valCls(p.blk_epa)]
       ])}
-      ${p.mmr_idx >= 0 ? `<button id="r-l-open-prof" type="button" class="btn btn-sm">Open Full Player Profile</button>` : ""}`;
+      ${p.mmr_idx >= 0 ? `<button id="r-l-open-prof" type="button" class="btn btn-sm btn-primary" style="margin-top:auto;">Open full profile</button>` : ""}`;
     const btn = document.getElementById("r-l-open-prof");
     if (btn) btn.onclick = () => openPlayerProfile(p.mmr_idx);
 
     const cols = [
       { k: "name", lbl: "Player", left: true, tip: "Player display name" },
-      { k: "is_primary", lbl: "Role", left: true, tip: "Primary Libero (>=35% FC touch share) vs Hybrid" },
+      { k: "is_primary", lbl: "Role", left: true, tip: "Primary libero (>=35% FC touch share) vs Hybrid" },
       { k: "l_eff", lbl: "L-Eff", tip: "Pass-grade pts/100 cross-net first contacts at shrinkage m" },
       { k: "l_vpm", lbl: "L-VPM", tip: "First-contact value per 100 rallies (m=150)" },
       { k: "sr_eff", lbl: "SR-Eff", tip: "Serve-Receive quality vs human baseline (m=25)" },
@@ -492,11 +556,11 @@
         <td class="right">${fmt(r.blk_epa, 2, true)}</td>`);
 
     renderRoleHBar("r-pass-ladder-svg", ROLES.pass_ladder, 100,
-      r => r[2] >= 55 ? "var(--success)" : (r[2] >= 45 ? "var(--chart-1)" : (r[2] > 5 ? "var(--warning)" : "var(--error)")),
+      r => r[2] >= 55 ? "var(--pos)" : (r[2] >= 45 ? "var(--chart-1)" : (r[2] > 5 ? "var(--warn)" : "var(--neg)")),
       r => `${r[2].toFixed(1)}% (${r[1]})`);
     const libRel = ROLES.rel.filter(r => r[4] === "lib" || r[0].includes("FC"));
     renderRoleHBar("r-lib-rel-svg", libRel, 0.9,
-      r => r[4] === "lib" ? "var(--chart-1)" : "var(--muted-foreground)",
+      r => r[4] === "lib" ? "var(--chart-1)" : "var(--chart-4)",
       r => `SB ${r[2].toFixed(3)} (n=${r[3]})`);
 
     document.getElementById("r-dvpm-proof-sub").textContent =
@@ -525,14 +589,16 @@
   document.getElementById("r-k-search").addEventListener("input", e => { state.rKSearch = e.target.value; renderSpikerTab(); });
   document.getElementById("r-spk-mode-load").addEventListener("click", () => {
     state.rKMode = "load";
-    document.getElementById("r-spk-mode-load").className = "btn btn-sm btn-active";
-    document.getElementById("r-spk-mode-hit").className = "btn btn-sm";
+    const loadB = document.getElementById("r-spk-mode-load"), hitB = document.getElementById("r-spk-mode-hit");
+    loadB.classList.add("is-active"); loadB.setAttribute("aria-pressed", "true");
+    hitB.classList.remove("is-active"); hitB.setAttribute("aria-pressed", "false");
     renderSpikerTab();
   });
   document.getElementById("r-spk-mode-hit").addEventListener("click", () => {
     state.rKMode = "hit";
-    document.getElementById("r-spk-mode-load").className = "btn btn-sm";
-    document.getElementById("r-spk-mode-hit").className = "btn btn-sm btn-active";
+    const loadB = document.getElementById("r-spk-mode-load"), hitB = document.getElementById("r-spk-mode-hit");
+    hitB.classList.add("is-active"); hitB.setAttribute("aria-pressed", "true");
+    loadB.classList.remove("is-active"); loadB.setAttribute("aria-pressed", "false");
     renderSpikerTab();
   });
 
@@ -547,13 +613,15 @@
   document.getElementById("r-l-search").addEventListener("input", e => { state.rLSearch = e.target.value; renderLiberoTab(); });
   document.getElementById("r-lib-mode-sr").addEventListener("click", () => {
     state.rLMode = "sr_dig";
-    document.getElementById("r-lib-mode-sr").className = "btn btn-sm btn-active";
-    document.getElementById("r-lib-mode-dvpm").className = "btn btn-sm";
+    const srB = document.getElementById("r-lib-mode-sr"), dvB = document.getElementById("r-lib-mode-dvpm");
+    srB.classList.add("is-active"); srB.setAttribute("aria-pressed", "true");
+    dvB.classList.remove("is-active"); dvB.setAttribute("aria-pressed", "false");
     renderLiberoTab();
   });
   document.getElementById("r-lib-mode-dvpm").addEventListener("click", () => {
     state.rLMode = "l_dvpm";
-    document.getElementById("r-lib-mode-sr").className = "btn btn-sm";
-    document.getElementById("r-lib-mode-dvpm").className = "btn btn-sm btn-active";
+    const srB = document.getElementById("r-lib-mode-sr"), dvB = document.getElementById("r-lib-mode-dvpm");
+    dvB.classList.add("is-active"); dvB.setAttribute("aria-pressed", "true");
+    srB.classList.remove("is-active"); srB.setAttribute("aria-pressed", "false");
     renderLiberoTab();
   });

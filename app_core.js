@@ -1,14 +1,18 @@
-  // Theme initialization & toggle
-  const savedTheme = localStorage.getItem("jv_theme") || "dark";
+  // Theme initialization & toggle (Court Chalk light default, Night Arena dark option)
+  const savedTheme = localStorage.getItem("jv_theme") || "light";
   document.documentElement.setAttribute("data-theme", savedTheme);
   const themeBtn = document.getElementById("theme-toggle");
+  const SUN_SVG = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>`;
+  const MOON_SVG = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`;
   function syncThemeBtn() {
-    const cur = document.documentElement.getAttribute("data-theme") || "dark";
-    themeBtn.textContent = cur === "dark" ? "Light Theme" : "Dark Theme";
+    const cur = document.documentElement.getAttribute("data-theme") || "light";
+    const toDark = cur === "light";
+    themeBtn.innerHTML = `${toDark ? MOON_SVG : SUN_SVG}<span>${toDark ? "Dark" : "Light"}</span>`;
+    themeBtn.setAttribute("aria-label", toDark ? "Switch to dark theme" : "Switch to light theme");
   }
   syncThemeBtn();
   themeBtn.addEventListener("click", () => {
-    const nxt = (document.documentElement.getAttribute("data-theme") || "dark") === "dark" ? "light" : "dark";
+    const nxt = (document.documentElement.getAttribute("data-theme") || "light") === "dark" ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", nxt);
     localStorage.setItem("jv_theme", nxt);
     syncThemeBtn();
@@ -16,7 +20,7 @@
   });
 
   const ARCH_NAMES = ["Elite Both", "Pure Efficiency", "Effective Anchor", "Developing", "Box-Only (<100R)"];
-  const ARCH_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--muted-foreground)", "var(--chart-5)"];
+  const ARCH_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
 
   // Unpack mmr_players: [name, sid4, bt_mmr, elo_mmr, gp, w, l]
   const mmrPlayers = SITE_DATA.mmr_players.map((r, i) => ({
@@ -102,7 +106,7 @@
   const state = {
     tab: hasPbp ? "scatter" : "profile",
     xKey: "v_eff", yKey: "vpm", sizeKey: "rallies", colorKey: "arch",
-    minRallies: 100, search: "",
+    minRallies: 100, search: "", activePreset: "eff_vpm",
     pinned: players[0] || null, pinnedMmr: null,
     wEpa: SITE_DATA.meta.default_w_epa, mShr: SITE_DATA.meta.default_m, tilt: 0,
     cmpA: 0, cmpB: Math.min(1, Math.max(0, players.length - 1)),
@@ -125,24 +129,37 @@
     return el;
   }
   function fmt(v, d = 2, plus = false) {
-    if (v === null || v === undefined || Number.isNaN(v)) return "—";
+    if (v === null || v === undefined || Number.isNaN(v)) return "-";
     const s = Number(v).toFixed(d);
     return (plus && Number(v) > 0) ? "+" + s : s;
   }
   function fmtStreak(st) {
-    if (!st) return "—";
+    if (!st) return "-";
     return st > 0 ? `${st}W` : `${Math.abs(st)}L`;
   }
+  function placeTooltip(el, e, maxW = 270, maxH = 150) {
+    const left = Math.max(8, Math.min(window.innerWidth - maxW - 8, e.clientX + 14));
+    const top = Math.max(8, Math.min(window.innerHeight - maxH - 8, e.clientY - 18));
+    el.style.left = left + "px";
+    el.style.top = top + "px";
+  }
 
-  // Header Subtitle & Dynamic Leader KPI Cards
+  // Header Meta, Footer Meta & 4-Column Leader Ledger
   function initHeader() {
     const m = SITE_DATA.meta;
-    const parts = [`${m.mmr_matches} verified online matches`, `${m.mmr_players} MMR players`];
-    if (m.has_pbp) parts.push(`${m.pbp_rallies.toLocaleString()} PBP rallies (${m.pbp_contacts.toLocaleString()} contacts)`);
-    else if (m.box_matches) parts.push(`${m.box_matches} box-score matches`);
-    document.getElementById("hdr-sub").textContent = "Interactive player-agnostic explorer across " + parts.join(", ") + ".";
+    const summaryParts = [`${m.mmr_matches} matches`, `${m.mmr_players} players`];
+    if (m.has_pbp) summaryParts.push(`${m.pbp_rallies.toLocaleString()} rallies (${m.pbp_qualified} qualified)`);
+    else if (m.box_matches) summaryParts.push(`${m.box_matches} box matches`);
+    document.getElementById("hdr-sub").textContent = summaryParts.join(" · ");
+
+    const footerParts = [`${m.date_min} to ${m.date_max}`, `${m.mmr_matches} matches`, `${m.mmr_players} players`];
+    if (m.has_pbp) footerParts.push(`${m.pbp_contacts.toLocaleString()} contacts across ${m.pbp_sessions} sessions`);
+    footerParts.push(`Updated ${m.generated_utc}`);
+    document.getElementById("footer-meta").textContent = footerParts.join(" · ");
 
     const strip = document.getElementById("kpi-strip");
+    if (!hasPbp) document.getElementById("tab-profile").prepend(strip);
+
     const cards = [];
     if (hasPbp) {
       const topVpm = [...qualPlayers].sort((a, b) => b.vpm - a.vpm)[0];
@@ -150,12 +167,10 @@
       const topEff = [...qualPlayers].sort((a, b) => b.v_eff - a.v_eff)[0];
       const topRapm = [...qualPlayers].sort((a, b) => b.rapm - a.rapm)[0];
       cards.push(
-        { lbl: "#1 Overall VPM", val: topVpm.name, sub: `${fmt(topVpm.vpm, 2, true)} (${topVpm.rallies}R)`, tip: "Volleyball Plus-Minus leader among qualified players", mmrIdx: topVpm.mmr_idx, pbpIdx: topVpm.idx },
-        { lbl: "#1 Global BT MMR", val: topMmr.name, sub: `${topMmr.bt_mmr.toFixed(1)} (${topMmr.w}–${topMmr.l})`, tip: "Global Regularized Bradley-Terry MMR leader across all players", mmrIdx: topMmr.idx },
-        { lbl: "#1 Touch Eff (V-Eff)", val: topEff.name, sub: `${fmt(topEff.v_eff, 2, true)} EPA/100T`, tip: "Highest Markov EPA per 100 touches among qualified players", mmrIdx: topEff.mmr_idx, pbpIdx: topEff.idx },
-        { lbl: "#1 Lineup RAPM", val: topRapm.name, sub: `${fmt(topRapm.rapm, 2, true)} pts/100R`, tip: "Highest Ridge Regularized Adjusted Plus-Minus", mmrIdx: topRapm.mmr_idx, pbpIdx: topRapm.idx },
-        { lbl: "Match Pool", val: `${m.mmr_matches} matches`, sub: `${m.mmr_players} players (${m.date_min} .. ${m.date_max})`, tip: "Deduplicated online match pool and active human player count" },
-        { lbl: "Telemetry Pool", val: `${m.pbp_rallies.toLocaleString()} rallies`, sub: `${m.pbp_sessions} sess · ${m.pbp_qualified} qualified`, tip: "Play-by-play telemetry rallies and qualified players (>=100R, >=40T)" }
+        { lbl: "#1 Overall VPM", val: topVpm.name, sub: `${fmt(topVpm.vpm, 2, true)} pts/100R (${topVpm.rallies}R)`, tip: "Volleyball Plus-Minus leader among qualified players", mmrIdx: topVpm.mmr_idx },
+        { lbl: "#1 Global BT MMR", val: topMmr.name, sub: `${topMmr.bt_mmr.toFixed(1)} (${topMmr.w}-${topMmr.l})`, tip: "Global Regularized Bradley-Terry MMR leader across all players", mmrIdx: topMmr.idx },
+        { lbl: "#1 Touch efficiency (V-Eff)", val: topEff.name, sub: `${fmt(topEff.v_eff, 2, true)} EPA/100T`, tip: "Highest Markov EPA per 100 touches among qualified players", mmrIdx: topEff.mmr_idx },
+        { lbl: "#1 Lineup RAPM", val: topRapm.name, sub: `${fmt(topRapm.rapm, 2, true)} pts/100R`, tip: "Highest Ridge Regularized Adjusted Plus-Minus", mmrIdx: topRapm.mmr_idx }
       );
     } else {
       const qualMmr = mmrPlayers.filter(x => x.gp >= 5);
@@ -164,26 +179,24 @@
       const topElo = [...mmrPlayers].sort((a, b) => b.elo_mmr - a.elo_mmr)[0];
       const mostActive = [...mmrPlayers].sort((a, b) => b.gp - a.gp || b.bt_mmr - a.bt_mmr)[0];
       cards.push(
-        { lbl: "#1 Global BT MMR", val: topMmr ? topMmr.name : "—", sub: topMmr ? `${topMmr.bt_mmr.toFixed(1)} (${topMmr.w}–${topMmr.l})` : "", tip: "Global Bradley-Terry MMR leader", mmrIdx: topMmr ? topMmr.idx : null },
-        { lbl: "#1 Chronological Elo", val: topElo ? topElo.name : "—", sub: topElo ? `${topElo.elo_mmr.toFixed(1)} (${topElo.gp} GP)` : "", tip: "Sequential team Elo leader", mmrIdx: topElo ? topElo.idx : null },
-        { lbl: "#1 Win% (5+ GP)", val: winLeader ? winLeader.name : "—", sub: winLeader ? `${winLeader.win_pct.toFixed(1)}% (${winLeader.w}–${winLeader.l})` : "", tip: "Best match win rate with >= 5 GP", mmrIdx: winLeader ? winLeader.idx : null },
-        { lbl: "Most Active", val: mostActive ? mostActive.name : "—", sub: mostActive ? `${mostActive.gp} GP (${mostActive.w}–${mostActive.l})` : "", tip: "Most online matches recorded", mmrIdx: mostActive ? mostActive.idx : null },
-        { lbl: "Match Pool", val: `${m.mmr_matches} matches`, sub: `${m.mmr_players} human players`, tip: "Verified deduplicated online match pool" },
-        { lbl: "Box & Date Span", val: `${m.box_matches} box`, sub: `${m.date_min} .. ${m.date_max}`, tip: "Box-score matches and earliest to latest match dates" }
+        { lbl: "#1 Global BT MMR", val: topMmr ? topMmr.name : "-", sub: topMmr ? `${topMmr.bt_mmr.toFixed(1)} (${topMmr.w}-${topMmr.l})` : "", tip: "Global Bradley-Terry MMR leader", mmrIdx: topMmr ? topMmr.idx : null },
+        { lbl: "#1 Chronological Elo", val: topElo ? topElo.name : "-", sub: topElo ? `${topElo.elo_mmr.toFixed(1)} (${topElo.gp} GP)` : "", tip: "Sequential team Elo leader", mmrIdx: topElo ? topElo.idx : null },
+        { lbl: "#1 Win% (5+ GP)", val: winLeader ? winLeader.name : "-", sub: winLeader ? `${winLeader.win_pct.toFixed(1)}% (${winLeader.w}-${winLeader.l})` : "", tip: "Best match win rate with >= 5 GP", mmrIdx: winLeader ? winLeader.idx : null },
+        { lbl: "Most active", val: mostActive ? mostActive.name : "-", sub: mostActive ? `${mostActive.gp} GP (${mostActive.w}-${mostActive.l})` : "", tip: "Most online matches recorded", mmrIdx: mostActive ? mostActive.idx : null }
       );
     }
 
-    strip.innerHTML = cards.map((c, ci) => `
-      <div class="subcard kpi" data-kpi="${ci}" title="${esc(c.tip)}">
+    strip.innerHTML = cards.map((c, ci) => {
+      const canClick = c.mmrIdx !== undefined && c.mmrIdx !== null && c.mmrIdx >= 0;
+      return `<div class="ledger-item ${canClick ? "is-clickable" : ""}" data-kpi="${ci}" title="${esc(c.tip)}">
         <div class="muted">${esc(c.lbl)}</div>
         <div class="kpi-val tabnum">${esc(c.val)}</div>
-        <div class="muted tabnum">${esc(c.sub)}</div>
-      </div>`).join("");
-    strip.querySelectorAll(".kpi").forEach(el => {
+        <div class="ledger-sub tabnum">${esc(c.sub)}</div>
+      </div>`;
+    }).join("");
+    strip.querySelectorAll(".ledger-item.is-clickable").forEach(el => {
       const c = cards[Number(el.dataset.kpi)];
-      if (c.mmrIdx !== undefined && c.mmrIdx !== null && c.mmrIdx >= 0) {
-        el.addEventListener("click", () => openPlayerProfile(c.mmrIdx));
-      }
+      el.addEventListener("click", () => openPlayerProfile(c.mmrIdx));
     });
   }
 
@@ -203,7 +216,6 @@
     state.profSelectedGame = Math.max(0, pl.timeline.length - 1);
     const profSel = document.getElementById("prof-select");
     if (profSel) profSel.value = String(mmrIdx);
-    // Smart default minShared for this player
     const matchups = computeMatchupsFor(mmrIdx);
     const hasMulti = matchups.some(x => x.shared >= 2);
     state.minShared = hasMulti ? 2 : 1;
@@ -261,16 +273,24 @@
   AXES.forEach(a => { selX.add(new Option(a.label, a.key)); selY.add(new Option(a.label, a.key)); });
   selX.value = state.xKey; selY.value = state.yKey;
 
+  function syncPresetButtons() {
+    document.querySelectorAll("#preset-btns [data-preset]").forEach(b => {
+      const on = b.dataset.preset === state.activePreset;
+      b.classList.toggle("is-active", on);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+  }
+
   function renderScatter() {
     if (!hasPbp) return;
     const svg = document.getElementById("scatter-svg");
     svg.innerHTML = "";
-    const W = 820, H = 450, pad = { l: 64, r: 26, t: 22, b: 48 };
+    const W = 820, H = 450, pad = { l: 64, r: 28, t: 22, b: 48 };
     const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
     const xMeta = AXIS_MAP[state.xKey], yMeta = AXIS_MAP[state.yKey];
     const pts = players.filter(p => p.rallies >= state.minRallies && p[state.xKey] !== null && p[state.yKey] !== null);
     if (!pts.length) {
-      svg.appendChild(svgEl("text", { x: W / 2, y: H / 2, "text-anchor": "middle", fill: "var(--muted-foreground)", "font-size": 13 }, "No players match the current filter."));
+      svg.appendChild(svgEl("text", { x: W / 2, y: H / 2, "text-anchor": "middle", fill: "var(--ink-muted)", "font-size": 13 }, "No players match the current filter."));
       return;
     }
 
@@ -284,38 +304,37 @@
     for (let i = 0; i <= 5; i++) {
       const xv = xMin + (i / 5) * (xMax - xMin), yv = yMin + (i / 5) * (yMax - yMin);
       const gx = sx(xv), gy = sy(yv);
-      svg.appendChild(svgEl("line", { x1: gx, y1: pad.t, x2: gx, y2: pad.t + ph, stroke: "var(--border)", "stroke-opacity": 0.45, "stroke-dasharray": "2,3" }));
-      svg.appendChild(svgEl("line", { x1: pad.l, y1: gy, x2: pad.l + pw, y2: gy, stroke: "var(--border)", "stroke-opacity": 0.45, "stroke-dasharray": "2,3" }));
-      svg.appendChild(svgEl("text", { x: gx, y: H - 24, "text-anchor": "middle", fill: "var(--muted-foreground)", "font-size": 12 }, Math.abs(xv) >= 100 ? xv.toFixed(0) : xv.toFixed(1)));
-      svg.appendChild(svgEl("text", { x: pad.l - 8, y: gy + 4, "text-anchor": "end", fill: "var(--muted-foreground)", "font-size": 12 }, Math.abs(yv) >= 100 ? yv.toFixed(0) : yv.toFixed(1)));
+      svg.appendChild(svgEl("line", { x1: gx, y1: pad.t, x2: gx, y2: pad.t + ph, stroke: "var(--line)", "stroke-opacity": 0.65, "stroke-dasharray": "2,3" }));
+      svg.appendChild(svgEl("line", { x1: pad.l, y1: gy, x2: pad.l + pw, y2: gy, stroke: "var(--line)", "stroke-opacity": 0.65, "stroke-dasharray": "2,3" }));
+      svg.appendChild(svgEl("text", { x: gx, y: H - 24, "text-anchor": "middle", fill: "var(--ink-muted)", "font-size": 12 }, Math.abs(xv) >= 100 ? xv.toFixed(0) : xv.toFixed(1)));
+      svg.appendChild(svgEl("text", { x: pad.l - 8, y: gy + 4, "text-anchor": "end", fill: "var(--ink-muted)", "font-size": 12 }, Math.abs(yv) >= 100 ? yv.toFixed(0) : yv.toFixed(1)));
     }
-    if (xMeta.zero && xMin < 0 && xMax > 0) svg.appendChild(svgEl("line", { x1: sx(0), y1: pad.t, x2: sx(0), y2: pad.t + ph, stroke: "var(--muted-foreground)", "stroke-opacity": 0.65, "stroke-dasharray": "5,4" }));
-    if (yMeta.zero && yMin < 0 && yMax > 0) svg.appendChild(svgEl("line", { x1: pad.l, y1: sy(0), x2: pad.l + pw, y2: sy(0), stroke: "var(--muted-foreground)", "stroke-opacity": 0.65, "stroke-dasharray": "5,4" }));
-    svg.appendChild(svgEl("text", { x: pad.l + pw / 2, y: H - 6, "text-anchor": "middle", fill: "var(--foreground)", "font-size": 12, "font-weight": 600 }, xMeta.label));
-    svg.appendChild(svgEl("text", { x: 16, y: pad.t + ph / 2, "text-anchor": "middle", fill: "var(--foreground)", "font-size": 12, "font-weight": 600, transform: `rotate(-90 16 ${pad.t + ph / 2})` }, yMeta.label));
+    if (xMeta.zero && xMin < 0 && xMax > 0) svg.appendChild(svgEl("line", { x1: sx(0), y1: pad.t, x2: sx(0), y2: pad.t + ph, stroke: "var(--ink-muted)", "stroke-opacity": 0.5, "stroke-dasharray": "5,4" }));
+    if (yMeta.zero && yMin < 0 && yMax > 0) svg.appendChild(svgEl("line", { x1: pad.l, y1: sy(0), x2: pad.l + pw, y2: sy(0), stroke: "var(--ink-muted)", "stroke-opacity": 0.5, "stroke-dasharray": "5,4" }));
+    svg.appendChild(svgEl("text", { x: pad.l + pw / 2, y: H - 6, "text-anchor": "middle", fill: "var(--ink)", "font-size": 12, "font-weight": 600 }, xMeta.label));
+    svg.appendChild(svgEl("text", { x: 16, y: pad.t + ph / 2, "text-anchor": "middle", fill: "var(--ink)", "font-size": 12, "font-weight": 600, transform: `rotate(-90 16 ${pad.t + ph / 2})` }, yMeta.label));
 
     const sMax = Math.max(...pts.map(p => Math.max(0, Number(p[state.sizeKey] || 0))), 1);
     const getRadius = p => state.sizeKey === "uniform" ? 6 : 4.5 + 12.5 * Math.sqrt(Math.max(0, Number(p[state.sizeKey] || 0)) / sMax);
     const getColor = p => {
       if (state.colorKey === "arch") return ARCH_COLORS[p.arch];
-      if (state.colorKey === "veff") return p.v_eff >= 0 ? "var(--success)" : "var(--error)";
-      return (!state.pinnedMmr && state.pinned && state.pinned.idx === p.idx) ? "var(--chart-1)" : "var(--muted-foreground)";
+      if (state.colorKey === "veff") return p.v_eff >= 0 ? "var(--pos)" : "var(--neg)";
+      return (!state.pinnedMmr && state.pinned && state.pinned.idx === p.idx) ? "var(--chart-1)" : "var(--chart-4)";
     };
 
     const legEl = document.getElementById("scatter-legend");
     if (state.colorKey === "arch") {
-      legEl.innerHTML = [0, 1, 2, 3].map(c => `<span class="row" style="gap:4px;"><span class="dot" style="background:${ARCH_COLORS[c]}"></span>${ARCH_NAMES[c]}</span>`).join("");
+      legEl.innerHTML = [0, 1, 2, 3].map(c => `<span class="legend-item"><span class="dot" style="background:${ARCH_COLORS[c]}"></span>${ARCH_NAMES[c]}</span>`).join("");
     } else if (state.colorKey === "veff") {
-      legEl.innerHTML = `<span class="row" style="gap:4px;"><span class="dot" style="background:var(--success)"></span>V-Eff &ge; 0</span><span class="row" style="gap:4px;"><span class="dot" style="background:var(--error)"></span>V-Eff &lt; 0</span>`;
+      legEl.innerHTML = `<span class="legend-item"><span class="dot" style="background:var(--pos)"></span>V-Eff &ge; 0</span><span class="legend-item"><span class="dot" style="background:var(--neg)"></span>V-Eff &lt; 0</span>`;
     } else {
-      legEl.innerHTML = `<span class="row" style="gap:4px;"><span class="dot" style="background:var(--chart-1)"></span>Pinned Player</span>`;
+      legEl.innerHTML = `<span class="legend-item"><span class="dot" style="background:var(--chart-1)"></span>Pinned player</span>`;
     }
 
     const q = state.search.trim().toLowerCase();
     const tt = document.getElementById("scatter-tooltip");
     const ordered = [...pts].sort((a, b) => a.rallies - b.rallies);
 
-    // Dynamic prominent-player label targets (zero hardcoded player names)
     const labelTargets = new Set();
     [...pts].sort((a, b) => b.vpm - a.vpm).slice(0, 4).forEach(p => labelTargets.add(p.idx));
     [...pts].sort((a, b) => b.v_eff - a.v_eff).slice(0, 3).forEach(p => labelTargets.add(p.idx));
@@ -335,12 +354,15 @@
       const cx = sx(p[state.xKey]), cy = sy(p[state.yKey]), r = getRadius(p);
       const isMatch = q && (p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q));
       const isPinned = !state.pinnedMmr && state.pinned && state.pinned.idx === p.idx;
+      const baseStroke = (isPinned || isMatch) ? "var(--ink)" : "var(--surface)";
+      const baseWidth = (isPinned || isMatch) ? 2.4 : 1.2;
       const circ = svgEl("circle", {
-        cx, cy, r, fill: getColor(p), "fill-opacity": q ? (isMatch ? 0.95 : 0.2) : 0.82,
-        stroke: (isPinned || isMatch) ? "var(--foreground)" : "var(--background)",
-        "stroke-width": (isPinned || isMatch) ? 2.2 : 1, style: "cursor:pointer;"
+        cx, cy, r, fill: getColor(p), "fill-opacity": q ? (isMatch ? 0.95 : 0.22) : 0.85,
+        stroke: baseStroke, "stroke-width": baseWidth, style: "cursor:pointer;"
       });
       circ.addEventListener("mouseenter", e => {
+        circ.setAttribute("stroke", "var(--ink)");
+        circ.setAttribute("stroke-width", "2.4");
         tt.innerHTML = `
           <div><b>${esc(p.name)}</b> <span class="muted">${esc(p.id)}</span></div>
           <div class="muted">${ARCH_NAMES[p.arch]} · ${p.rallies}R · ${p.touches}T</div>
@@ -350,14 +372,14 @@
             <span>TrueHit%: <b>${fmt(p.true_hit, 3)}</b></span><span>BT MMR: <b>${fmt(p.bt_mmr, 1)}</b></span>
           </div>`;
         tt.classList.remove("hidden");
-        tt.style.left = Math.min(window.innerWidth - 270, e.clientX + 14) + "px";
-        tt.style.top = Math.max(8, e.clientY - 20) + "px";
+        placeTooltip(tt, e, 270, 140);
       });
-      circ.addEventListener("mousemove", e => {
-        tt.style.left = Math.min(window.innerWidth - 270, e.clientX + 14) + "px";
-        tt.style.top = Math.max(8, e.clientY - 20) + "px";
+      circ.addEventListener("mousemove", e => placeTooltip(tt, e, 270, 140));
+      circ.addEventListener("mouseleave", () => {
+        circ.setAttribute("stroke", baseStroke);
+        circ.setAttribute("stroke-width", baseWidth);
+        tt.classList.add("hidden");
       });
-      circ.addEventListener("mouseleave", () => tt.classList.add("hidden"));
       circ.addEventListener("click", () => { state.pinned = p; state.pinnedMmr = null; renderScatter(); });
       svg.appendChild(circ);
     });
@@ -367,13 +389,42 @@
       (!state.pinnedMmr && state.pinned && state.pinned.idx === p.idx) ||
       labelTargets.has(p.idx)
     );
-    labelCands.sort((a, b) => b.rallies - a.rallies);
+    labelCands.sort((a, b) => {
+      const aP = (!state.pinnedMmr && state.pinned && state.pinned.idx === a.idx) ? 1 : 0;
+      const bP = (!state.pinnedMmr && state.pinned && state.pinned.idx === b.idx) ? 1 : 0;
+      if (aP !== bP) return bP - aP;
+      return b.rallies - a.rallies;
+    });
+    const tryPlaceLabel = (cx, cy, r, txt, bold, forceRight) => {
+      const bw = txt.length * 6.5 + 6, bh = 14;
+      const cands = [
+        { x: cx + r + 5, y: cy + 4, anchor: "start", boxX: cx + r + 5, boxY: cy + 4 },
+        { x: cx - r - 5, y: cy + 4, anchor: "end", boxX: cx - r - 5 - bw, boxY: cy + 4 },
+        { x: cx, y: cy - r - 5, anchor: "middle", boxX: cx - bw / 2, boxY: cy - r - 5 },
+        { x: cx, y: cy + r + 14, anchor: "middle", boxX: cx - bw / 2, boxY: cy + r + 14 }
+      ];
+      for (const c of cands) {
+        if (c.boxX < pad.l || c.boxX + bw > W - pad.r || c.boxY - bh < pad.t || c.boxY > H - pad.b) continue;
+        let hit = false;
+        for (const b of placedBoxes) {
+          if (!(c.boxX + bw < b.x || c.boxX > b.x + b.w || c.boxY < b.y - b.h || c.boxY - bh > b.y)) { hit = true; break; }
+        }
+        if (!hit) {
+          placedBoxes.push({ x: c.boxX, y: c.boxY, w: bw, h: bh });
+          svg.appendChild(svgEl("text", { x: c.x, y: c.y, "text-anchor": c.anchor, fill: "var(--ink)", "font-size": 12, "font-weight": bold ? 700 : 500 }, txt));
+          return;
+        }
+      }
+      if (forceRight) {
+        const c = cands[0];
+        placedBoxes.push({ x: c.boxX, y: c.boxY, w: bw, h: bh });
+        svg.appendChild(svgEl("text", { x: c.x, y: c.y, "text-anchor": "start", fill: "var(--ink)", "font-size": 12, "font-weight": 700 }, txt));
+      }
+    };
     labelCands.forEach(p => {
       const cx = sx(p[state.xKey]), cy = sy(p[state.yKey]), r = getRadius(p);
       const isPinned = !state.pinnedMmr && state.pinned && state.pinned.idx === p.idx;
-      if (canPlace(cx + r + 4, cy + 4, p.name) || isPinned) {
-        svg.appendChild(svgEl("text", { x: cx + r + 4, y: cy + 4, fill: "var(--foreground)", "font-size": 12, "font-weight": isPinned ? 700 : 500 }, p.name));
-      }
+      tryPlaceLabel(cx, cy, r, p.name, isPinned, isPinned);
     });
 
     // Pinned Inspector
@@ -381,29 +432,34 @@
     if (state.pinnedMmr) {
       const m = state.pinnedMmr;
       ins.innerHTML = `
-        <div class="row">
-          <b style="font-size:14px;">${esc(m.name)}</b>
-          <span class="muted">${esc(m.id)}</span>
-          <span class="pill">No PBP telemetry (&lt;100R)</span>
-          <button id="ins-prof-btn" type="button" class="btn btn-sm">View Profile</button>
+        <div class="between">
+          <div class="row" style="gap:8px;">
+            <b style="font-size:var(--text-body);">${esc(m.name)}</b>
+            <span class="muted">${esc(m.id)} · No play-by-play telemetry (&lt;100R)</span>
+          </div>
+          <button id="ins-prof-btn" type="button" class="btn btn-sm btn-primary">View profile</button>
         </div>
-        <div class="row tabnum" style="gap:14px;">
+        <div class="row tabnum" style="gap:4px 14px;font-size:var(--text-sm);">
           <span>BT MMR: <b>${fmt(m.bt_mmr, 1)}</b> (#${m.rank} / ${mmrPlayers.length})</span>
           <span>Elo: <b>${fmt(m.elo_mmr, 1)}</b></span>
           <span>Peak: <b>${fmt(m.peak_elo, 1)}</b></span>
-          <span>Record: <b>${m.w}–${m.l}</b> (${fmt(m.win_pct, 1)}%)</span>
+          <span>Record: <b>${m.w}-${m.l}</b> (${fmt(m.win_pct, 1)}%)</span>
         </div>`;
       document.getElementById("ins-prof-btn").addEventListener("click", () => openPlayerProfile(m.idx));
     } else {
       const p = state.pinned || pts[0];
       ins.innerHTML = `
-        <div class="row">
-          <b style="font-size:14px;">${esc(p.name)}</b>
-          <span class="muted">${esc(p.id)} · ${ARCH_NAMES[p.arch]}</span>
-          ${p.mmr_idx >= 0 ? `<button id="ins-prof-btn" type="button" class="btn btn-sm">View Profile</button>` : ""}
-          <button id="ins-cmp-btn" type="button" class="btn btn-sm">Compare</button>
+        <div class="between">
+          <div class="row" style="gap:8px;">
+            <b style="font-size:var(--text-body);">${esc(p.name)}</b>
+            <span class="muted">${esc(p.id)} · ${ARCH_NAMES[p.arch]}</span>
+          </div>
+          <div class="row" style="gap:6px;">
+            ${p.mmr_idx >= 0 ? `<button id="ins-prof-btn" type="button" class="btn btn-sm btn-primary">View profile</button>` : ""}
+            <button id="ins-cmp-btn" type="button" class="btn btn-sm">Compare</button>
+          </div>
         </div>
-        <div class="row tabnum" style="gap:12px;">
+        <div class="row tabnum" style="gap:4px 14px;font-size:var(--text-sm);">
           <span>VPM: <b>${fmt(p.vpm, 2, true)}</b> (O ${fmt(p.o_vpm, 1, true)} / D ${fmt(p.d_vpm, 1, true)})</span>
           <span>Custom: <b class="pri">${fmt(p.custom_vpm, 2, true)}</b></span>
           <span>V-Eff: <b>${fmt(p.v_eff, 2, true)}</b></span>
@@ -433,20 +489,21 @@
     let list;
     if (q) {
       const filtered = ranked.filter(({ p }) => p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q));
-      titleEl.textContent = `Custom VPM Matches (${filtered.length} of ${ranked.length})`;
+      titleEl.textContent = `Custom VPM matches (${filtered.length} of ${ranked.length})`;
       list = filtered.slice(0, 12);
     } else {
-      titleEl.textContent = "Live Top 12 by Custom VPM (vs. Default Rank)";
+      titleEl.textContent = "Live Top 12 by Custom VPM (vs. default rank)";
       list = ranked.slice(0, 12);
     }
     if (!list.length) {
-      tbody.innerHTML = `<tr><td colspan="5" class="left muted" style="padding:10px;">No qualified PBP players match (check search dropdown for MMR-only players).</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="5" class="left muted" style="padding:12px;">No qualified PBP players match (check search results for MMR-only players).</td></tr>`;
       return;
     }
     tbody.innerHTML = list.map(({ p, rank }) => {
       const diff = (defRankMap.get(p.name + p.id) || 0) - rank;
-      const shiftHtml = diff > 0 ? `<span class="pos">▲+${diff}</span>` : (diff < 0 ? `<span class="neg">▼${diff}</span>` : `<span class="muted">—</span>`);
-      return `<tr class="clickable" data-pidx="${p.idx}">
+      const shiftHtml = diff > 0 ? `<span class="pos">+${diff}</span>` : (diff < 0 ? `<span class="neg">${diff}</span>` : `<span class="muted">-</span>`);
+      const isPinned = !state.pinnedMmr && state.pinned && state.pinned.idx === p.idx;
+      return `<tr class="clickable ${isPinned ? "is-selected" : ""}" data-pidx="${p.idx}">
         <td class="left muted">${rank}</td>
         <td class="left" style="font-weight:500;max-width:130px;overflow:hidden;text-overflow:ellipsis;">${esc(p.name)}</td>
         <td class="right" style="font-weight:600;">${fmt(p.custom_vpm, 2, true)}</td>
@@ -455,11 +512,12 @@
       </tr>`;
     }).join("");
     tbody.querySelectorAll("tr").forEach(tr => tr.addEventListener("click", () => {
-      state.pinned = players[Number(tr.dataset.pidx)]; state.pinnedMmr = null; renderScatter();
+      state.pinned = players[Number(tr.dataset.pidx)]; state.pinnedMmr = null;
+      renderScatter(); renderSandboxTable();
     }));
   }
 
-  // Unified Main-Tab Player Search
+  // Unified Global Player Search
   const pbpMmrSet = new Set(players.filter(p => p.mmr_idx >= 0).map(p => p.mmr_idx));
   const unifiedIndex = [
     ...players.map(p => ({ kind: "pbp", name: p.name, id: p.id, pbp: p, mmr: p.mmr_idx >= 0 ? mmrPlayers[p.mmr_idx] : null })),
@@ -485,10 +543,23 @@
   const mainSearchResults = document.getElementById("main-search-results");
   const mainSearchClear = document.getElementById("main-search-clear");
   const mainSearchStatus = document.getElementById("main-search-status");
+  const mainSearchKbd = document.getElementById("main-search-kbd");
   const mainSearchWrap = document.getElementById("main-search-wrap");
   mainSearchStatus.textContent = `${qualPlayers.length} PBP · ${mmrPlayers.length} MMR`;
 
   function selectSearchResult(item) {
+    mainSearchResults.classList.add("hidden");
+    if (state.tab !== "scatter") {
+      if (item.mmr) {
+        openPlayerProfile(item.mmr.idx);
+        return;
+      }
+      if (item.pbp) {
+        state.pinned = item.pbp; state.pinnedMmr = null;
+        switchTab("scatter");
+        return;
+      }
+    }
     if (item.kind === "pbp" && item.pbp) {
       state.pinned = item.pbp; state.pinnedMmr = null;
       if (state.minRallies > item.pbp.rallies && item.pbp.rallies >= 100) {
@@ -499,22 +570,24 @@
     } else if (item.mmr) {
       state.pinned = null; state.pinnedMmr = item.mmr;
     }
-    mainSearchResults.classList.add("hidden");
     renderScatter(); renderSandboxTable();
   }
 
   function renderSearchDropdown() {
     const q = state.search.trim();
     if (!q) {
-      mainSearchResults.classList.add("hidden"); mainSearchClear.classList.add("hidden");
+      mainSearchResults.classList.add("hidden");
+      mainSearchClear.classList.add("hidden");
+      mainSearchKbd.classList.remove("hidden");
       mainSearchStatus.textContent = `${qualPlayers.length} PBP · ${mmrPlayers.length} MMR`;
       return;
     }
     mainSearchClear.classList.remove("hidden");
+    mainSearchKbd.classList.add("hidden");
     const matches = searchAllPlayers(q);
     mainSearchStatus.textContent = `${matches.length} match${matches.length === 1 ? "" : "es"}`;
     if (!matches.length) {
-      mainSearchResults.innerHTML = `<div class="muted" style="padding:10px 12px;">No players match "${esc(q)}".</div>`;
+      mainSearchResults.innerHTML = `<div class="muted" style="padding:12px 14px;">No players match "${esc(q)}".</div>`;
       mainSearchResults.classList.remove("hidden");
       return;
     }
@@ -524,33 +597,55 @@
         const p = it.pbp;
         return `<button type="button" class="dd-item" data-ri="${idx}">
           <span><b>${esc(p.name)}</b> <span class="muted">${esc(p.id)} · ${ARCH_NAMES[p.arch]}</span></span>
-          <span class="tabnum muted">VPM <b style="color:var(--foreground)">${fmt(p.vpm, 2, true)}</b> · V-Eff <b>${fmt(p.v_eff, 2, true)}</b> · RAPM <b>${fmt(p.rapm, 2, true)}</b> · ${p.rallies}R</span>
+          <span class="tabnum muted">VPM <b style="color:var(--ink)">${fmt(p.vpm, 2, true)}</b> · V-Eff <b>${fmt(p.v_eff, 2, true)}</b> · RAPM <b>${fmt(p.rapm, 2, true)}</b> · ${p.rallies}R</span>
         </button>`;
       }
       const m = it.mmr;
       return `<button type="button" class="dd-item" data-ri="${idx}">
-        <span><b>${esc(m.name)}</b> <span class="muted">${esc(m.id)} · MMR-only</span></span>
-        <span class="tabnum muted">BT MMR <b style="color:var(--foreground)">${fmt(m.bt_mmr, 1)}</b> (#${m.rank}) · ${m.w}–${m.l} (${m.gp} GP)</span>
+        <span><b>${esc(m.name)}</b> <span class="muted">${esc(m.id)} · MMR only</span></span>
+        <span class="tabnum muted">BT MMR <b style="color:var(--ink)">${fmt(m.bt_mmr, 1)}</b> (#${m.rank}) · ${m.w}-${m.l} (${m.gp} GP)</span>
       </button>`;
     }).join("");
     mainSearchResults.classList.remove("hidden");
     mainSearchResults.querySelectorAll("button[data-ri]").forEach(b => b.addEventListener("click", () => selectSearchResult(shown[Number(b.dataset.ri)])));
   }
 
-  mainSearchInput.addEventListener("input", e => { state.search = e.target.value; renderSearchDropdown(); renderScatter(); renderSandboxTable(); });
+  mainSearchInput.addEventListener("input", e => {
+    state.search = e.target.value;
+    renderSearchDropdown();
+    if (state.tab === "scatter") { renderScatter(); renderSandboxTable(); }
+  });
   mainSearchInput.addEventListener("focus", () => { if (state.search.trim()) renderSearchDropdown(); });
   mainSearchInput.addEventListener("keydown", e => {
     if (e.key === "Enter") { const m = searchAllPlayers(state.search); if (m.length) { e.preventDefault(); selectSearchResult(m[0]); } }
-    else if (e.key === "Escape") { state.search = ""; mainSearchInput.value = ""; renderSearchDropdown(); renderScatter(); renderSandboxTable(); }
+    else if (e.key === "Escape") {
+      state.search = ""; mainSearchInput.value = "";
+      renderSearchDropdown();
+      if (state.tab === "scatter") { renderScatter(); renderSandboxTable(); }
+      mainSearchInput.blur();
+    }
   });
   mainSearchClear.addEventListener("click", () => {
-    state.search = ""; mainSearchInput.value = ""; renderSearchDropdown(); renderScatter(); renderSandboxTable(); mainSearchInput.focus();
+    state.search = ""; mainSearchInput.value = "";
+    renderSearchDropdown();
+    if (state.tab === "scatter") { renderScatter(); renderSandboxTable(); }
+    mainSearchInput.focus();
   });
   document.addEventListener("click", e => { if (!mainSearchWrap.contains(e.target)) mainSearchResults.classList.add("hidden"); });
+  document.addEventListener("keydown", e => {
+    if (e.key === "/" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      const tag = (document.activeElement && document.activeElement.tagName) || "";
+      if (tag !== "INPUT" && tag !== "TEXTAREA" && tag !== "SELECT") {
+        e.preventDefault();
+        mainSearchInput.focus();
+      }
+    }
+  });
 
   ["sel-x", "sel-y", "sel-size", "sel-color"].forEach(id => {
     document.getElementById(id).addEventListener("change", e => {
       state[{ "sel-x": "xKey", "sel-y": "yKey", "sel-size": "sizeKey", "sel-color": "colorKey" }[id]] = e.target.value;
+      if (id === "sel-x" || id === "sel-y") { state.activePreset = null; syncPresetButtons(); }
       renderScatter();
     });
   });
@@ -566,10 +661,11 @@
         off_def: ["o_vpm", "d_vpm", 100], rapm_eff: ["v_eff", "rapm", 100], mvp_margin: ["box_mvp_r", "box_margin", 100]
       };
       const [xk, yk, mr] = presets[btn.dataset.preset];
-      state.xKey = xk; state.yKey = yk; state.minRallies = mr;
+      state.xKey = xk; state.yKey = yk; state.minRallies = mr; state.activePreset = btn.dataset.preset;
       selX.value = xk; selY.value = yk;
       document.getElementById("min-rallies").value = mr;
       document.getElementById("min-rallies-val").textContent = mr;
+      syncPresetButtons();
       renderScatter();
     });
   });
@@ -595,8 +691,8 @@
   players.forEach((p, i) => { cmpA.add(new Option(`${p.name} (${p.rallies}R)`, i)); cmpB.add(new Option(`${p.name} (${p.rallies}R)`, i)); });
   cmpA.value = state.cmpA; cmpB.value = state.cmpB;
   document.getElementById("radar-qual-lbl").textContent = `Qualified (n=${qualPlayers.length})`;
-  document.getElementById("tbl-mode-eff").textContent = `Efficiency & VPM (${players.length} PBP/Box)`;
-  document.getElementById("tbl-mode-mmr").textContent = `Global MMR (${mmrPlayers.length} Players)`;
+  document.getElementById("tbl-mode-eff").textContent = `Efficiency & VPM (${players.length})`;
+  document.getElementById("tbl-mode-mmr").textContent = `Global MMR (${mmrPlayers.length})`;
 
   if (hasPbp) {
     const chipsEl = document.getElementById("quick-chips");
@@ -608,10 +704,15 @@
     pushTop([...qualPlayers].sort((a, b) => b.rapm - a.rapm));
     pushTop([...qualPlayers].sort((a, b) => (b.bt_mmr || 0) - (a.bt_mmr || 0)));
     pushTop([...qualPlayers].sort((a, b) => b.rallies - a.rallies));
+    const lbl = document.createElement("span");
+    lbl.className = "muted";
+    lbl.textContent = "Quick compare:";
+    chipsEl.appendChild(lbl);
     chipIdxs.forEach(idx => {
       const p = players[idx];
       const b = document.createElement("button");
-      b.className = "btn btn-sm"; b.textContent = "vs " + p.name;
+      b.type = "button";
+      b.className = "quick-link"; b.textContent = "vs " + p.name;
       b.onclick = () => { state.cmpB = idx; cmpB.value = idx; renderCompare(); };
       chipsEl.appendChild(b);
     });
@@ -619,7 +720,9 @@
     document.getElementById("compare-cards").classList.add("hidden");
     document.getElementById("tbl-mode-eff").classList.add("hidden");
     document.getElementById("tbl-arch-filter").classList.add("hidden");
-    document.getElementById("tbl-mode-mmr").className = "btn btn-active";
+    const mmrBtn = document.getElementById("tbl-mode-mmr");
+    mmrBtn.classList.add("is-active");
+    mmrBtn.setAttribute("aria-selected", "true");
   }
 
   function pctRank(key, val) {
@@ -634,7 +737,7 @@
     const pA = players[state.cmpA], pB = players[state.cmpB];
     const svg = document.getElementById("radar-svg");
     svg.innerHTML = "";
-    const cx = 210, cy = 165, R = 112;
+    const cx = 210, cy = 165, R = 110;
     const axes = [
       { key: "o_vpm", lbl: "O-VPM" }, { key: "d_vpm", lbl: "D-VPM" }, { key: "v_eff", lbl: "V-Eff" },
       { key: "true_hit", lbl: "TrueHit%" }, { key: "true_ace", lbl: "TrueAce%" }, { key: "rapm", lbl: "RAPM" }
@@ -644,12 +747,12 @@
         const a = -Math.PI / 2 + (2 * Math.PI * i) / axes.length;
         return `${cx + R * lvl * Math.cos(a)},${cy + R * lvl * Math.sin(a)}`;
       }).join(" ");
-      svg.appendChild(svgEl("polygon", { points: pts, fill: "none", stroke: "var(--border)", "stroke-opacity": 0.7 }));
+      svg.appendChild(svgEl("polygon", { points: pts, fill: "none", stroke: "var(--line)", "stroke-opacity": 0.75 }));
     });
     axes.forEach((ax, i) => {
       const a = -Math.PI / 2 + (2 * Math.PI * i) / axes.length;
-      svg.appendChild(svgEl("line", { x1: cx, y1: cy, x2: cx + R * Math.cos(a), y2: cy + R * Math.sin(a), stroke: "var(--border)" }));
-      svg.appendChild(svgEl("text", { x: cx + (R + 20) * Math.cos(a), y: cy + (R + 18) * Math.sin(a) + 4, "text-anchor": "middle", fill: "var(--foreground)", "font-size": 12, "font-weight": 500 }, ax.lbl));
+      svg.appendChild(svgEl("line", { x1: cx, y1: cy, x2: cx + R * Math.cos(a), y2: cy + R * Math.sin(a), stroke: "var(--line)" }));
+      svg.appendChild(svgEl("text", { x: cx + (R + 22) * Math.cos(a), y: cy + (R + 18) * Math.sin(a) + 4, "text-anchor": "middle", fill: "var(--ink)", "font-size": 12, "font-weight": 500 }, ax.lbl));
     });
     const drawPoly = (p, col, dash) => {
       const pts = axes.map((ax, i) => {
@@ -657,14 +760,14 @@
         const a = -Math.PI / 2 + (2 * Math.PI * i) / axes.length;
         return `${cx + R * pct * Math.cos(a)},${cy + R * pct * Math.sin(a)}`;
       }).join(" ");
-      svg.appendChild(svgEl("polygon", { points: pts, fill: col, "fill-opacity": 0.22, stroke: col, "stroke-width": 2.2, ...(dash ? { "stroke-dasharray": dash } : {}) }));
+      svg.appendChild(svgEl("polygon", { points: pts, fill: col, "fill-opacity": 0.20, stroke: col, "stroke-width": 2.2, ...(dash ? { "stroke-dasharray": dash } : {}) }));
     };
     drawPoly(pA, "var(--chart-1)", null);
     drawPoly(pB, "var(--chart-2)", "5,3");
     svg.appendChild(svgEl("circle", { cx: 22, cy: 322, r: 5, fill: "var(--chart-1)" }));
-    svg.appendChild(svgEl("text", { x: 32, y: 326, fill: "var(--foreground)", "font-size": 12, "font-weight": 600 }, pA.name));
+    svg.appendChild(svgEl("text", { x: 32, y: 326, fill: "var(--ink)", "font-size": 12, "font-weight": 600 }, pA.name));
     svg.appendChild(svgEl("circle", { cx: 220, cy: 322, r: 5, fill: "var(--chart-2)" }));
-    svg.appendChild(svgEl("text", { x: 230, y: 326, fill: "var(--foreground)", "font-size": 12, "font-weight": 600 }, pB.name));
+    svg.appendChild(svgEl("text", { x: 230, y: 326, fill: "var(--ink)", "font-size": 12, "font-weight": 600 }, pB.name));
 
     const metrics = [
       { lbl: "VPM (Pts/100R)", k: "vpm", d: 2, plus: true, min: -20, max: 32 },
@@ -681,14 +784,20 @@
     const norm = (v, mn, mx) => (v === null || v === undefined) ? 0 : Math.max(0, Math.min(100, (100 * (v - mn)) / (mx - mn)));
     document.getElementById("cmp-bars").innerHTML = metrics.map(m => {
       const va = pA[m.k], vb = pB[m.k];
+      const aWins = va !== null && vb !== null && va > vb;
+      const bWins = va !== null && vb !== null && vb > va;
       return `<div>
         <div class="between tabnum">
           <span style="font-weight:500;">${m.lbl}</span>
-          <span><b style="color:var(--chart-1)">${fmt(va, m.d, m.plus)}</b> <span class="muted">vs</span> <b style="color:var(--chart-2)">${fmt(vb, m.d, m.plus)}</b></span>
+          <span>
+            <span style="color:${aWins ? "var(--chart-1)" : "var(--ink-muted)"};font-weight:${aWins ? 700 : 500};">${fmt(va, m.d, m.plus)}</span>
+            <span class="muted"> vs </span>
+            <span style="color:${bWins ? "var(--chart-2)" : "var(--ink-muted)"};font-weight:${bWins ? 700 : 500};">${fmt(vb, m.d, m.plus)}</span>
+          </span>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:3px;">
-          <div class="bar-track" style="display:flex;justify-content:flex-end;"><div class="bar-fill" style="width:${norm(va, m.min, m.max)}%;background:var(--chart-1);"></div></div>
-          <div class="bar-track"><div class="bar-fill" style="width:${norm(vb, m.min, m.max)}%;background:var(--chart-2);"></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;">
+          <div class="bar-track" style="display:flex;justify-content:flex-end;"><div class="bar-fill" style="width:${norm(va, m.min, m.max)}%;background:var(--chart-1);opacity:${aWins ? 1 : 0.65};"></div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:${norm(vb, m.min, m.max)}%;background:var(--chart-2);opacity:${bWins ? 1 : 0.65};"></div></div>
         </div>
       </div>`;
     }).join("");
@@ -728,13 +837,13 @@
           <td class="left muted">${i + 1}</td>
           <td class="left"><b>${esc(p.name)}</b> <span class="muted">${esc(p.id)}</span></td>
           <td class="left"><span class="dot" style="background:${ARCH_COLORS[p.arch]}"></span>${ARCH_NAMES[p.arch]}</td>
-          <td class="right"><b>${fmt(p.vpm, 2, true)}</b></td>
+          <td class="right ${valCls(p.vpm)}"><b>${fmt(p.vpm, 2, true)}</b></td>
           <td class="right">${fmt(p.o_vpm, 2, true)}</td>
           <td class="right">${fmt(p.d_vpm, 2, true)}</td>
-          <td class="right">${fmt(p.v_eff, 2, true)}</td>
+          <td class="right ${valCls(p.v_eff)}">${fmt(p.v_eff, 2, true)}</td>
           <td class="right">${fmt(p.true_hit, 3)}</td>
           <td class="right">${fmt(p.usage, 2)}</td>
-          <td class="right">${fmt(p.rapm, 2, true)}</td>
+          <td class="right ${valCls(p.rapm)}">${fmt(p.rapm, 2, true)}</td>
           <td class="right">${fmt(p.v_war, 2, true)}</td>
           <td class="right">${fmt(p.bt_mmr, 1)}</td>
           <td class="right">${p.rallies}</td>
@@ -745,16 +854,16 @@
         renderCompare();
       }));
     } else {
-      hint.textContent = "Click any column header to sort. Click any player row to open their full Elo trajectory and matchup profile.";
+      hint.textContent = "Click any column header to sort. Click any player row to open their Elo history and matchup profile.";
       const cols = [
         { k: "name", lbl: "Player", left: true, tip: "Display name and last 4 SteamID digits" },
         { k: "bt_mmr", lbl: "BT MMR", tip: "Global Regularized Bradley-Terry MMR (removes chronological bias)" },
         { k: "elo_mmr", lbl: "Elo MMR", tip: "Sequential Chronological Team Elo (start 1500, K=32)" },
         { k: "peak_elo", lbl: "Peak Elo", tip: "Highest chronological Elo reached" },
         { k: "gp", lbl: "GP", tip: "Verified online games played" },
-        { k: "w", lbl: "W", tip: "Match Wins" },
-        { k: "l", lbl: "L", tip: "Match Losses" },
-        { k: "win_pct", lbl: "Win%", tip: "Match Win Percentage" },
+        { k: "w", lbl: "W", tip: "Match wins" },
+        { k: "l", lbl: "L", tip: "Match losses" },
+        { k: "win_pct", lbl: "Win%", tip: "Match win percentage" },
         { k: "cur_streak", lbl: "Streak", tip: "Current consecutive win/loss streak" }
       ];
       thead.innerHTML = `<tr><th class="left">#</th>` + cols.map(c =>
@@ -799,17 +908,18 @@
   document.getElementById("tbl-mode-eff").addEventListener("click", () => {
     state.tblMode = "eff"; state.tblSort = { key: "vpm", dir: -1 };
     document.getElementById("tbl-arch-filter").classList.remove("hidden");
-    document.getElementById("tbl-mode-eff").className = "btn btn-active";
-    document.getElementById("tbl-mode-mmr").className = "btn";
+    const effB = document.getElementById("tbl-mode-eff"), mmrB = document.getElementById("tbl-mode-mmr");
+    effB.classList.add("is-active"); effB.setAttribute("aria-selected", "true");
+    mmrB.classList.remove("is-active"); mmrB.setAttribute("aria-selected", "false");
     renderMainTable();
   });
   document.getElementById("tbl-mode-mmr").addEventListener("click", () => {
     state.tblMode = "mmr"; state.tblSort = { key: "bt_mmr", dir: -1 };
     document.getElementById("tbl-arch-filter").classList.add("hidden");
-    document.getElementById("tbl-mode-mmr").className = "btn btn-active";
-    document.getElementById("tbl-mode-eff").className = "btn";
+    const effB = document.getElementById("tbl-mode-eff"), mmrB = document.getElementById("tbl-mode-mmr");
+    mmrB.classList.add("is-active"); mmrB.setAttribute("aria-selected", "true");
+    effB.classList.remove("is-active"); effB.setAttribute("aria-selected", "false");
     renderMainTable();
   });
   document.getElementById("tbl-arch-filter").addEventListener("change", e => { state.tblArch = e.target.value; renderMainTable(); });
   document.getElementById("tbl-search").addEventListener("input", e => { state.tblSearch = e.target.value; renderMainTable(); });
-

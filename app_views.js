@@ -35,7 +35,6 @@
       g.opps.forEach(x => {
         if (x < 0 || seenO.has(x)) return; seenO.add(x);
         const rec = ensure(x);
-        // "With" / "Vs" is opponent's W/L when playing vs selected player
         if (g.won) rec.vl++; else rec.vw++;
       });
     });
@@ -43,7 +42,7 @@
   }
 
   function formatPlayerList(idxs) {
-    return idxs.map(x => x < 0 ? "[CPU]" : mmrPlayers[x].name).join(", ") || "—";
+    return idxs.map(x => x < 0 ? "[CPU]" : mmrPlayers[x].name).join(", ") || "-";
   }
 
   function renderProfile() {
@@ -67,20 +66,20 @@
     const cards = [
       { lbl: "Global BT MMR", val: pl.bt_mmr.toFixed(1), sub: `Rank #${pl.rank} / ${mmrPlayers.length}` },
       { lbl: "Chronological Elo", val: pl.elo_mmr.toFixed(1), sub: `Peak ${pl.peak_elo.toFixed(1)} · Low ${pl.low_elo.toFixed(1)}` },
-      { lbl: "Match Record", val: `${pl.w}–${pl.l} (${pl.win_pct.toFixed(1)}%)`, sub: `${pl.gp} online matches` },
+      { lbl: "Match record", val: `${pl.w}-${pl.l} (${pl.win_pct.toFixed(1)}%)`, sub: `${pl.gp} online matches` },
       { lbl: "Streaks", val: fmtStreak(pl.cur_streak), sub: `Best win streak: ${pl.longest_win}W` },
       pbp && pbp.qualified
         ? { lbl: "Impact (VPM / RAPM)", val: `${fmt(pbp.vpm, 2, true)}`, sub: `RAPM ${fmt(pbp.rapm, 2, true)} · ${pbp.rallies}R` }
-        : { lbl: "PBP Efficiency", val: pbp ? `${pbp.rallies}R` : "N/A", sub: pbp ? "Unqualified (<100R)" : "No PBP telemetry" },
+        : { lbl: "PBP efficiency", val: pbp ? `${pbp.rallies}R` : "N/A", sub: pbp ? "Unqualified (<100R)" : "No PBP telemetry" },
       pbp && pbp.qualified
         ? { lbl: "Efficiency (V-Eff)", val: `${fmt(pbp.v_eff, 2, true)}`, sub: `Use ${fmt(pbp.usage, 2)} · Hit ${fmt(pbp.true_hit, 3)}` }
-        : { lbl: "Wins Above Repl", val: "—", sub: "Needs >=100 PBP rallies" }
+        : { lbl: "Wins Above Repl", val: "-", sub: "Needs >=100 PBP rallies" }
     ];
     document.getElementById("prof-summary").innerHTML = cards.map(c => `
-      <div class="subcard">
+      <div class="ledger-item">
         <div class="muted">${esc(c.lbl)}</div>
         <div class="kpi-val tabnum">${esc(c.val)}</div>
-        <div class="muted tabnum">${esc(c.sub)}</div>
+        <div class="ledger-sub tabnum">${esc(c.sub)}</div>
       </div>`).join("");
 
     const tl = pl.timeline;
@@ -98,17 +97,24 @@
     const sx = gno => tl.length <= 1 ? (pad.l + pw / 2) : pad.l + ((gno - 1) / (tl.length - 1)) * pw;
     const sy = e => pad.t + ph - ((e - eMin) / Math.max(1, eMax - eMin)) * ph;
 
+    const defs = svgEl("defs");
+    const grad = svgEl("linearGradient", { id: "elo-area-grad", x1: "0", y1: "0", x2: "0", y2: "1" });
+    grad.appendChild(svgEl("stop", { offset: "0%", "stop-color": "var(--chart-1)", "stop-opacity": "0.22" }));
+    grad.appendChild(svgEl("stop", { offset: "100%", "stop-color": "var(--chart-1)", "stop-opacity": "0.0" }));
+    defs.appendChild(grad);
+    svg.appendChild(defs);
+
     for (let i = 0; i <= 4; i++) {
       const ev = eMin + (i / 4) * (eMax - eMin), y = sy(ev);
-      svg.appendChild(svgEl("line", { x1: pad.l, y1: y, x2: pad.l + pw, y2: y, stroke: "var(--border)", "stroke-opacity": 0.5, "stroke-dasharray": "2,3" }));
-      svg.appendChild(svgEl("text", { x: pad.l - 8, y: y + 4, "text-anchor": "end", fill: "var(--muted-foreground)", "font-size": 12 }, Math.round(ev)));
+      svg.appendChild(svgEl("line", { x1: pad.l, y1: y, x2: pad.l + pw, y2: y, stroke: "var(--line)", "stroke-opacity": 0.65, "stroke-dasharray": "2,3" }));
+      svg.appendChild(svgEl("text", { x: pad.l - 8, y: y + 4, "text-anchor": "end", fill: "var(--ink-muted)", "font-size": 12 }, Math.round(ev)));
     }
-    svg.appendChild(svgEl("line", { x1: pad.l, y1: sy(1500), x2: pad.l + pw, y2: sy(1500), stroke: "var(--muted-foreground)", "stroke-dasharray": "4,4", "stroke-opacity": 0.6 }));
+    svg.appendChild(svgEl("line", { x1: pad.l, y1: sy(1500), x2: pad.l + pw, y2: sy(1500), stroke: "var(--ink-muted)", "stroke-dasharray": "4,4", "stroke-opacity": 0.55 }));
 
     const stepX = Math.max(1, Math.ceil(tl.length / 8));
     tl.forEach((g, idx) => {
       if (idx === 0 || idx === tl.length - 1 || (idx + 1) % stepX === 0) {
-        svg.appendChild(svgEl("text", { x: sx(g.gno), y: H - 14, "text-anchor": "middle", fill: "var(--muted-foreground)", "font-size": 12 }, "#" + g.gno));
+        svg.appendChild(svgEl("text", { x: sx(g.gno), y: H - 14, "text-anchor": "middle", fill: "var(--ink-muted)", "font-size": 12 }, "#" + g.gno));
       }
     });
 
@@ -121,7 +127,7 @@
         const wp = sl.reduce((s, x) => s + (x.won ? 1 : 0), 0) / sl.length;
         dR += (i === 0 ? "M" : "L") + `${sx(g.gno).toFixed(1)},${syP(wp).toFixed(1)}`;
       });
-      svg.appendChild(svgEl("path", { d: dR, fill: "none", stroke: "var(--chart-2)", "stroke-width": 1.8, "stroke-opacity": 0.75, "stroke-dasharray": "5,3" }));
+      svg.appendChild(svgEl("path", { d: dR, fill: "none", stroke: "var(--chart-2)", "stroke-width": 1.8, "stroke-opacity": 0.8, "stroke-dasharray": "5,3" }));
     }
 
     if (tl.length >= 2) {
@@ -132,7 +138,7 @@
         dA += (i === 0 ? `M${x},${sy(eMin).toFixed(1)} L${x},${y}` : ` L${x},${y}`);
       });
       dA += ` L${sx(tl.length).toFixed(1)},${sy(eMin).toFixed(1)} Z`;
-      svg.appendChild(svgEl("path", { d: dA, fill: "var(--chart-1)", "fill-opacity": 0.14 }));
+      svg.appendChild(svgEl("path", { d: dA, fill: "url(#elo-area-grad)" }));
       svg.appendChild(svgEl("path", { d: dL, fill: "none", stroke: "var(--chart-1)", "stroke-width": 2.4 }));
     }
 
@@ -142,38 +148,43 @@
       if (g.elo > peakG.elo) peakG = g;
       if (g.elo < lowG.elo) lowG = g;
       const isSel = i === selIdx;
-      const c = svgEl("circle", {
-        cx: sx(g.gno), cy: sy(g.elo), r: isSel ? 6.5 : 4,
-        fill: g.won ? "var(--success)" : "var(--error)",
-        stroke: isSel ? "var(--foreground)" : "var(--background)",
-        "stroke-width": isSel ? 2 : 1, style: "cursor:pointer;"
-      });
+      const cx = sx(g.gno), cy = sy(g.elo);
+      if (isSel) {
+        svg.appendChild(svgEl("circle", { cx, cy, r: 10, fill: "var(--chart-1)", "fill-opacity": 0.18 }));
+      }
+      svg.appendChild(svgEl("circle", {
+        cx, cy, r: isSel ? 6 : 4,
+        fill: g.won ? "var(--pos)" : "var(--neg)",
+        stroke: isSel ? "var(--ink)" : "var(--surface)",
+        "stroke-width": isSel ? 2 : 1.2
+      }));
+      const hit = svgEl("circle", { cx, cy, r: 10, fill: "transparent", style: "cursor:pointer;" });
       const pick = () => { state.profSelectedGame = i; renderProfile(); };
-      c.addEventListener("mouseenter", pick); c.addEventListener("click", pick);
-      svg.appendChild(c);
+      hit.addEventListener("mouseenter", pick); hit.addEventListener("click", pick);
+      svg.appendChild(hit);
     });
 
     if (tl.length > 1) {
-      svg.appendChild(svgEl("text", { x: sx(peakG.gno), y: Math.max(pad.t + 12, sy(peakG.elo) - 10), "text-anchor": peakG.gno > tl.length * 0.8 ? "end" : "middle", fill: "var(--success)", "font-size": 12, "font-weight": 600 }, `Peak ${peakG.elo.toFixed(1)} (#${peakG.gno})`));
-      if (lowG.gno !== peakG.gno) svg.appendChild(svgEl("text", { x: sx(lowG.gno), y: Math.min(H - 22, sy(lowG.elo) + 18), "text-anchor": "middle", fill: "var(--error)", "font-size": 12, "font-weight": 600 }, `Low ${lowG.elo.toFixed(1)} (#${lowG.gno})`));
+      svg.appendChild(svgEl("text", { x: sx(peakG.gno), y: Math.max(pad.t + 12, sy(peakG.elo) - 10), "text-anchor": peakG.gno > tl.length * 0.8 ? "end" : "middle", fill: "var(--pos)", "font-size": 12, "font-weight": 600 }, `Peak ${peakG.elo.toFixed(1)} (#${peakG.gno})`));
+      if (lowG.gno !== peakG.gno) svg.appendChild(svgEl("text", { x: sx(lowG.gno), y: Math.min(H - 22, sy(lowG.elo) + 18), "text-anchor": lowG.gno > tl.length * 0.8 ? "end" : "middle", fill: "var(--neg)", "font-size": 12, "font-weight": 600 }, `Low ${lowG.elo.toFixed(1)} (#${lowG.gno})`));
     }
 
     const gm = tl[selIdx];
     document.getElementById("match-inspector").innerHTML = gm ? `
       <div class="between" style="margin-bottom:6px;">
         <b>Game #${gm.gno} · ${esc(gm.ts)} · ${esc(gm.mode)} (${esc(gm.stage)})</b>
-        <span class="mono tabnum ${gm.won ? "pos" : "neg"}" style="font-weight:700;">
+        <span class="tabnum ${gm.won ? "pos" : "neg"}" style="font-weight:700;">
           ${gm.won ? "WIN" : "LOSS"} ${esc(gm.setsStr)} · Elo ${gm.elo.toFixed(1)} (${gm.delta >= 0 ? "+" : ""}${gm.delta.toFixed(1)})
         </span>
       </div>
       <div class="grid-2 muted">
-        <div><b style="color:var(--foreground);">Teammates:</b> ${esc(formatPlayerList(gm.mates))}</div>
-        <div><b style="color:var(--foreground);">Opponents:</b> ${esc(formatPlayerList(gm.opps))}</div>
+        <div><b style="color:var(--ink);">Teammates:</b> ${esc(formatPlayerList(gm.mates))}</div>
+        <div><b style="color:var(--ink);">Opponents:</b> ${esc(formatPlayerList(gm.opps))}</div>
       </div>` : `<span class="muted">No matches recorded.</span>`;
 
     // Match Log table
     document.getElementById("prof-match-log").innerHTML = [...tl].reverse().map(g => `
-      <tr class="clickable" data-gi="${g.gno - 1}" style="${g.gno - 1 === selIdx ? "background:var(--card-alt);" : ""}">
+      <tr class="clickable ${g.gno - 1 === selIdx ? "is-selected" : ""}" data-gi="${g.gno - 1}">
         <td class="left muted">${g.gno}</td>
         <td class="left">${esc(g.ts.slice(5))}</td>
         <td class="left">${esc(g.mode)} ${esc(g.stage)}</td>
@@ -186,39 +197,39 @@
     }));
 
     // Matchups SVG
-    document.getElementById("matchups-title").textContent = `Shared Games with ${pl.name}`;
+    document.getElementById("matchups-title").textContent = `Shared games with ${pl.name}`;
     const mSvg = document.getElementById("matchups-svg");
     mSvg.innerHTML = "";
     let mList = computeMatchupsFor(pl.idx).filter(d => d.shared >= state.minShared);
     mList.sort((a, b) => state.matchupSort === "with" ? (b.withTot - a.withTot || b.shared - a.shared) : state.matchupSort === "vs" ? (b.vsTot - a.vsTot || b.shared - a.shared) : (b.shared - a.shared || b.bt_mmr - a.bt_mmr));
     mList = mList.slice(0, 14);
     if (!mList.length) {
-      mSvg.appendChild(svgEl("text", { x: 320, y: 195, "text-anchor": "middle", fill: "var(--muted-foreground)", "font-size": 13 }, `No players with >= ${state.minShared} shared games.`));
+      mSvg.appendChild(svgEl("text", { x: 320, y: 195, "text-anchor": "middle", fill: "var(--ink-muted)", "font-size": 13 }, `No players with >= ${state.minShared} shared games.`));
       return;
     }
 
-    const rowH = 24, mH = 44 + mList.length * rowH + 14;
+    const rowH = 25, mH = 44 + mList.length * rowH + 14;
     mSvg.setAttribute("viewBox", `0 0 640 ${mH}`);
-    const cx0 = 380, maxHalf = 115, maxTot = Math.max(...mList.map(d => Math.max(d.withTot, d.vsTot)), 1);
+    const cx0 = 395, maxHalf = 108, maxTot = Math.max(...mList.map(d => Math.max(d.withTot, d.vsTot)), 1);
     const sc = v => (v / maxTot) * maxHalf;
-    mSvg.appendChild(svgEl("text", { x: cx0 - 12, y: 20, "text-anchor": "end", fill: "var(--foreground)", "font-size": 12, "font-weight": 600 }, "← As Teammate (W/L)"));
-    mSvg.appendChild(svgEl("text", { x: cx0 + 12, y: 20, "text-anchor": "start", fill: "var(--foreground)", "font-size": 12, "font-weight": 600 }, "As Opponent (W/L) →"));
-    mSvg.appendChild(svgEl("line", { x1: cx0, y1: 30, x2: cx0, y2: mH - 12, stroke: "var(--muted-foreground)", "stroke-dasharray": "3,3" }));
+    mSvg.appendChild(svgEl("text", { x: cx0 - 12, y: 20, "text-anchor": "end", fill: "var(--ink)", "font-size": 12, "font-weight": 600 }, "As teammate (W-L)"));
+    mSvg.appendChild(svgEl("text", { x: cx0 + 12, y: 20, "text-anchor": "start", fill: "var(--ink)", "font-size": 12, "font-weight": 600 }, "As opponent (W-L)"));
+    mSvg.appendChild(svgEl("line", { x1: cx0, y1: 30, x2: cx0, y2: mH - 12, stroke: "var(--ink-muted)", "stroke-dasharray": "3,3", "stroke-opacity": 0.55 }));
 
     mList.forEach((d, i) => {
       const y = 38 + i * rowH;
-      const nmEl = svgEl("text", { x: 165, y: y + 14, "text-anchor": "end", fill: "var(--link)", "font-size": 12, "font-weight": 500, style: "cursor:pointer;" }, `${d.name.slice(0, 16)} (${d.bt_mmr.toFixed(0)})`);
+      const nmEl = svgEl("text", { x: 186, y: y + 14, "text-anchor": "end", fill: "var(--link)", "font-size": 12, "font-weight": 500, style: "cursor:pointer;" }, `${d.name.slice(0, 15)} (${d.bt_mmr.toFixed(0)})`);
       nmEl.addEventListener("click", () => openPlayerProfile(d.idx));
       mSvg.appendChild(nmEl);
 
       const wwW = sc(d.ww), wlW = sc(d.wl), vwW = sc(d.vw), vlW = sc(d.vl);
-      if (wwW) mSvg.appendChild(svgEl("rect", { x: cx0 - 6 - wwW, y: y + 3, width: wwW, height: 14, fill: "var(--success)", rx: 2 }));
-      if (wlW) mSvg.appendChild(svgEl("rect", { x: cx0 - 6 - wwW - wlW, y: y + 3, width: wlW, height: 14, fill: "var(--error)", rx: 2 }));
-      if (d.withTot) mSvg.appendChild(svgEl("text", { x: cx0 - 12 - wwW - wlW, y: y + 14, "text-anchor": "end", fill: "var(--muted-foreground)", "font-size": 12 }, `${d.ww}-${d.wl}`));
+      if (wwW) mSvg.appendChild(svgEl("rect", { x: cx0 - 6 - wwW, y: y + 3, width: wwW, height: 14, fill: "var(--pos)", rx: 2 }));
+      if (wlW) mSvg.appendChild(svgEl("rect", { x: cx0 - 6 - wwW - wlW, y: y + 3, width: wlW, height: 14, fill: "var(--neg)", rx: 2 }));
+      if (d.withTot) mSvg.appendChild(svgEl("text", { x: cx0 - 12 - wwW - wlW, y: y + 14, "text-anchor": "end", fill: "var(--ink-muted)", "font-size": 12 }, `${d.ww}-${d.wl}`));
 
-      if (vwW) mSvg.appendChild(svgEl("rect", { x: cx0 + 6, y: y + 3, width: vwW, height: 14, fill: "var(--success)", rx: 2 }));
-      if (vlW) mSvg.appendChild(svgEl("rect", { x: cx0 + 6 + vwW, y: y + 3, width: vlW, height: 14, fill: "var(--error)", rx: 2 }));
-      if (d.vsTot) mSvg.appendChild(svgEl("text", { x: cx0 + 12 + vwW + vlW, y: y + 14, fill: "var(--muted-foreground)", "font-size": 12 }, `${d.vw}-${d.vl}`));
+      if (vwW) mSvg.appendChild(svgEl("rect", { x: cx0 + 6, y: y + 3, width: vwW, height: 14, fill: "var(--pos)", rx: 2 }));
+      if (vlW) mSvg.appendChild(svgEl("rect", { x: cx0 + 6 + vwW, y: y + 3, width: vlW, height: 14, fill: "var(--neg)", rx: 2 }));
+      if (d.vsTot) mSvg.appendChild(svgEl("text", { x: cx0 + 12 + vwW + vlW, y: y + 14, fill: "var(--ink-muted)", "font-size": 12 }, `${d.vw}-${d.vl}`));
     });
   }
 
@@ -232,12 +243,12 @@
   });
   document.getElementById("matchup-sort").addEventListener("change", e => { state.matchupSort = e.target.value; renderProfile(); });
 
-  // TAB 4: MODEL & TELEMETRY
+  // TAB 4: METHODOLOGY & VALIDATION
   function renderEngine() {
     if (!hasPbp) return;
     const m = SITE_DATA.meta;
-    document.getElementById("bpm-sub").textContent = `Scaled to pts = +3.0 across ${m.box_matches} box-score matches (LOO-CV R² = ${m.bpm_r2 ?? "—"}). Passive volume touches turn negative once points are controlled.`;
-    document.getElementById("cv-sub").textContent = `Out-of-sample rally log-loss (lower is better) and Spearman-Brown split-half reliability across ${m.pbp_qualified} qualified players.`;
+    document.getElementById("bpm-sub").textContent = `Scaled to pts = +3.0 across ${m.box_matches} box-score matches (LOO-CV R^2 = ${m.bpm_r2 ?? "-"}). Passive volume touches turn negative once points are controlled.`;
+    document.getElementById("cv-sub").textContent = `Out-of-sample rally log-loss (longer bar = lower loss) and Spearman-Brown split-half reliability across ${m.pbp_qualified} qualified players.`;
 
     const svg = document.getElementById("kinds-svg");
     svg.innerHTML = "";
@@ -245,29 +256,36 @@
     const valFn = k => state.kindMetric === "epa" ? k[2] : (state.kindMetric === "v_all" ? 100 * k[3] : (state.kindMetric === "v_nt" ? 100 * k[4] : k[1]));
     const vals = kinds.map(valFn);
     const minV = state.kindMetric === "epa" ? Math.min(...vals, 0) : 0, maxV = Math.max(...vals, 1);
-    const sx0 = 100 + ((0 - minV) / (maxV - minV)) * 390;
-    const sc = v => 100 + ((v - minV) / (maxV - minV)) * 390;
-    svg.appendChild(svgEl("line", { x1: sx0, y1: 18, x2: sx0, y2: 316, stroke: "var(--muted-foreground)", "stroke-dasharray": "3,3" }));
+    const padL = minV < 0 ? 142 : 96, padR = 72, iw = 580 - padL - padR;
+    const lblX = minV < 0 ? 78 : padL - 10;
+    const sx0 = padL + ((0 - minV) / (maxV - minV)) * iw;
+    const sc = v => padL + ((v - minV) / (maxV - minV)) * iw;
+    svg.appendChild(svgEl("line", { x1: sx0, y1: 18, x2: sx0, y2: 318, stroke: "var(--ink-muted)", "stroke-dasharray": "3,3", "stroke-opacity": 0.55 }));
     kinds.forEach((k, i) => {
       const v = valFn(k), y = 24 + i * 26, sel = k[0] === state.selectedKind;
       const xStart = Math.min(sx0, sc(v)), bw = Math.max(2, Math.abs(sc(v) - sx0));
-      const rect = svgEl("rect", { x: xStart, y: y + 2, width: bw, height: 18, rx: 3, fill: state.kindMetric === "epa" ? (v >= 0 ? "var(--success)" : "var(--error)") : "var(--chart-1)", "fill-opacity": sel ? 1 : 0.72, stroke: sel ? "var(--foreground)" : "none", "stroke-width": sel ? 1.5 : 0, style: "cursor:pointer;" });
-      const lbl = svgEl("text", { x: 92, y: y + 15, "text-anchor": "end", fill: "var(--foreground)", "font-size": 12, "font-weight": sel ? 700 : 400, style: "cursor:pointer;" }, k[0]);
+      const rect = svgEl("rect", {
+        x: xStart, y: y + 2, width: bw, height: 18, rx: 3,
+        fill: state.kindMetric === "epa" ? (v >= 0 ? "var(--pos)" : "var(--neg)") : "var(--chart-1)",
+        "fill-opacity": sel ? 1 : 0.72,
+        stroke: sel ? "var(--ink)" : "none", "stroke-width": sel ? 1.6 : 0, style: "cursor:pointer;"
+      });
+      const lbl = svgEl("text", { x: lblX, y: y + 15, "text-anchor": "end", fill: "var(--ink)", "font-size": 12, "font-weight": sel ? 700 : 500, style: "cursor:pointer;" }, k[0]);
       const pick = () => { state.selectedKind = k[0]; renderEngine(); };
       rect.addEventListener("click", pick); lbl.addEventListener("click", pick);
       svg.appendChild(rect); svg.appendChild(lbl);
       const txtVal = state.kindMetric === "count" ? `${k[1]}` : (state.kindMetric === "epa" ? `${v >= 0 ? "+" : ""}${v.toFixed(2)}` : `${v.toFixed(1)}%`);
-      svg.appendChild(svgEl("text", { x: v >= 0 ? xStart + bw + 6 : xStart - 6, y: y + 15, "text-anchor": v >= 0 ? "start" : "end", fill: "var(--muted-foreground)", "font-size": 12 }, txtVal));
+      svg.appendChild(svgEl("text", { x: v >= 0 ? xStart + bw + 7 : xStart - 7, y: y + 15, "text-anchor": v >= 0 ? "start" : "end", fill: "var(--ink-muted)", "font-size": 12 }, txtVal));
     });
 
-    document.getElementById("substate-title").textContent = "Sub-States: " + state.selectedKind;
+    document.getElementById("substate-title").textContent = "Sub-states: " + state.selectedKind;
     const rows = SITE_DATA.markov_states.filter(s => s[0] === state.selectedKind).sort((a, b) => a[1] - b[1] || a[2].localeCompare(b[2]));
     document.getElementById("substate-body").innerHTML = rows.map(s => `
       <tr>
         <td class="left">T${s[1]}</td><td class="left muted">${esc(s[2])}</td>
         <td class="right">${s[3]}</td>
         <td class="right">${(100 * s[4]).toFixed(1)}%</td>
-        <td class="right pri"><b>${s[6] !== null ? (100 * s[6]).toFixed(1) + "%" : "—"}</b></td>
+        <td class="right pri"><b>${s[6] !== null ? (100 * s[6]).toFixed(1) + "%" : "-"}</b></td>
         <td class="right">${(100 * s[7]).toFixed(1)}%</td>
       </tr>`).join("");
 
@@ -276,42 +294,58 @@
     bpmSvg.innerHTML = "";
     const bpm = SITE_DATA.bpm_weights;
     if (bpm.length) {
-      const zeroX = 180, scB = v => zeroX + (v + 3.5) / 7.5 * 300 - (3.5 / 7.5 * 300);
-      bpmSvg.appendChild(svgEl("line", { x1: zeroX, y1: 24, x2: zeroX, y2: 266, stroke: "var(--muted-foreground)", "stroke-dasharray": "3,3" }));
+      const bMin = Math.min(0, ...bpm.map(b => Math.min(b[1], b[2]))) - 0.3;
+      const bMax = Math.max(0, ...bpm.map(b => Math.max(b[1], b[2]))) + 0.3;
+      const bPadL = 62, bPadR = 148, bW = 560 - bPadL - bPadR;
+      const scB = v => bPadL + ((v - bMin) / (bMax - bMin)) * bW;
+      const zeroX = scB(0);
+      bpmSvg.appendChild(svgEl("line", { x1: zeroX, y1: 22, x2: zeroX, y2: 266, stroke: "var(--ink-muted)", "stroke-dasharray": "3,3", "stroke-opacity": 0.55 }));
       bpm.forEach((b, i) => {
-        const y = 32 + i * 29;
-        bpmSvg.appendChild(svgEl("text", { x: 64, y: y + 15, "text-anchor": "end", fill: "var(--foreground)", "font-size": 12, "font-weight": 600 }, b[0]));
+        const y = 30 + i * 29;
+        bpmSvg.appendChild(svgEl("text", { x: bPadL - 10, y: y + 15, "text-anchor": "end", fill: "var(--ink)", "font-size": 12, "font-weight": 600 }, b[0]));
         const ox = Math.min(zeroX, scB(b[1])), ow = Math.max(2, Math.abs(scB(b[1]) - zeroX));
         const ex = Math.min(zeroX, scB(b[2])), ew = Math.max(2, Math.abs(scB(b[2]) - zeroX));
-        bpmSvg.appendChild(svgEl("rect", { x: ox, y: y + 2, width: ow, height: 9, fill: "var(--chart-3)", rx: 2 }));
-        bpmSvg.appendChild(svgEl("rect", { x: ex, y: y + 13, width: ew, height: 9, fill: b[2] >= 0 ? "var(--chart-1)" : "var(--error)", rx: 2 }));
-        bpmSvg.appendChild(svgEl("text", { x: Math.max(ox + ow, ex + ew) + 6, y: y + 16, fill: "var(--muted-foreground)", "font-size": 12 }, `Off ${b[1].toFixed(1)} / Emp ${b[2] >= 0 ? "+" : ""}${b[2].toFixed(2)}`));
+        bpmSvg.appendChild(svgEl("rect", { x: ox, y: y + 2, width: ow, height: 9, fill: "var(--chart-2)", rx: 2 }));
+        bpmSvg.appendChild(svgEl("rect", { x: ex, y: y + 13, width: ew, height: 9, fill: b[2] >= 0 ? "var(--chart-1)" : "var(--neg)", rx: 2 }));
+        bpmSvg.appendChild(svgEl("text", { x: Math.max(ox + ow, ex + ew) + 8, y: y + 16, fill: "var(--ink-muted)", "font-size": 12 }, `Off ${b[1].toFixed(1)} / Emp ${b[2] >= 0 ? "+" : ""}${b[2].toFixed(2)}`));
       });
-      bpmSvg.appendChild(svgEl("rect", { x: 180, y: 276, width: 12, height: 8, fill: "var(--chart-3)" }));
-      bpmSvg.appendChild(svgEl("text", { x: 196, y: 284, fill: "var(--foreground)", "font-size": 12 }, "In-Game MVP"));
-      bpmSvg.appendChild(svgEl("rect", { x: 295, y: 276, width: 12, height: 8, fill: "var(--chart-1)" }));
-      bpmSvg.appendChild(svgEl("text", { x: 311, y: 284, fill: "var(--foreground)", "font-size": 12 }, "Empirical LOO-CV BPM"));
+      bpmSvg.appendChild(svgEl("rect", { x: bPadL, y: 279, width: 12, height: 8, fill: "var(--chart-2)", rx: 2 }));
+      bpmSvg.appendChild(svgEl("text", { x: bPadL + 18, y: 287, fill: "var(--ink)", "font-size": 12 }, "In-game MVP"));
+      bpmSvg.appendChild(svgEl("rect", { x: bPadL + 130, y: 279, width: 12, height: 8, fill: "var(--chart-1)", rx: 2 }));
+      bpmSvg.appendChild(svgEl("text", { x: bPadL + 148, y: 287, fill: "var(--ink)", "font-size": 12 }, "Empirical LOO-CV BPM"));
     }
 
-    // CV Chart
+    // CV Chart (dynamic scale so lower log-loss cleanly reads as longer bar)
     const cvSvg = document.getElementById("cv-svg");
     cvSvg.innerHTML = "";
-    SITE_DATA.cv_bench.forEach((c, i) => {
-      const y = 16 + i * 26, w = ((0.692 - c[2]) / 0.018) * 230;
-      const last = i === SITE_DATA.cv_bench.length - 1;
-      cvSvg.appendChild(svgEl("text", { x: 175, y: y + 14, "text-anchor": "end", fill: "var(--foreground)", "font-size": 12, "font-weight": last ? 700 : 400 }, c[0]));
-      cvSvg.appendChild(svgEl("rect", { x: 182, y: y + 2, width: Math.max(8, w), height: 15, rx: 3, fill: last ? "var(--success)" : "var(--chart-1)" }));
-      cvSvg.appendChild(svgEl("text", { x: 188 + Math.max(8, w), y: y + 14, fill: "var(--muted-foreground)", "font-size": 12 }, `${c[2].toFixed(5)} · AUC ${c[4].toFixed(3)}`));
-    });
+    const cvRows = SITE_DATA.cv_bench;
+    if (cvRows.length) {
+      const losses = cvRows.map(c => c[2]);
+      const lMax = Math.max(...losses) + 0.0012;
+      const lMin = Math.min(...losses) - 0.0012;
+      const cPadL = 186, cPadR = 148, cW = 560 - cPadL - cPadR;
+      cvRows.forEach((c, i) => {
+        const y = 16 + i * 28;
+        const w = Math.max(10, ((lMax - c[2]) / Math.max(1e-6, lMax - lMin)) * cW);
+        const last = i === cvRows.length - 1;
+        cvSvg.appendChild(svgEl("text", { x: cPadL - 10, y: y + 14, "text-anchor": "end", fill: "var(--ink)", "font-size": 12, "font-weight": last ? 700 : 500 }, c[0]));
+        cvSvg.appendChild(svgEl("rect", { x: cPadL, y: y + 2, width: cW, height: 16, rx: 3, fill: "var(--line)", "fill-opacity": 0.4 }));
+        cvSvg.appendChild(svgEl("rect", { x: cPadL, y: y + 2, width: w, height: 16, rx: 3, fill: last ? "var(--pos)" : "var(--chart-1)" }));
+        cvSvg.appendChild(svgEl("text", { x: cPadL + w + 8, y: y + 14, fill: "var(--ink-muted)", "font-size": 12 }, `${c[2].toFixed(5)} · AUC ${c[4].toFixed(3)}`));
+      });
+    }
 
     // Reliability Chart
     const relSvg = document.getElementById("rel-svg");
     relSvg.innerHTML = "";
+    const rPadL = 196, rPadR = 142, rW = 560 - rPadL - rPadR;
     SITE_DATA.reliability.forEach((r, i) => {
-      const y = 14 + i * 21;
-      relSvg.appendChild(svgEl("text", { x: 185, y: y + 13, "text-anchor": "end", fill: "var(--foreground)", "font-size": 12 }, r[0]));
-      relSvg.appendChild(svgEl("rect", { x: 192, y: y + 3, width: Math.max(4, r[2] * 240), height: 11, rx: 2, fill: r[2] >= 0.6 ? "var(--success)" : "var(--chart-3)" }));
-      relSvg.appendChild(svgEl("text", { x: 198 + Math.max(4, r[2] * 240), y: y + 13, fill: "var(--muted-foreground)", "font-size": 12 }, `SB ${r[2].toFixed(2)} (r=${r[1].toFixed(2)})`));
+      const y = 12 + i * 23;
+      const barW = Math.max(4, Math.min(1, r[2]) * rW);
+      relSvg.appendChild(svgEl("text", { x: rPadL - 10, y: y + 13, "text-anchor": "end", fill: "var(--ink)", "font-size": 12 }, r[0]));
+      relSvg.appendChild(svgEl("rect", { x: rPadL, y: y + 3, width: rW, height: 12, rx: 2, fill: "var(--line)", "fill-opacity": 0.4 }));
+      relSvg.appendChild(svgEl("rect", { x: rPadL, y: y + 3, width: barW, height: 12, rx: 2, fill: r[2] >= 0.6 ? "var(--pos)" : "var(--warn)" }));
+      relSvg.appendChild(svgEl("text", { x: rPadL + barW + 8, y: y + 13, fill: "var(--ink-muted)", "font-size": 12 }, `SB ${r[2].toFixed(2)} (r=${r[1].toFixed(2)})`));
     });
   }
   document.getElementById("kind-metric").addEventListener("change", e => { state.kindMetric = e.target.value; renderEngine(); });
@@ -319,7 +353,7 @@
   // Glossary Modal (100% player-agnostic)
   const GLOSSARY_GROUPS = [
     {
-      title: "Core Composite & Efficiency Metrics",
+      title: "Core composite and efficiency metrics",
       items: [
         ["VPM", "Volleyball Plus-Minus", "Flagship overall effectiveness rating (team-equivalent expected point margin per 100 rallies above average): 75% calibrated PBP EPA/100R + 25% Rally RAPM."],
         ["O-VPM / D-VPM", "Offensive & Defensive VPM", "Additive split of VPM (O-VPM + D-VPM = VPM) combining offensive PBP EPA + Sideout RAPM vs. defensive PBP EPA + Serve RAPM."],
@@ -330,7 +364,7 @@
       ]
     },
     {
-      title: "Lineup Impact & Matchmaking Ratings",
+      title: "Lineup impact and matchmaking ratings",
       items: [
         ["RAPM", "Regularized Adjusted Plus-Minus", "Ridge regression (alpha = 40) predicting rally outcomes from on-court lineups, controlling for teammates, opponents, CPU fills, and serving team."],
         ["Serve / Sideout RAPM", "Phase-Split RAPM", "Serve RAPM measures breakpoint impact when your team serves; Sideout RAPM measures receive/offense impact when returning serve."],
@@ -339,7 +373,7 @@
       ]
     },
     {
-      title: "Volleyball Splits & Validation",
+      title: "Volleyball splits and validation",
       items: [
         ["TrueHit%", "True Hitting Percentage", "(True Kills - Direct Attack Errors) / Attack Attempts across spikes, tips, and dumps, including kills forced off a failed defensive touch."],
         ["TrueAce% / ServeErr%", "Serve Splits", "TrueAce% counts direct aces plus serves forcing a failed receive/shank; ServeErr% is direct serve fault rate."],
@@ -350,7 +384,7 @@
       ]
     },
     {
-      title: "Role Metrics (Spiker, Setter, Libero)",
+      title: "Role metrics (Spiker, Setter, Libero)",
       items: [
         ["A-Eff / A-VPM", "Spiker Attack Efficiency & Impact", "Non-terminal Markov attack EPA per 100 attempts (spikes, tips, dumps) shrunk by m=40 (A-Eff), or per 100 rallies at m=150 (A-VPM)."],
         ["S-Eff / S-VPM", "Setter Delivery Efficiency & Impact", "Expected win-probability points per 100 setting actions (sets touch 1-2 + 2nd-touch dumps) above context-matched human baselines, shrunk by m=40 (S-Eff) or per 100 rallies at m=150 (S-VPM)."],
@@ -368,15 +402,17 @@
     const html = GLOSSARY_GROUPS.map(g => {
       const hits = g.items.filter(([c, n, d]) => !q || c.toLowerCase().includes(q) || n.toLowerCase().includes(q) || d.toLowerCase().includes(q));
       if (!hits.length) return "";
-      return `<div><h3>${esc(g.title)}</h3><div class="grid-2">${hits.map(([c, n, d]) => `
-        <div class="subcard">
-          <div class="between" style="margin-bottom:4px;"><b class="mono pri">${esc(c)}</b><span class="muted">${esc(n)}</span></div>
-          <p>${esc(d)}</p>
+      return `<div><h3 style="margin-bottom:8px;">${esc(g.title)}</h3><div class="glossary-grid">${hits.map(([c, n, d]) => `
+        <div class="glossary-item">
+          <div class="between"><b class="pri">${esc(c)}</b><span class="muted">${esc(n)}</span></div>
+          <p class="prose" style="font-size:var(--text-sm);">${esc(d)}</p>
         </div>`).join("")}</div></div>`;
     }).join("");
     document.getElementById("glossary-body").innerHTML = html || `<p class="muted">No glossary entries match "${esc(filter)}".</p>`;
   }
-  document.getElementById("open-glossary").addEventListener("click", () => { glossaryModal.classList.remove("hidden"); renderGlossary(glossarySearch.value); glossarySearch.focus(); });
+  const openGlossary = () => { glossaryModal.classList.remove("hidden"); renderGlossary(glossarySearch.value); glossarySearch.focus(); };
+  document.getElementById("open-glossary").addEventListener("click", openGlossary);
+  document.getElementById("footer-glossary").addEventListener("click", openGlossary);
   document.getElementById("close-glossary").addEventListener("click", () => glossaryModal.classList.add("hidden"));
   glossaryModal.addEventListener("click", e => { if (e.target === glossaryModal) glossaryModal.classList.add("hidden"); });
   glossarySearch.addEventListener("input", e => renderGlossary(e.target.value));
