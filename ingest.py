@@ -24,6 +24,7 @@ except ImportError:
     zstd = None
 
 CPU_KEY = "CPU::[CPU]"
+VBR_PRUNE_CHUNK_S = 120.0
 DEFAULT_LOCAL_ROOT = (
     pathlib.Path(os.environ.get("APPDATA", "")) / "Godot" / "app_userdata" / "volleyball"
 )
@@ -499,12 +500,16 @@ def match_from_vbr_parsed(
     if hs == aws or max(hs, aws) == 0:
         return None, "skipped_incomplete_or_tie"
 
-    pts = [
-        e["d"]
+    pt_events = [
+        (float(e.get("t", 0.0)), e["d"])
         for e in events
         if isinstance(e, dict) and e.get("k") == "point" and isinstance(e.get("d"), dict)
     ]
-    set0 = int(pts[0].get("set", 1)) if pts else 1
+    pts = [d for _, d in pt_events]
+    # Long replays prune early events in 120s ring-buffer chunks while keeping
+    # slots captured at t=0; only trust pts[0]["set"] when unpruned.
+    first_pt_t = pt_events[0][0] if pt_events else 0.0
+    set0 = 1 if first_pt_t >= VBR_PRUNE_CHUNK_S else (int(pts[0].get("set", 1)) if pts else 1)
     tot = hs + aws
     win_final = 1 if hs > aws else -1
     win_tid = win_final * ((-1) ** (tot - 1))
@@ -517,11 +522,16 @@ def match_from_vbr_parsed(
     sets_b = aws if a_final_side == 1 else hs
     winner = "A" if win_tid == 1 else "B"
 
-    rec_at = str(meta.get("recorded_at", ""))
-    try:
-        ts = dt.datetime.fromisoformat(rec_at.replace("Z", "+00:00")).timestamp() + float(meta.get("duration", 0.0))
-    except Exception:
+    # Prefer mtime_ts (UTC epoch when replay was saved at match end); recorded_at +
+    # duration drifts by minutes on ring-buffer-pruned replays and lacks timezone info.
+    if mtime_ts > 0:
         ts = mtime_ts
+    else:
+        rec_at = str(meta.get("recorded_at", ""))
+        try:
+            ts = dt.datetime.fromisoformat(rec_at.replace("Z", "+00:00")).timestamp() + float(meta.get("duration", 0.0))
+        except Exception:
+            ts = mtime_ts
 
     team_a, team_b = [], []
     names_a, names_b = set(), set()
