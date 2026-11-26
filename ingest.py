@@ -533,11 +533,63 @@ def match_from_vbr_parsed(
         except Exception:
             ts = mtime_ts
 
+    # Apply chronological seat events so mid-match joins/rejoins match final
+    # profiles.json and .vbtsess rosters. Keep unreplaced leavers (bot=True)
+    # credited in their original slot, but vacate that slot if the same player
+    # later rejoins a different slot.
+    final_slots = [
+        {
+            "side": int(s["side"]),
+            "name": str(s.get("name", "")).strip(),
+            "is_bot": bool(s.get("is_bot", False)),
+            "vacated": False,
+        }
+        for s in slots
+    ]
+    seat_events = sorted(
+        (
+            (float(e.get("t", 0.0)), 0 if bool(e["d"].get("bot", False)) else 1, idx_ev, e["d"])
+            for idx_ev, e in enumerate(events)
+            if isinstance(e, dict) and e.get("k") == "seat" and isinstance(e.get("d"), dict)
+        ),
+        key=lambda x: (x[0], x[1], x[2]),
+    )
+    for _, _, _, sd in seat_events:
+        s_idx = int(sd.get("s", -1))
+        if not (0 <= s_idx < len(final_slots)):
+            continue
+        if bool(sd.get("bot", False)):
+            final_slots[s_idx]["vacated"] = True
+            cur_name = final_slots[s_idx]["name"]
+            if cur_name and not final_slots[s_idx]["is_bot"]:
+                cur_key, _ = resolve_player_key(cur_name, None, False, sid_latest_name, name_to_sid)
+                if any(
+                    oi != s_idx and not o["is_bot"]
+                    and resolve_player_key(o["name"], None, False, sid_latest_name, name_to_sid)[0] == cur_key
+                    for oi, o in enumerate(final_slots)
+                ):
+                    final_slots[s_idx]["name"] = ""
+                    final_slots[s_idx]["is_bot"] = True
+                    final_slots[s_idx]["vacated"] = False
+        else:
+            new_name = str(sd.get("name", "")).strip()
+            new_key, _ = resolve_player_key(new_name, None, False, sid_latest_name, name_to_sid)
+            for other_idx, other in enumerate(final_slots):
+                if other_idx != s_idx and other["vacated"] and not other["is_bot"]:
+                    other_key, _ = resolve_player_key(other["name"], None, False, sid_latest_name, name_to_sid)
+                    if other_key == new_key:
+                        other["name"] = ""
+                        other["is_bot"] = True
+                        other["vacated"] = False
+            final_slots[s_idx]["name"] = new_name
+            final_slots[s_idx]["is_bot"] = False
+            final_slots[s_idx]["vacated"] = False
+
     team_a, team_b = [], []
     names_a, names_b = set(), set()
-    for s in slots:
-        rname = str(s.get("name", "")).strip()
-        is_bot = bool(s.get("is_bot", False))
+    for s in final_slots:
+        rname = s["name"]
+        is_bot = s["is_bot"]
         key, _ = resolve_player_key(rname, None, is_bot, sid_latest_name, name_to_sid)
         base_nm, _ = strip_cpu_suffix(rname)
         tid = int(s["side"]) * set0_flip
