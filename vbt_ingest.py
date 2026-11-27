@@ -15,6 +15,21 @@ except ImportError:
 
 import ingest as _ing
 
+SIDE_SWITCH_COOLDOWN_TICKS = 60
+
+
+def _is_global_side_switch(ev: dict, active_sides: dict[int, int]) -> bool:
+    sl = int(ev.get("slot", -1))
+    if sl == -1:
+        return True
+    return (
+        sl in active_sides
+        and "side" in ev
+        and active_sides[sl] != 0
+        and int(ev["side"]) == -active_sides[sl]
+    )
+
+
 def load_vbtsess_matches(
     local_root: pathlib.Path | None,
     include_local: bool,
@@ -48,6 +63,7 @@ def load_vbtsess_matches(
             fmap = {fld["n"]: fld["o"] for fld in wb["fields"]}
             first_world = None
             rally_ends = []
+            slot_events: list[dict] = []
 
             while True:
                 ch = f.read(56)
@@ -74,8 +90,11 @@ def load_vbtsess_matches(
                     break
                 if ecomp > 0:
                     for ev in json.loads(dctx.decompress(epay, max_output_size=eraw)):
-                        if ev.get("type") == "rally_end":
+                        et = ev.get("type")
+                        if et == "rally_end":
                             rally_ends.append(ev)
+                        elif et in ("slot_assign", "slot_release", "side_switch"):
+                            slot_events.append(ev)
 
         if first_world != (0, 0, 0, 0):
             stats["skipped_midmatch_join"] += 1
@@ -107,10 +126,36 @@ def load_vbtsess_matches(
             continue
 
         swap_factor = (-1) ** (setsA + setsB - 1)
+        # Departed slots stop flipping on subsequent side_switch events, leaving
+        # hdr["entities"] frozen at their pre-switch side; track polarity per slot.
+        ev_pol = 1
+        last_sw_t = -(10**9)
+        active_sides: dict[int, int] = {}
+        slot_pol: dict[int, int] = {}
+        for _, ev in sorted(enumerate(slot_events), key=lambda x: (int(x[1].get("t", 0)), x[0])):
+            et = ev.get("type")
+            t = int(ev.get("t", 0))
+            if et == "slot_assign":
+                sl = int(ev.get("slot", -1))
+                ent = ev.get("entity") or {}
+                if sl >= 0 and ent:
+                    active_sides[sl] = int(ent.get("side", 0))
+                    slot_pol[sl] = ev_pol
+            elif et == "slot_release":
+                active_sides.pop(int(ev.get("slot", -1)), None)
+            elif et == "side_switch":
+                if _is_global_side_switch(ev, active_sides) and t - last_sw_t > SIDE_SWITCH_COOLDOWN_TICKS:
+                    ev_pol *= -1
+                    for asl in list(active_sides):
+                        active_sides[asl] = -active_sides[asl]
+                        slot_pol[asl] = ev_pol
+                    last_sw_t = t
+
         team_a, team_b = [], []
         names_a, names_b = set(), set()
         for ent in hdr.get("entities", []):
-            init_side = int(ent["side"]) * swap_factor
+            sl = int(ent.get("slot", -1))
+            init_side = int(ent["side"]) * slot_pol.get(sl, swap_factor)
             rname = str(ent.get("name", "")).strip()
             is_bot = bool(ent.get("is_bot", False))
             key, _ = _ing.resolve_player_key(rname, None, is_bot, sid_latest_name, name_to_sid)
@@ -236,12 +281,8 @@ def extract_pbp_rallies(
             elif et == "slot_release":
                 active_slots.pop(int(ev.get("slot", -1)), None)
             elif et == "side_switch":
-                sl = int(ev.get("slot", -1))
-                is_global = (sl == -1) or (
-                    sl in active_slots and "side" in ev and active_slots[sl]["side"] != 0
-                    and int(ev["side"]) == -active_slots[sl]["side"]
-                )
-                if is_global and t - last_global_switch_t > 60:
+                active_sides = {s: info["side"] for s, info in active_slots.items()}
+                if _is_global_side_switch(ev, active_sides) and t - last_global_switch_t > SIDE_SWITCH_COOLDOWN_TICKS:
                     for info in active_slots.values():
                         info["side"] = -info["side"]
                     last_global_switch_t = t
